@@ -1,46 +1,11 @@
-const fs = require('fs');
-const path = require('path');
 const { loadData, saveData } = require('../utils/storage');
 const { randomUUID } = require('crypto');
-
-const UPLOAD_DIR = path.join(__dirname, '../../data/uploads');
-
-function coerceBoolean(value, fallback = false) {
-  if (typeof value === 'boolean') return value;
-  if (value === undefined || value === null) return fallback;
-  const normalized = String(value).toLowerCase();
-  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
-  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
-  return fallback;
-}
-
-function ensureUploadDir() {
-  if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  }
-}
 
 function persist(updater) {
   const data = loadData();
   const result = updater(data);
   saveData(data);
   return result;
-}
-
-function ensureCounter(data, key) {
-  if (!data.counters) {
-    data.counters = { run: 1, report: 1 };
-  }
-  if (typeof data.counters[key] !== 'number') {
-    data.counters[key] = 1;
-  }
-  return data.counters[key];
-}
-
-function nextCode(data, key, prefix) {
-  const current = ensureCounter(data, key);
-  data.counters[key] = current + 1;
-  return `${prefix}-${String(current).padStart(4, '0')}`;
 }
 
 function now() {
@@ -72,37 +37,6 @@ function logAdminAction(data, action) {
   });
 }
 
-function persistUploads(uploadBlobs = []) {
-  if (!uploadBlobs.length) {
-    return [];
-  }
-  ensureUploadDir();
-  return uploadBlobs
-    .map((blob) => {
-      if (!blob || !blob.data) return null;
-      const matches = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(blob.data);
-      if (!matches) return null;
-      const mime = matches[1];
-      const base64 = matches[2];
-      const extension = mime.split('/')[1]?.split('+')[0] || 'png';
-      const filename = `${Date.now()}-${randomUUID()}.${extension}`;
-      const filePath = path.join(UPLOAD_DIR, filename);
-      try {
-        fs.writeFileSync(filePath, Buffer.from(base64, 'base64'));
-        return `/uploads/${filename}`;
-      } catch (error) {
-        console.error('Failed to save screenshot', error);
-        return null;
-      }
-    })
-    .filter(Boolean);
-}
-
-function normalizeScreenshots(existing = [], uploads = []) {
-  const merged = [...(existing || []), ...(uploads || [])].filter(Boolean);
-  return Array.from(new Set(merged));
-}
-
 function awardGrimFavor(playerId, amount, reason, details = {}, adminPlayerId = null) {
   return persist((data) => {
     findPlayer(data, playerId);
@@ -128,9 +62,6 @@ function awardGrimFavor(playerId, amount, reason, details = {}, adminPlayerId = 
   });
 }
 
-const DEFAULT_RANK = 'Initiate';
-const DEFAULT_ROLE = 'member';
-
 function createPlayer(payload) {
   return persist((data) => {
     const id = randomUUID();
@@ -138,9 +69,6 @@ function createPlayer(payload) {
       id,
       discordTag: payload.discordTag,
       displayName: payload.displayName || payload.discordTag,
-      rank: payload.rank || DEFAULT_RANK,
-      role: payload.role || DEFAULT_ROLE,
-      isMember: coerceBoolean(payload.isMember, true),
       friends: [],
       status: 'offline',
       lifetimeGF: 0,
@@ -206,7 +134,6 @@ function createRun(payload) {
     const id = randomUUID();
     const run = {
       id,
-      code: nextCode(data, 'run', 'RUN'),
       label: payload.label || `Run-${data.runs.length + 1}`,
       mode: payload.mode,
       scheduledAt: payload.scheduledAt || now(),
@@ -251,7 +178,6 @@ function submitReport(payload) {
     extracted = false,
     traits = [],
     screenshots = [],
-    uploadBlobs = [],
     adminPlayerId = null
   } = payload;
 
@@ -271,13 +197,9 @@ function submitReport(payload) {
       throw new Error('Character not found');
     }
 
-    const storedUploads = persistUploads(uploadBlobs);
-    const allScreenshots = normalizeScreenshots(screenshots, storedUploads);
-
     const id = randomUUID();
     const report = {
       id,
-      code: nextCode(data, 'report', 'REP'),
       runId,
       characterId,
       playerId: character.playerId,
@@ -286,7 +208,7 @@ function submitReport(payload) {
       stats,
       extracted,
       traits,
-      screenshots: allScreenshots,
+      screenshots,
       createdAt: now()
     };
 
@@ -295,11 +217,11 @@ function submitReport(payload) {
     if (!run.reporterIds.includes(character.playerId)) {
       run.reporterIds.push(character.playerId);
     }
-    if (allScreenshots.length) {
-      run.screenshots = Array.from(new Set([...(run.screenshots || []), ...allScreenshots]));
+    if (screenshots.length) {
+      run.screenshots = Array.from(new Set([...(run.screenshots || []), ...screenshots]));
     }
 
-    const confirmed = allScreenshots.length > 0;
+    const confirmed = screenshots.length > 0;
     updateCharacterStats(character, stats, confirmed);
 
     const { minReporters, participationGF, reportGF } = settings.runVerification;
@@ -327,101 +249,16 @@ function submitReport(payload) {
   });
 }
 
-function matchesDate(targetDate, iso) {
-  if (!targetDate) return true;
-  if (!iso) return false;
-  return iso.slice(0, 10) === targetDate;
-}
-
-function matchesQuery(value, query) {
-  if (!query) return true;
-  if (!value) return false;
-  return value.toLowerCase().includes(query.toLowerCase());
-}
-
-function listRuns(filters = {}) {
+function listRuns() {
   const data = loadData();
-  const players = new Map(data.players.map((player) => [player.id, player]));
-  const query = filters.q?.toLowerCase();
-  const playerQuery = filters.playerName?.toLowerCase() || filters.playerQuery?.toLowerCase();
-
-  return data.runs
-    .filter((run) => {
-      if (!matchesDate(filters.date, run.scheduledAt)) return false;
-      if (filters.playerId && !run.participants.includes(filters.playerId)) return false;
-      if (playerQuery) {
-        const match = run.participants.some((id) => {
-          const participant = players.get(id);
-          if (!participant) return false;
-          return (
-            participant.displayName.toLowerCase().includes(playerQuery) ||
-            participant.discordTag?.toLowerCase().includes(playerQuery)
-          );
-        });
-        if (!match) return false;
-      }
-      if (query) {
-        const haystack = `${run.code || ''} ${run.label || ''} ${run.id}`.toLowerCase();
-        if (!haystack.includes(query)) return false;
-      }
-      return true;
-    })
-    .map((run) => ({
-      ...run,
-      code: run.code || `RUN-${run.id.slice(0, 6).toUpperCase()}`,
-      reporterCount: run.reporterIds.length,
-      participantDetails: run.participants.map((id) => {
-        const participant = players.get(id);
-        return participant
-          ? { id, displayName: participant.displayName, discordTag: participant.discordTag, rank: participant.rank }
-          : { id, displayName: 'Unknown', discordTag: null, rank: null };
-      })
-    }));
+  return data.runs.map((run) => ({
+    ...run,
+    reporterCount: run.reporterIds.length
+  }));
 }
 
-function listReports(filters = {}) {
-  const data = loadData();
-  const characters = new Map(data.characters.map((char) => [char.id, char]));
-  const players = new Map(data.players.map((player) => [player.id, player]));
-  const runs = new Map(data.runs.map((run) => [run.id, run]));
-  const playerQuery = filters.playerName?.toLowerCase() || filters.playerQuery?.toLowerCase();
-  const characterQuery = filters.characterName?.toLowerCase();
-  const query = filters.q?.toLowerCase();
-  const codeQuery = filters.code?.toLowerCase();
-
-  return data.reports
-    .filter((report) => {
-      if (!matchesDate(filters.date, report.createdAt)) return false;
-      if (filters.playerId && report.playerId !== filters.playerId) return false;
-      if (filters.characterId && report.characterId !== filters.characterId) return false;
-      if (filters.runId && report.runId !== filters.runId) return false;
-      const player = players.get(report.playerId);
-      const character = characters.get(report.characterId);
-      if (playerQuery && !(player?.displayName?.toLowerCase().includes(playerQuery) || player?.discordTag?.toLowerCase().includes(playerQuery))) {
-        return false;
-      }
-      if (characterQuery && !character?.name?.toLowerCase().includes(characterQuery)) {
-        return false;
-      }
-      if (codeQuery) {
-        const codeHaystack = `${report.code || ''} ${report.id}`.toLowerCase();
-        if (!codeHaystack.includes(codeQuery)) {
-          return false;
-        }
-      }
-      if (query) {
-        const run = runs.get(report.runId);
-        const haystack = `${report.comment || ''} ${report.traits?.join(' ') || ''} ${run?.label || ''}`.toLowerCase();
-        if (!haystack.includes(query)) {
-          return false;
-        }
-      }
-      return true;
-    })
-    .map((report) => ({
-      ...report,
-      code: report.code || `REP-${report.id.slice(0, 6).toUpperCase()}`
-    }));
+function listReports() {
+  return loadData().reports;
 }
 
 function listAdminLog() {
@@ -480,36 +317,6 @@ function listBounties() {
   return loadData().bounties;
 }
 
-function updatePlayer(playerId, payload, adminPlayerId = null) {
-  return persist((data) => {
-    const player = findPlayer(data, playerId);
-    if (payload.displayName) {
-      player.displayName = payload.displayName;
-    }
-    if (payload.discordTag) {
-      player.discordTag = payload.discordTag;
-    }
-    if (payload.rank) {
-      player.rank = payload.rank;
-    }
-    if (payload.role) {
-      player.role = payload.role;
-    }
-    if (payload.isMember !== undefined) {
-      player.isMember = coerceBoolean(payload.isMember, player.isMember);
-    }
-
-    logAdminAction(data, {
-      adminPlayerId,
-      actionType: 'update_player',
-      targetPlayerId: playerId,
-      metadata: { rank: player.rank, role: player.role, isMember: player.isMember }
-    });
-
-    return player;
-  });
-}
-
 module.exports = {
   awardGrimFavor,
   createBounty,
@@ -523,6 +330,5 @@ module.exports = {
   listReports,
   listRuns,
   submitReport,
-  updatePlayer,
   upsertSettings
 };

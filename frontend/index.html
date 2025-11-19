@@ -14,27 +14,21 @@
       <aside class="sidebar">
         <div class="brand">
           <span class="badge">Guild Nexus</span>
-          <h1>Nexus Control Deck</h1>
-          <p>Snappy controls for both the Members’ Hall and the Officer Lounge.</p>
+          <h1>Officer Console</h1>
+          <p>Monitor runs, verify reports, and issue Grim Favor in one sleek cockpit.</p>
         </div>
-        <div class="view-toggle" id="viewToggle">
-          <button type="button" data-view="member" class="active">Members</button>
-          <button type="button" data-view="officer">Officers</button>
-        </div>
-        <nav class="nav" id="sectionNav">
-          <button type="button" data-scroll="#dashboard">Overview</button>
-          <button type="button" data-scroll="#lookup">Search Runs</button>
-          <button type="button" data-scroll="#players">Roster</button>
-          <button type="button" data-scroll="#runs">Runs & Reports</button>
-          <button type="button" data-scroll="#bounties">Bounty Board</button>
-          <button type="button" data-scroll="#settings">Settings & Ledger</button>
-          <button type="button" data-scroll="#admin-log">Admin Log</button>
+        <nav class="nav">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#players">Players & Characters</a>
+          <a href="#runs">Runs & Reports</a>
+          <a href="#bounties">Bounty Board</a>
+          <a href="#settings">Settings & Ledger</a>
+          <a href="#admin-log">Admin Log</a>
         </nav>
         <div class="api-panel">
           <label for="apiBase">API Base URL</label>
           <input id="apiBase" type="text" placeholder="http://localhost:3000/api" />
           <button id="refreshButton" class="ghost">Refresh data</button>
-          <p class="help-text">Point to prod/staging to manage a live guild.</p>
         </div>
       </aside>
       <main>
@@ -42,52 +36,12 @@
           <div>
             <p class="eyebrow">Live Guild Snapshot</p>
             <h2>Command the Dark and Darker guild from anywhere.</h2>
-            <p class="subtitle">Flip between the Members’ Hall and the Officer Lounge without leaving the cockpit.</p>
-            <div class="quick-actions">
-              <button type="button" data-scroll="#lookup">Find a report</button>
-              <button type="button" data-scroll="#runs">Log a run</button>
-              <button type="button" data-scroll="#settings" class="ghost">Issue GF</button>
-            </div>
+            <p class="subtitle">All configuration, rewards, and verification tools are now available in a single responsive UI.</p>
           </div>
           <div class="hero-metrics" id="metricCards"></div>
         </header>
 
-        <section class="panel member-only" id="lookup" aria-labelledby="lookup-title">
-          <div class="panel-header">
-            <div>
-              <p class="eyebrow">Member Hall</p>
-              <h3 id="lookup-title">Search runs & report IDs</h3>
-              <p class="subtitle">Lookup by day, teammate, character, or short report code.</p>
-            </div>
-            <div class="panel-actions">
-              <button class="ghost" id="clearSearch">Clear results</button>
-            </div>
-          </div>
-          <div class="panel-content split stack">
-            <form id="runSearchForm" class="form-card">
-              <h4>Run search</h4>
-              <label>Date<input type="date" name="date" /></label>
-              <label>Player / handle<input name="playerQuery" placeholder="Display name or Discord tag" /></label>
-              <label>Keyword<input name="q" placeholder="Mode, label, or run code" /></label>
-              <button type="submit">Search runs</button>
-            </form>
-            <form id="reportSearchForm" class="form-card">
-              <h4>Report search</h4>
-              <label>Date<input type="date" name="date" /></label>
-              <label>Player<input name="playerName" placeholder="Player display name" /></label>
-              <label>Character<input name="characterName" placeholder="Character name" /></label>
-              <label>Report code<input name="code" placeholder="REP-0007" /></label>
-              <button type="submit">Search reports</button>
-            </form>
-          </div>
-          <div class="panel-content">
-            <div class="cards" id="runSearchResults"></div>
-            <div class="panel-spacer"></div>
-            <div class="cards" id="reportSearchResults"></div>
-          </div>
-        </section>
-
-        <section class="panel officer-only" aria-labelledby="players-title" id="players">
+        <section class="panel" aria-labelledby="players-title" id="players">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Roster</p>
@@ -103,26 +57,6 @@
                 <h4>Add player</h4>
                 <label>Display name<input name="displayName" required /></label>
                 <label>Discord tag<input name="discordTag" placeholder="player#1234" required /></label>
-                <label>Rank
-                  <select name="rank">
-                    <option>Initiate</option>
-                    <option>Recruit</option>
-                    <option>Raider</option>
-                    <option>Veteran</option>
-                    <option>Champion</option>
-                    <option>Officer</option>
-                    <option>Overseer</option>
-                  </select>
-                </label>
-                <label>Role
-                  <select name="role">
-                    <option value="member">Member</option>
-                    <option value="officer">Officer</option>
-                    <option value="admin">Admin</option>
-                    <option value="guest">Guest</option>
-                  </select>
-                </label>
-                <label class="checkbox"><input type="checkbox" name="isMember" checked /> Guild member</label>
                 <button type="submit">Create player</button>
               </form>
               <form id="characterForm" class="form-card">
@@ -143,20 +77,12 @@
                 </label>
                 <button type="submit">Create character</button>
               </form>
-              <form id="membershipForm" class="form-card">
-                <h4>Manage rank & access</h4>
-                <label>Player<select id="membershipPlayerId" name="playerId" required></select></label>
-                <label>Rank<select name="rank" id="membershipRank"></select></label>
-                <label>Role<select name="role" id="membershipRole"></select></label>
-                <label class="checkbox"><input type="checkbox" name="isMember" id="membershipIsMember" checked /> Active guild member</label>
-                <button type="submit">Update player</button>
-              </form>
             </div>
             <div class="cards" id="playersList"></div>
           </div>
         </section>
 
-        <section class="panel officer-only" aria-labelledby="runs-title" id="runs">
+        <section class="panel" aria-labelledby="runs-title" id="runs">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Operations</p>
@@ -201,16 +127,7 @@
                   <input type="checkbox" name="extracted" /> Extracted
                 </label>
                 <fieldset id="traitOptions" class="trait-options"></fieldset>
-                <label>Screenshots
-                  <input type="file" id="reportScreenshotFiles" accept="image/*" multiple />
-                  <span class="help-text">Upload scoreboard or chat proof directly from your device.</span>
-                </label>
-                <label>External URLs (optional)<textarea name="screenshots" rows="2" placeholder="https://imgur.com/..."></textarea></label>
-                <details class="screenshot-tips">
-                  <summary>No uploader handy?</summary>
-                  <p>Drag + drop into Imgur, Discord attachments, or ImgBB and paste the share link above.</p>
-                </details>
-                <ul id="uploadPreview" class="upload-preview"></ul>
+                <label>Screenshots (comma separated URLs)<textarea name="screenshots" rows="2"></textarea></label>
                 <button type="submit">Submit report</button>
               </form>
             </div>
@@ -219,7 +136,7 @@
           <div class="panel-content" id="reportsList"></div>
         </section>
 
-        <section class="panel officer-only" aria-labelledby="bounties-title" id="bounties">
+        <section class="panel" aria-labelledby="bounties-title" id="bounties">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Engagement</p>
@@ -250,7 +167,7 @@
           </div>
         </section>
 
-        <section class="panel officer-only" aria-labelledby="settings-title" id="settings">
+        <section class="panel" aria-labelledby="settings-title" id="settings">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Control Room</p>
@@ -302,7 +219,7 @@
           </div>
         </section>
 
-        <section class="panel officer-only" aria-labelledby="admin-log-title" id="admin-log">
+        <section class="panel" aria-labelledby="admin-log-title" id="admin-log">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Transparency</p>
