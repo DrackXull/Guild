@@ -63,7 +63,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && pathname === '/api/players') {
-      sendJson(res, 200, { players: listPlayers() });
+      sendJson(res, 200, listPlayers());
       return;
     }
 
@@ -102,11 +102,12 @@ const server = http.createServer(async (req, res) => {
       const runs = listRuns();
       const includeReports = searchParams.get('includeReports') === 'true';
       const data = loadData();
-      const payload = includeReports ? runs.map((run) => ({
-        ...run,
-        reports: data.runReports.filter((report) => report.runId === run.runId)
+      const payload = includeReports 
+        ? runs.map((run) => ({
+          ...run,
+          reports: (data.runReports || []).filter((report) => report.runId === run.id || report.runId === run.runId)
       })) : runs;
-      sendJson(res, 200, { runs: payload });
+      sendJson(res, 200, payload);
       return;
     }
 
@@ -138,6 +139,42 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 201, report);
       return;
     }
+
+// --- NEW: flat list of all reports across runs ---
+    if (req.method === 'GET' && pathname === '/api/reports') {
+      const data = loadData();
+      // runReports is where runService stores reports
+      sendJson(res, 200, data.runReports || []);
+      return;
+    }
+
+    // --- NEW: bounties list (empty for now until we wire saving) ---
+    if (req.method === 'GET' && pathname === '/api/bounties') {
+      const data = loadData();
+      sendJson(res, 200, data.bounties || []);
+      return;
+    }
+
+    // --- NEW: admin log list (immutable history) ---
+    if (req.method === 'GET' && pathname === '/api/admin-log') {
+      const data = loadData();
+      sendJson(res, 200, data.adminLog || []);
+      return;
+    }
+
+    // --- NEW: characters list, flattened from players ---
+    if (req.method === 'GET' && pathname === '/api/characters') {
+      const players = listPlayers();
+      const characters = players.flatMap((player) =>
+        (player.characters || []).map((char) => ({
+          ...char,
+          playerId: player.id
+        }))
+      );
+      sendJson(res, 200, characters);
+      return;
+    }
+
 
     notFound(res);
   } catch (error) {
