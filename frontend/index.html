@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guild Nexus Control Deck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="badge">Guild Nexus</span>
+          <h1>Officer Console</h1>
+          <p>Monitor runs, verify reports, and issue Grim Favor in one sleek cockpit.</p>
+        </div>
+        <nav class="nav">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#players">Players & Characters</a>
+          <a href="#runs">Runs & Reports</a>
+          <a href="#bounties">Bounty Board</a>
+          <a href="#settings">Settings & Ledger</a>
+          <a href="#admin-log">Admin Log</a>
+        </nav>
+        <div class="api-panel">
+          <label for="apiBase">API Base URL</label>
+          <input id="apiBase" type="text" placeholder="http://localhost:3000/api" />
+          <button id="refreshButton" class="ghost">Refresh data</button>
+        </div>
+      </aside>
+      <main>
+        <header class="hero" id="dashboard">
+          <div>
+            <p class="eyebrow">Live Guild Snapshot</p>
+            <h2>Command the Dark and Darker guild from anywhere.</h2>
+            <p class="subtitle">All configuration, rewards, and verification tools are now available in a single responsive UI.</p>
+          </div>
+          <div class="hero-metrics" id="metricCards"></div>
+        </header>
+
+        <section class="panel" aria-labelledby="players-title" id="players">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Roster</p>
+              <h3 id="players-title">Players & Characters</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncPlayers">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <div>
+              <form id="playerForm" class="form-card">
+                <h4>Add player</h4>
+                <label>Display name<input name="displayName" required /></label>
+                <label>Discord tag<input name="discordTag" placeholder="player#1234" required /></label>
+                <button type="submit">Create player</button>
+              </form>
+              <form id="characterForm" class="form-card">
+                <h4>Add character</h4>
+                <label>Owner<select id="characterPlayerId" name="playerId" required></select></label>
+                <label>Character name<input name="name" required /></label>
+                <label>Class
+                  <select name="clazz" required>
+                    <option value="">Select class</option>
+                    <option>Barbarian</option>
+                    <option>Fighter</option>
+                    <option>Cleric</option>
+                    <option>Wizard</option>
+                    <option>Rogue</option>
+                    <option>Ranger</option>
+                    <option>Bard</option>
+                  </select>
+                </label>
+                <button type="submit">Create character</button>
+              </form>
+            </div>
+            <div class="cards" id="playersList"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="runs-title" id="runs">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h3 id="runs-title">Runs & Reports</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncRuns">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <div class="stack">
+              <form id="runForm" class="form-card">
+                <h4>Schedule / log run</h4>
+                <label>Label<input name="label" placeholder="Guild High Roller" required /></label>
+                <label>Mode
+                  <select name="mode" required>
+                    <option value="High Roller">High Roller</option>
+                    <option value="Squire to Riches">Squire to Riches</option>
+                    <option value="PvE">PvE</option>
+                    <option value="PvP">PvP</option>
+                  </select>
+                </label>
+                <label>Participants
+                  <select name="participants" id="runParticipants" multiple size="4"></select>
+                  <span class="help-text">Hold Ctrl/Cmd to multi-select.</span>
+                </label>
+                <button type="submit">Create run</button>
+              </form>
+
+              <form id="reportForm" class="form-card">
+                <h4>Submit run report</h4>
+                <label>Run<select id="reportRunId" name="runId" required></select></label>
+                <label>Character<select id="reportCharacterId" name="characterId" required></select></label>
+                <label>Score<input type="number" min="1" max="10" name="score" required /></label>
+                <label>Comment<textarea name="comment" rows="3" placeholder="Share details to satisfy drastic score rules." required></textarea></label>
+                <div class="grid-3">
+                  <label>Kills<input type="number" name="kills" min="0" /></label>
+                  <label>Deaths<input type="number" name="deaths" min="0" /></label>
+                  <label>Boss kills<input type="number" name="bossKills" min="0" /></label>
+                </div>
+                <label class="checkbox">
+                  <input type="checkbox" name="extracted" /> Extracted
+                </label>
+                <fieldset id="traitOptions" class="trait-options"></fieldset>
+                <label>Screenshots (comma separated URLs)<textarea name="screenshots" rows="2"></textarea></label>
+                <button type="submit">Submit report</button>
+              </form>
+            </div>
+            <div class="cards" id="runsList"></div>
+          </div>
+          <div class="panel-content" id="reportsList"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="bounties-title" id="bounties">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Engagement</p>
+              <h3 id="bounties-title">Bounty Board</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncBounties">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <form id="bountyForm" class="form-card">
+              <h4>Create bounty</h4>
+              <label>Title<input name="title" required /></label>
+              <label>Description<textarea name="description" rows="2" required></textarea></label>
+              <label>Type
+                <select name="type" required>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="one_time">One-time</option>
+                </select>
+              </label>
+              <label>Requirements<textarea name="requirements" rows="2" placeholder="e.g. {\"runs\":3}"></textarea></label>
+              <label>Reward (GF)<input type="number" name="rewardAmount" min="1" required /></label>
+              <label class="checkbox"><input type="checkbox" name="isActive" checked /> Active</label>
+              <button type="submit">Create bounty</button>
+            </form>
+            <div class="cards" id="bountyList"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="settings-title" id="settings">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Control Room</p>
+              <h3 id="settings-title">Settings & Ledger</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncSettings">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <form id="settingsForm" class="form-card">
+              <h4>Drastic score rules</h4>
+              <div class="grid-2">
+                <label>Low threshold<input type="number" name="lowThreshold" min="1" max="10" required /></label>
+                <label>High threshold<input type="number" name="highThreshold" min="1" max="10" required /></label>
+              </div>
+              <div class="grid-2">
+                <label>Low comment min<input type="number" name="lowCommentMinLength" min="0" /></label>
+                <label>High comment min<input type="number" name="highCommentMinLength" min="0" /></label>
+              </div>
+              <h4>Run verification</h4>
+              <div class="grid-3">
+                <label>Min reporters<input type="number" name="minReporters" min="1" /></label>
+                <label>Participation GF<input type="number" name="participationGF" min="0" /></label>
+                <label>Report GF<input type="number" name="reportGF" min="0" /></label>
+              </div>
+              <label>Trait tags<textarea name="traitOptions" rows="2" placeholder="Comma separated"></textarea></label>
+              <button type="submit">Save settings</button>
+            </form>
+
+            <form id="awardForm" class="form-card">
+              <h4>Award / adjust Grim Favor</h4>
+              <label>Player<select id="awardPlayerId" name="playerId" required></select></label>
+              <label>Amount<input type="number" name="amount" required /></label>
+              <label>Reason
+                <select name="reason" required>
+                  <option value="run_participation">Run participation</option>
+                  <option value="report_submission">Run report</option>
+                  <option value="quest_reward">Quest reward</option>
+                  <option value="reward_purchase">Reward purchase</option>
+                  <option value="gold_donation">Gold donation</option>
+                  <option value="officer_bonus">Officer bonus</option>
+                  <option value="adjustment">Manual adjustment</option>
+                </select>
+              </label>
+              <label>Details (JSON optional)<textarea name="details" rows="2"></textarea></label>
+              <button type="submit">Record entry</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="admin-log-title" id="admin-log">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Transparency</p>
+              <h3 id="admin-log-title">Admin Log</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncAdminLog">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content" id="adminLogList"></div>
+        </section>
+      </main>
+    </div>
+    <div id="statusToast" class="status-toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
