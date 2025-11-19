@@ -628,4 +628,35 @@ Anti-exploit design (Verified Runs, drastic score rules)
 
 Evidence support (screenshots, stat confirmation)
 
-Ease of use (everything configurable via UI)# Guild
+Ease of use (everything configurable via UI)
+
+---
+
+## Getting Started
+
+This repository now includes a minimal Node.js prototype server that exposes the very first Guild Nexus APIs. The goal of this skeleton is to exercise the core ideas from the spec—players, characters, runs, reports, ledger entries, and admin logging—while keeping the storage layer JSON-based so we can iterate rapidly.
+
+### Prerequisites
+
+* Node.js 18+ (uses the built-in `crypto.randomUUID` helper)
+
+### Local development
+
+```bash
+npm install   # no external dependencies are required yet, but this keeps the workflow familiar
+npm start
+```
+
+The server starts on port `3000` by default and stores all state in `data/data.json`. Because we are still in pure file-storage mode, you can inspect or back up the JSON file directly.
+
+### Available endpoints
+
+* `GET /api/health` – sanity check the service
+* `GET /api/settings` – returns the configurable defaults defined in `src/data/defaultData.js`
+* `POST /api/players` – create a player profile (`displayName`, optional `discordTag`)
+* `POST /api/players/:playerId/characters` – add a character with a unique name/class pair
+* `GET /api/runs` – list recorded runs, optionally `?includeReports=true`
+* `POST /api/runs` – create a run (`title`, `gameMode`, `participantIds`)
+* `POST /api/runs/:runId/reports` – file a run report, which enforces the drastic score rules from the spec
+
+When a run accumulates reports from at least two unique players, it is automatically marked as verified and Grim Favor rewards are recorded via the ledger system. Every change also records an immutable Admin Log entry as described above.
