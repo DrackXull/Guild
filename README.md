@@ -550,6 +550,15 @@ Mark stats as screenshot-verified
 
 All of these actions generate Admin Log entries.
 
+🧭 Recruitment & Applications
+
+Guild Nexus now keeps a dedicated Recruits lane:
+
+- Applicants fill a guided form (hours played, favorite/most played modes, availability, characters, bosses) from the "Recruits" view.
+- Officers see a glowing mailbox badge for pending applications in the Lounge, with repeat-applicant flags when Discord/email/characters match prior submissions.
+- Approvals or denials require a short note and are logged to the Admin Log alongside reviewer info and timestamps.
+- Endpoints: `POST /api/applications` to submit, `GET /api/applications?status=pending` to browse, `PUT /api/applications/:id` to approve/deny with `adminPlayerId` + `note`.
+
 🧱 Architecture & Storage (Working Plan)
 Frontend
 
