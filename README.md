@@ -628,4 +628,41 @@ Anti-exploit design (Verified Runs, drastic score rules)
 
 Evidence support (screenshots, stat confirmation)
 
-Ease of use (everything configurable via UI)# Guild
+Ease of use (everything configurable via UI)
+
+## Local Development
+
+The first pass of the Guild Nexus API lives in `src/server.js` and persists data to `data/data.json`. The server only relies on Node built-ins so it can run in restricted environments without npm access.
+
+```bash
+npm install # no-op but kept for future packages
+npm run dev  # starts the API on port 4000
+```
+
+### Available API routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/health` | Server heartbeat |
+| GET/PUT | `/api/settings` | Read/update drastic score, verification, and trait options |
+| GET/POST | `/api/players` | List players or create a new Discord-linked player |
+| GET | `/api/characters` | List characters (optionally filtered by `playerId`) |
+| POST | `/api/players/:playerId/characters` | Register a single-class character |
+| GET/POST | `/api/runs` | Manage scheduled runs and participants |
+| GET/POST | `/api/reports` | Submit or inspect per-character run reports |
+| POST | `/api/ledger/award` | Append Grim Favor ledger entries with admin log mirroring |
+| GET | `/api/admin-log` | Review append-only officer actions |
+| GET/POST | `/api/bounties` | Manage Bounty Board quests |
+
+### Officer Console Frontend
+
+The Node server now serves a zero-dependency SPA from `/frontend`. Launching `npm start` exposes the UI at `http://localhost:3000/` and proxies all API calls to `/api`. The Officer Console ships:
+
+- Neon-on-dark responsive layout that mirrors the tactical vibe described in the spec.
+- Metric cards, roster cards, run/report galleries, bounty board, and admin log table.
+- Inline forms for every major workflow: creating players/characters/runs/reports/bounties, awarding Grim Favor, and editing drastic score rules.
+- Configurable API base URL so the UI can target remote Guild Nexus nodes without rebuilding assets.
+
+Because it is plain HTML/CSS/JS, the UI can be hosted via any static server or CDN. The built-in server automatically falls back to `index.html` for non-API routes so deep links stay functional.
+
+Run `npm test` to execute a scripted smoke test that boots the API, creates a player/character/run, and records a report end-to-end.
