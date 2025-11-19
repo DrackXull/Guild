@@ -1,13 +1,54 @@
 const http = require('http');
 const { URL } = require('url');
+const fs = require('fs');
+const path = require('path');
 const { parseBody, sendJson, notFound } = require('./utils/http');
 const { listPlayers, createPlayer, addCharacter, getPlayer } = require('./services/playerService');
 const { listRuns, createRun, getRun, submitRunReport } = require('./services/runService');
 const { loadData } = require('./data/store');
 
+const publicDir = path.join(__dirname, '../frontend');
+
+function serveStatic(pathname, res) {
+  // Default to index.html at root
+  let requestedPath = pathname === '/' ? '/index.html' : pathname;
+
+  // Strip leading slash and normalise
+  requestedPath = requestedPath.replace(/^\/+/, '');
+  const filePath = path.join(publicDir, requestedPath);
+
+  // Basic content-type map
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType =
+    ext === '.html' ? 'text/html; charset=utf-8' :
+    ext === '.css'  ? 'text/css; charset=utf-8' :
+    ext === '.js'   ? 'application/javascript; charset=utf-8' :
+    ext === '.json' ? 'application/json; charset=utf-8' :
+    'application/octet-stream';
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      // If file not found, fall back to 404 JSON
+      if (err.code === 'ENOENT') {
+        notFound(res);
+      } else {
+        sendJson(res, 500, { message: 'Static file error' });
+      }
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const { pathname, searchParams } = url;
+
+  if (req.method === 'GET' && !pathname.startsWith('/api')) {
+    serveStatic(pathname, res);
+    return;
+  }
 
   try {
     if (req.method === 'GET' && pathname === '/api/health') {
