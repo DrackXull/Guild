@@ -2,315 +2,199 @@ const http = require('http');
 const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
-const {
-  awardHonor,
-  createBounty,
-  createApplication,
-  createCharacter,
-  createPlayer,
-  createLfgPost,
-  createRun,
-  listApplications,
-  listAdminLog,
-  listCharacters,
-  listBounties,
-  listLfgPosts,
-  listPlayers,
-  listReports,
-  listRuns,
-  applyToLfgPost,
-  decideLfgRequest,
-  reviewApplication,
-  pingPresence,
-  submitReport,
-  updatePlayer,
-  upsertSettings
-} = require('./services/guildService');
-const { loadData } = require('./utils/storage');
+const { parseBody, sendJson, notFound } = require('./utils/http');
+const { listPlayers, createPlayer, addCharacter, getPlayer } = require('./services/playerService');
+const { listRuns, createRun, getRun, submitRunReport } = require('./services/runService');
+const { loadData } = require('./data/store');
 
-const PORT = process.env.PORT || 3000;
-const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
-const UPLOAD_DIR = path.join(__dirname, '..', 'data', 'uploads');
-const MAX_BODY_SIZE = 5 * 1024 * 1024; // 5MB
+const publicDir = path.join(__dirname, '../frontend');
 
-const MIME_TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
-};
+function serveStatic(pathname, res) {
+  // Default to index.html at root
+  let requestedPath = pathname === '/' ? '/index.html' : pathname;
 
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (chunk) => {
-      body += chunk;
-      if (body.length > MAX_BODY_SIZE) {
-        req.connection.destroy();
-        reject(new Error('Payload too large'));
+  // Strip leading slash and normalise
+  requestedPath = requestedPath.replace(/^\/+/, '');
+  const filePath = path.join(publicDir, requestedPath);
+
+  // Basic content-type map
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType =
+    ext === '.html' ? 'text/html; charset=utf-8' :
+    ext === '.css'  ? 'text/css; charset=utf-8' :
+    ext === '.js'   ? 'application/javascript; charset=utf-8' :
+    ext === '.json' ? 'application/json; charset=utf-8' :
+    'application/octet-stream';
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      // If file not found, fall back to 404 JSON
+      if (err.code === 'ENOENT') {
+        notFound(res);
+      } else {
+        sendJson(res, 500, { message: 'Static file error' });
       }
-    });
-    req.on('end', () => {
-      if (!body) {
-        resolve({});
-        return;
-      }
-      try {
-        const parsed = JSON.parse(body);
-        resolve(parsed);
-      } catch (error) {
-        reject(new Error('Invalid JSON payload'));
-      }
-    });
-    req.on('error', reject);
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
   });
-}
-
-function send(res, status, payload) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(payload));
-}
-
-function notFound(res) {
-  send(res, 404, { error: 'Not found' });
-}
-
-function serveStatic(res, pathname) {
-  let relativePath = pathname;
-  if (relativePath === '/') {
-    relativePath = '/index.html';
-  }
-  let filePath = path.join(FRONTEND_DIR, relativePath);
-  if (!filePath.startsWith(FRONTEND_DIR)) {
-    send(res, 403, { error: 'Forbidden' });
-    return true;
-  }
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    filePath = path.join(FRONTEND_DIR, 'index.html');
-  }
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-  res.writeHead(200, { 'Content-Type': contentType });
-  fs.createReadStream(filePath).pipe(res);
-  return true;
-}
-
-function serveUpload(res, pathname) {
-  const relative = pathname.replace('/uploads/', '');
-  const filePath = path.join(UPLOAD_DIR, relative);
-  if (!filePath.startsWith(UPLOAD_DIR) || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-    return false;
-  }
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-  res.writeHead(200, { 'Content-Type': contentType });
-  fs.createReadStream(filePath).pipe(res);
-  return true;
 }
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const method = req.method;
+  const { pathname, searchParams } = url;
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
+  if (req.method === 'GET' && !pathname.startsWith('/api')) {
+    serveStatic(pathname, res);
     return;
   }
 
   try {
-    if (url.pathname === '/api/health' && method === 'GET') {
-      send(res, 200, { status: 'ok', timestamp: new Date().toISOString() });
+    if (req.method === 'GET' && pathname === '/api/health') {
+      sendJson(res, 200, { status: 'ok', timestamp: new Date().toISOString() });
       return;
     }
 
-    if (url.pathname === '/api/settings' && method === 'GET') {
+    if (req.method === 'GET' && pathname === '/api/settings') {
       const data = loadData();
-      send(res, 200, data.settings);
+      sendJson(res, 200, data.settings);
       return;
     }
 
-    if (url.pathname === '/api/settings' && method === 'PUT') {
-      const body = await readBody(req);
-      const settings = upsertSettings(body, body.adminPlayerId || null);
-      send(res, 200, settings);
+    if (req.method === 'GET' && pathname === '/api/players') {
+      sendJson(res, 200, listPlayers());
       return;
     }
 
-    if (url.pathname === '/api/players' && method === 'GET') {
-      send(res, 200, listPlayers());
+    if (req.method === 'POST' && pathname === '/api/players') {
+      const body = await parseBody(req);
+      const player = createPlayer(body || {});
+      sendJson(res, 201, player);
       return;
     }
 
-    if (url.pathname === '/api/players' && method === 'POST') {
-      const body = await readBody(req);
-      const player = createPlayer(body);
-      send(res, 201, player);
-      return;
-    }
-
-    if (url.pathname === '/api/applications' && method === 'GET') {
-      const filters = Object.fromEntries(url.searchParams.entries());
-      send(res, 200, listApplications(filters));
-      return;
-    }
-
-    if (url.pathname === '/api/applications' && method === 'POST') {
-      const body = await readBody(req);
-      const application = createApplication(body);
-      send(res, 201, application);
-      return;
-    }
-
-    if (url.pathname.startsWith('/api/applications/') && method === 'PUT') {
-      const applicationId = url.pathname.split('/')[3];
-      const body = await readBody(req);
-      const application = reviewApplication(applicationId, body);
-      send(res, 200, application);
-      return;
-    }
-
-    if (url.pathname === '/api/lfg' && method === 'GET') {
-      const filters = Object.fromEntries(url.searchParams.entries());
-      send(res, 200, listLfgPosts(filters));
-      return;
-    }
-
-    if (url.pathname === '/api/lfg' && method === 'POST') {
-      const body = await readBody(req);
-      const post = createLfgPost(body, body.actorPlayerId || body.hostPlayerId || null);
-      send(res, 201, post);
-      return;
-    }
-
-    if (url.pathname.startsWith('/api/lfg/') && url.pathname.endsWith('/requests') && method === 'POST') {
-      const postId = url.pathname.split('/')[3];
-      const body = await readBody(req);
-      const request = applyToLfgPost(postId, body);
-      send(res, 201, request);
-      return;
-    }
-
-    if (url.pathname.startsWith('/api/lfg/') && url.pathname.includes('/requests/') && method === 'PUT') {
-      const [, , , postId, , requestId] = url.pathname.split('/');
-      const body = await readBody(req);
-      const request = decideLfgRequest(postId, requestId, body);
-      send(res, 200, request);
-      return;
-    }
-
-    if (url.pathname.startsWith('/api/players/') && url.pathname.endsWith('/characters') && method === 'POST') {
-      const playerId = url.pathname.split('/')[3];
-      const body = await readBody(req);
-      const character = createCharacter(playerId, body);
-      send(res, 201, character);
-      return;
-    }
-
-    if (url.pathname === '/api/runs' && method === 'GET') {
-      const filters = Object.fromEntries(url.searchParams.entries());
-      send(res, 200, listRuns(filters));
-      return;
-    }
-
-    if (url.pathname === '/api/runs' && method === 'POST') {
-      const body = await readBody(req);
-      const run = createRun(body);
-      send(res, 201, run);
-      return;
-    }
-
-    if (url.pathname === '/api/reports' && method === 'GET') {
-      const filters = Object.fromEntries(url.searchParams.entries());
-      send(res, 200, listReports(filters));
-      return;
-    }
-
-    if (url.pathname === '/api/reports' && method === 'POST') {
-      const body = await readBody(req);
-      const report = submitReport(body);
-      send(res, 201, report);
-      return;
-    }
-
-    if (url.pathname.startsWith('/api/players/') && method === 'PUT') {
-      const playerId = url.pathname.split('/')[3];
-      const body = await readBody(req);
-      const player = updatePlayer(playerId, body, body.adminPlayerId || null);
-      send(res, 200, player);
-      return;
-    }
-
-    if (url.pathname === '/api/ledger/award' && method === 'POST') {
-      const body = await readBody(req);
-      const totals = awardHonor(body.playerId, body.amount, body.reason, body.details, body.adminPlayerId || null);
-      send(res, 200, totals);
-      return;
-    }
-
-    if (url.pathname === '/api/presence/ping' && method === 'POST') {
-      const body = await readBody(req);
-      const presence = pingPresence(body);
-      send(res, 200, presence);
-      return;
-    }
-
-    if (url.pathname === '/api/admin-log' && method === 'GET') {
-      send(res, 200, listAdminLog());
-      return;
-    }
-
-    if (url.pathname === '/api/characters' && method === 'GET') {
-      const playerId = url.searchParams.get('playerId');
-      send(res, 200, listCharacters(playerId));
-      return;
-    }
-
-    if (url.pathname === '/api/bounties' && method === 'GET') {
-      send(res, 200, listBounties());
-      return;
-    }
-
-    if (url.pathname === '/api/bounties' && method === 'POST') {
-      const body = await readBody(req);
-      const bounty = createBounty(body, body.adminPlayerId || null);
-      send(res, 201, bounty);
-      return;
-    }
-
-    if (url.pathname.startsWith('/uploads/') && method === 'GET') {
-      if (serveUpload(res, url.pathname)) {
+    if (req.method === 'GET' && pathname.startsWith('/api/players/')) {
+      const [, , , playerId] = pathname.split('/');
+      if (!playerId) {
+        notFound(res);
         return;
       }
-      notFound(res);
+      const player = getPlayer(playerId);
+      if (!player) {
+        notFound(res);
+        return;
+      }
+      sendJson(res, 200, player);
       return;
     }
 
-    if (!url.pathname.startsWith('/api/') && method === 'GET') {
-      serveStatic(res, url.pathname);
+    if (req.method === 'POST' && pathname.match(/^\/api\/players\/.+\/characters$/)) {
+      const segments = pathname.split('/');
+      const playerId = segments[3];
+      const body = await parseBody(req);
+      const character = addCharacter(playerId, body || {});
+      sendJson(res, 201, character);
       return;
     }
+
+    if (req.method === 'GET' && pathname === '/api/runs') {
+      const runs = listRuns();
+      const includeReports = searchParams.get('includeReports') === 'true';
+      const data = loadData();
+      const payload = includeReports 
+        ? runs.map((run) => ({
+          ...run,
+          reports: (data.runReports || []).filter((report) => report.runId === run.id || report.runId === run.runId)
+      })) : runs;
+      sendJson(res, 200, payload);
+      return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/runs') {
+      const body = await parseBody(req);
+      const run = createRun(body || {});
+      sendJson(res, 201, run);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname.startsWith('/api/runs/')) {
+      const [, , , runId] = pathname.split('/');
+      const run = getRun(runId);
+      if (!run) {
+        notFound(res);
+        return;
+      }
+      const data = loadData();
+      const reports = data.runReports.filter((report) => report.runId === runId);
+      sendJson(res, 200, { ...run, reports });
+      return;
+    }
+
+    if (req.method === 'POST' && pathname.match(/^\/api\/runs\/.+\/reports$/)) {
+      const segments = pathname.split('/');
+      const runId = segments[3];
+      const body = await parseBody(req);
+      const report = submitRunReport(runId, body || {});
+      sendJson(res, 201, report);
+      return;
+    }
+
+// --- NEW: flat list of all reports across runs ---
+    if (req.method === 'GET' && pathname === '/api/reports') {
+      const data = loadData();
+      // runReports is where runService stores reports
+      sendJson(res, 200, data.runReports || []);
+      return;
+    }
+
+    // --- NEW: bounties list (empty for now until we wire saving) ---
+    if (req.method === 'GET' && pathname === '/api/bounties') {
+      const data = loadData();
+      sendJson(res, 200, data.bounties || []);
+      return;
+    }
+
+    // --- NEW: admin log list (immutable history) ---
+    if (req.method === 'GET' && pathname === '/api/admin-log') {
+      const data = loadData();
+      sendJson(res, 200, data.adminLog || []);
+      return;
+    }
+
+    // --- NEW: characters list, flattened from players ---
+    if (req.method === 'GET' && pathname === '/api/characters') {
+      const players = listPlayers();
+      const characters = players.flatMap((player) =>
+        (player.characters || []).map((char) => ({
+          ...char,
+          playerId: player.id
+        }))
+      );
+      sendJson(res, 200, characters);
+      return;
+    }
+
 
     notFound(res);
   } catch (error) {
-    console.error(error);
-    send(res, 400, { error: error.message });
+    sendJson(res, 400, { message: error.message });
   }
 });
 
-if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`Guild Nexus API server listening on port ${PORT}`);
+function start(port = process.env.PORT || 3000) {
+  return new Promise((resolve) => {
+    server.listen(port, () => {
+      console.log(`Guild Nexus API listening on port ${port}`);
+      resolve();
+    });
   });
 }
 
-module.exports = server;
+if (require.main === module) {
+  start();
+}
+
+module.exports = {
+  start
+};
