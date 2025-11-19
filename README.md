@@ -639,43 +639,33 @@ Evidence support (screenshots, stat confirmation)
 
 Ease of use (everything configurable via UI)
 
-## Local Development
+---
 
-The first pass of the Guild Nexus API lives in `src/server.js` and persists data to `data/data.json`. The server only relies on Node built-ins so it can run in restricted environments without npm access.
+## Getting Started
+
+This repository now includes a minimal Node.js prototype server that exposes the very first Guild Nexus APIs. The goal of this skeleton is to exercise the core ideas from the spec—players, characters, runs, reports, ledger entries, and admin logging—while keeping the storage layer JSON-based so we can iterate rapidly.
+
+### Prerequisites
+
+* Node.js 18+ (uses the built-in `crypto.randomUUID` helper)
+
+### Local development
 
 ```bash
-npm install # no-op but kept for future packages
-npm run dev  # starts the API on port 4000
+npm install   # no external dependencies are required yet, but this keeps the workflow familiar
+npm start
 ```
 
-### Available API routes
+The server starts on port `3000` by default and stores all state in `data/data.json`. Because we are still in pure file-storage mode, you can inspect or back up the JSON file directly.
 
-| Method | Path | Description |
-| --- | --- | --- |
-| GET | `/api/health` | Server heartbeat |
-| GET/PUT | `/api/settings` | Read/update drastic score, verification, and trait options |
-| GET/POST | `/api/players` | List players or create a new Discord-linked player |
-| GET | `/api/characters` | List characters (optionally filtered by `playerId`) |
-| POST | `/api/players/:playerId/characters` | Register a single-class character |
-| GET/POST | `/api/runs` | Manage scheduled runs and participants. Supports filtering via `date`, `playerId`, and `playerQuery`. |
-| GET/POST | `/api/reports` | Submit or inspect per-character run reports. Filter with `date`, `playerId`, `characterName`, `code`, etc. |
-| PUT | `/api/players/:playerId` | Update ranks, roles, and membership flags for existing players |
-| POST | `/api/ledger/award` | Append Honor ledger entries with admin log mirroring |
-| POST | `/api/presence/ping` | Update a player's online/in-game status (used by the UI and optional desktop helper) |
-| GET | `/api/admin-log` | Review append-only officer actions |
-| GET/POST | `/api/bounties` | Manage Bounty Board quests |
+### Available endpoints
 
-### Officer Console Frontend
+* `GET /api/health` – sanity check the service
+* `GET /api/settings` – returns the configurable defaults defined in `src/data/defaultData.js`
+* `POST /api/players` – create a player profile (`displayName`, optional `discordTag`)
+* `POST /api/players/:playerId/characters` – add a character with a unique name/class pair
+* `GET /api/runs` – list recorded runs, optionally `?includeReports=true`
+* `POST /api/runs` – create a run (`title`, `gameMode`, `participantIds`)
+* `POST /api/runs/:runId/reports` – file a run report, which enforces the drastic score rules from the spec
 
-The Node server now serves a zero-dependency SPA from `/frontend`. Launching `npm start` exposes the UI at `http://localhost:3000/` and proxies all API calls to `/api`. The Officer Console ships:
-
-- Torch-lit, leather-on-iron responsive layout with a two-mode navigation shell. Instantly flip between the “Member Hall” (run/report lookup) and the “Officer Lounge” (admin tooling) without losing context.
-- Metric cards, roster cards, run/report galleries with short IDs (e.g., `RUN-0007`, `REP-0009`), bounty board, Honor ledger, presence radar, and admin log table.
-- Inline forms for every major workflow: creating players/characters/runs/reports/bounties, awarding Honor, editing drastic score rules, updating ranks/roles, and pinging presence.
-- Member-facing global search that filters runs by day, teammate, or mode and reports by player, character, or report code.
-- Built-in screenshot uploader that stores scoreboard proof server-side, plus explicit guidance for free hosts (Imgur, Discord attachments, ImgBB) when a player prefers pasting URLs.
-- Configurable API base URL so the UI can target remote Guild Nexus nodes without rebuilding assets.
-
-Because it is plain HTML/CSS/JS, the UI can be hosted via any static server or CDN. The built-in server automatically falls back to `index.html` for non-API routes so deep links stay functional. Uploaded screenshots are saved under `data/uploads` and automatically served from `/uploads/...` URLs.
-
-Run `npm test` to execute a scripted smoke test that boots the API, creates a player/character/run, and records a report end-to-end.
+When a run accumulates reports from at least two unique players, it is automatically marked as verified and Grim Favor rewards are recorded via the ledger system. Every change also records an immutable Admin Log entry as described above.
