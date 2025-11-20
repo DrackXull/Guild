@@ -42,9 +42,9 @@ Messaging
 
 Online/offline status
 
-Lifetime Grim Favor (rank score)
+Lifetime Honor (rank score)
 
-Current Grim Favor (spendable)
+Current Honor (spendable)
 
 0–N Characters
 
@@ -172,6 +172,8 @@ Players can upload screenshots as part of a Run Report.
 
 Screenshots attach to the Run, not individual reviews.
 
+If someone prefers third-party hosting they can drop images into free services like Imgur, Discord attachments, or ImgBB and paste the share URL—the UI spells out those options next to the uploader so no one gets stuck wondering where to host proof.
+
 Accessible from:
 
 Run detail view (all participants)
@@ -202,15 +204,15 @@ This allows long-term stat tracking without trusting raw text alone.
 
 4. Verified Run System (Anti-Exploit for Reports)
 
-To prevent farming Grim Favor via solo spam:
+To prevent farming Honor via solo spam:
 
 A run is only marked Verified when at least 2 distinct players submit a report for that run.
 
 Once Verified:
 
-All participants gain Participation Grim Favor
+All participants gain Participation Honor
 
-All report authors gain Report Grim Favor
+All report authors gain Report Honor
 
 This auto-award happens once per run only
 
@@ -224,65 +226,39 @@ Points per mode
 
 …are all configurable in-app by admins.
 
-💰 Grim Favor (GF) – Working Title Guild Currency
+💰 Honor Points (HP) – The Honor System
 
-EPGP-style currency, renamed for Dark and Darker flavor.
+The guild currency has been renamed to Honor Points (HP) to lean into Dark and Darker flavor. Honor is tracked per player with two independent ledgers:
 
-Tracked at the Player level with two distinct tracks:
+A. Lifetime Honor (Rank Score)
 
-A. Lifetime Grim Favor (Rank Score)
+- Totals all earned HP across all characters and actions
+- Never decreases
+- Drives rank tiers and long-term reputation
 
-Totals all earned GF across all characters and actions
+B. Current Honor (Wallet)
 
-Never decreases
+- Goes up when earning HP
+- Goes down when redeeming guildbank rewards or services
+- Does not affect Lifetime Honor
 
-Determines:
+How Players Earn Honor (all values editable in-app):
 
-Rank tiers
+- Verified run participation (auto-awarded when runs hit the reporter threshold)
+- Submitting run reports that meet drastic rules
+- Completing Bounty Board quests
+- Donating gold or items to the guild
+- Officer bonuses for clutch plays, great comms, or outstanding citizenship
 
-Long-term reputation
+Every award is recorded in the Honor ledger and mirrored in the Admin Log with the reason and any contextual metadata. "Honor is earned, trust is built"—so the UI now forces officers to include a narrative when granting HP.
 
-B. Current Grim Favor (Wallet)
+How Players Spend Honor:
 
-Goes up when earning GF
+- Claiming guildbank items
+- Paying for carries, crafts, or special services
+- Unlocking perks defined by officers
 
-Goes down when spending GF on guildbank rewards
-
-Does not affect Lifetime total
-
-How Players Earn Grim Favor
-
-Examples (all values configurable in-app):
-
-Verified run participation
-
-Submitting run reports
-
-Completing Bounty Board quests
-
-Donating gold or items to the guild
-
-Officer bonuses for good/funny/detailed reports
-
-Every award is recorded in a ledger entry and mirrored in an Admin Log (see below).
-
-How Players Spend Grim Favor
-
-Players can spend GF on:
-
-Guildbank items
-
-Services (e.g., carries, crafting, priority loot rights)
-
-Special perks defined by officers
-
-Spending is:
-
-Logged as a negative change in the ledger
-
-Visible to officers in the Admin Log
-
-Does not reduce Lifetime GF used for Rank
+Spending creates a negative ledger entry, is visible to all officers, and never reduces Lifetime Honor (only the current wallet balance).
 
 🧾 Immutable Admin Log & Points Ledger
 
@@ -306,11 +282,13 @@ details (JSON: runId, characterId, questId, officerId, etc.)
 
 createdAt
 
+Every entry also carries a short “why” narrative; the UI refuses to submit adjustments without one so all officers can see exactly why Honor moved.
+
 Used to compute:
 
-Current GF (sum of all entries)
+Current Honor (sum of all entries)
 
-Lifetime GF (sum of "earn" entries)
+Lifetime Honor (sum of "earn" entries)
 
 Admin Log (Global, Immutable Audit Log)
 
@@ -346,7 +324,7 @@ Admin Log is append-only.
 
 Individual log entries cannot be edited or deleted, even by officers.
 
-Corrections are done via new entries (e.g. “Reversed +10 GF mis-award”).
+Corrections are done via new entries (e.g. “Reversed +10 HP mis-award”).
 
 All admins/officers can see the full Admin Log in the app, including filters by:
 
@@ -382,7 +360,7 @@ Weekly:
 
 “Play 10 Guild Runs”
 
-“Earn 50 GF this week”
+“Earn 50 HP this week”
 
 Each bounty has:
 
@@ -394,14 +372,14 @@ Type: daily, weekly, or one_time
 
 Requirements (run count, report count, specific modes, etc.)
 
-GF reward amount
+Honor reward amount
 
 Active status
 
 Progress is auto-tracked based on runs/reports.
 Players claim rewards manually → generates:
 
-GF Ledger entries
+Honor ledger entries
 
 Notification
 
@@ -430,9 +408,25 @@ Players can send/accept friend requests
 
 Friends list is easily viewable
 
-Online status determined by recent activity:
+Online status is determined by presence pings:
 
-e.g. active within last 5 mins = Online
+- Players who interact with the UI are marked `online` for `presence.ttlMinutes` (configurable in Settings).
+- Officers or desktop helpers can explicitly ping `in_game` to show someone is inside Dark and Darker.
+- When the TTL expires without another ping the player automatically falls back to `offline`, so the “Active now” metric always reflects reality.
+
+To automate presence, bundle the provided helper script with your game launcher:
+
+```
+GUILD_API_BASE=https://guild.example.com/api \
+GUILD_PLAYER_ID=player-uuid-here \
+GUILD_PRESENCE=in_game \
+node scripts/presence-helper.js
+```
+
+Windows users can drop that command into a batch file that runs before starting the Dark and Darker executable; Steam launch options or Task Scheduler work well. macOS/Linux users can wire it into a shell alias. The UI still exposes a manual “Presence Ping” form for quick overrides.
+
+The dashboard’s “Active now” metric and hoverable presence chips reflect these pings, so “active members” always means “online or in-game right now.”
+The sticky headbar also includes an online dropdown showing who pinged last, what their note is, and how fresh their presence is.
 
 Friends list UI shows:
 
@@ -482,7 +476,7 @@ Completed bounties ready to claim
 
 Daily login rewards
 
-Officer GF awards
+Officer Honor awards
 
 Friend requests
 
@@ -523,17 +517,23 @@ Rewards Admin (Guildbank)
 
 Add/edit rewards
 
-Set GF cost
+Set Honor cost
 
 Mark redemptions as fulfilled
 
 Points Management
 
-Award GF to players
+Award Honor to players
 
 Apply corrections
 
 View per-player ledger
+
+Membership Management
+
+Promote/demote ranks and roles
+
+Toggle guild membership (removal requires a written reason; the UI enforces it and the Admin Log captures it)
 
 Review Management
 
@@ -550,6 +550,15 @@ Confirm or invalidate suspicious stat claims
 Mark stats as screenshot-verified
 
 All of these actions generate Admin Log entries.
+
+🧭 Recruitment & Applications
+
+Guild Nexus now keeps a dedicated Recruits lane:
+
+- Applicants fill a guided form (hours played, favorite/most played modes, availability, characters, bosses) from the "Recruits" view.
+- Officers see a glowing mailbox badge for pending applications in the Lounge, with repeat-applicant flags when Discord/email/characters match prior submissions.
+- Approvals or denials require a short note and are logged to the Admin Log alongside reviewer info and timestamps.
+- Endpoints: `POST /api/applications` to submit, `GET /api/applications?status=pending` to browse, `PUT /api/applications/:id` to approve/deny with `adminPlayerId` + `note`.
 
 🧱 Architecture & Storage (Working Plan)
 Frontend
@@ -612,11 +621,21 @@ loadData / saveData → DB queries
 
 Keeping all core logic intact.
 
+🔐 Auth & Hosting Options
+
+- **Current prototype** – trusts local JSON storage and manual knowledge of who should access the Officer Lounge. Great for rapid iteration, but not secure enough for production.
+- **Discord OAuth (free)** – map Discord IDs to `playerId`, gate the UI (especially the Officer Lounge) by guild roles, and reuse the presence ping endpoint for status updates.
+- **Supabase (generous free tier)** – drop-in Postgres replacement for the JSON files plus built-in Auth (email magic links, Discord, etc.). The storage abstraction keeps the migration trivial.
+- **Firebase/Firestore (free tier)** – also viable if the team prefers Google tooling; the REST API already mirrors Firestore collections, so swapping out persistence is straightforward.
+- **Self-hosting** – run the Node server behind nginx/Caddy, layer on OAuth (Auth0, Cloudflare Access, etc.), and keep everything on your own hardware if you prefer.
+
+Regardless of the provider, the UI already separates the Member Hall from the Officer Lounge, enforces Honor narratives, and requires reasons for guild removals—auth just decides who can see which side.
+
 🏁 Status
 
 This README now serves as the working design spec for Guild Nexus.
 
-All titles (Guild Nexus, Grim Favor, Bounty Board, etc.) are working names.
+All titles (Guild Nexus, Honor System, Bounty Board, etc.) are working names.
 
 All numeric values (score thresholds, min characters, rewards) will be editable in-app by admins/officers.
 
@@ -628,4 +647,55 @@ Anti-exploit design (Verified Runs, drastic score rules)
 
 Evidence support (screenshots, stat confirmation)
 
-Ease of use (everything configurable via UI)# Guild
+Ease of use (everything configurable via UI)
+
+## Local Development
+
+The first pass of the Guild Nexus API lives in `src/server.js` and persists data to `data/data.json`. The server only relies on Node built-ins so it can run in restricted environments without npm access.
+
+```bash
+npm install # no-op but kept for future packages
+npm run dev  # starts the API on port 4000
+```
+
+### Available API routes
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/health` | Server heartbeat |
+| GET/PUT | `/api/settings` | Read/update drastic score, verification, and trait options |
+| GET/POST | `/api/players` | List players or create a new Discord-linked player |
+| GET | `/api/characters` | List characters (optionally filtered by `playerId`) |
+| POST | `/api/players/:playerId/characters` | Register a single-class character |
+| GET/POST | `/api/runs` | Manage scheduled runs and participants. Supports filtering via `date`, `playerId`, and `playerQuery`. |
+| GET/POST | `/api/reports` | Submit or inspect per-character run reports. Filter with `date`, `playerId`, `characterName`, `code`, etc. |
+| GET/POST | `/api/lfg` | Publish or list Looking For Group posts with short codes. |
+| POST | `/api/lfg/:postId/requests` | Request to join an LFG post with an optional message. |
+| PUT | `/api/lfg/:postId/requests/:requestId` | Accept or decline LFG join requests (host or officer roles). |
+| PUT | `/api/players/:playerId` | Update ranks, roles, and membership flags for existing players |
+| POST | `/api/ledger/award` | Append Honor ledger entries with admin log mirroring |
+| POST | `/api/presence/ping` | Update a player's online/in-game status (used by the UI and optional desktop helper) |
+| GET | `/api/admin-log` | Review append-only officer actions |
+| GET/POST | `/api/bounties` | Manage Bounty Board quests |
+
+### Access keys & role separation
+
+- All member-only routes expect the `X-Guild-Key` header to match `settings.accessKeys.memberKey` (defaults to `guild-member-demo-key`).
+- Officer-only routes (settings, ledger awards, admin log, applications review, bounty creation, roster edits) also require `X-Officer-Key` matching `settings.accessKeys.officerKey` (defaults to `guild-officer-demo-key`).
+- Guests who do not have a key can only submit recruitment applications; if you rotate keys, update them via `/api/settings` or the Settings panel and paste the new values into the sidebar “Guild member key”/“Officer key” inputs in the SPA.
+
+### Officer Console Frontend
+
+The Node server now serves a zero-dependency SPA from `/frontend`. Launching `npm start` exposes the UI at `http://localhost:3000/` and proxies all API calls to `/api`. The Officer Console ships:
+
+- Torch-lit, leather-on-iron responsive layout with a two-mode navigation shell. Instantly flip between the “Member Hall” (run/report lookup) and the “Officer Lounge” (admin tooling) without losing context.
+- Metric cards, roster cards, run/report galleries with short IDs (e.g., `RUN-0007`, `REP-0009`), bounty board, Honor ledger, presence radar, and admin log table.
+- Members’ LFG board with one-click join requests and officer/host approvals, plus stored history for repeat applicants.
+- Inline forms for every major workflow: creating players/characters/runs/reports/bounties, awarding Honor, editing drastic score rules, updating ranks/roles, and pinging presence.
+- Member-facing global search that filters runs by day, teammate, or mode and reports by player, character, or report code.
+- Built-in screenshot uploader that stores scoreboard proof server-side, plus explicit guidance for free hosts (Imgur, Discord attachments, ImgBB) when a player prefers pasting URLs.
+- Configurable API base URL so the UI can target remote Guild Nexus nodes without rebuilding assets.
+
+Because it is plain HTML/CSS/JS, the UI can be hosted via any static server or CDN. The built-in server automatically falls back to `index.html` for non-API routes so deep links stay functional. Uploaded screenshots are saved under `data/uploads` and automatically served from `/uploads/...` URLs.
+
+Run `npm test` to execute a scripted smoke test that boots the API, creates a player/character/run, and records a report end-to-end.
