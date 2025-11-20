@@ -32,8 +32,6 @@ async function run() {
     });
   });
 
-  const unique = Date.now().toString().slice(-6);
-
   const baseOptions = {
     hostname: '127.0.0.1',
     port: 3100,
@@ -41,17 +39,17 @@ async function run() {
   };
 
   const player = await request({ ...baseOptions, path: '/api/players', method: 'POST' }, {
-    discordTag: `tester#${unique}`,
-    displayName: `Test Pilot ${unique}`
+    discordTag: 'tester#0001',
+    displayName: 'Test Pilot'
   });
 
   const character = await request({ ...baseOptions, path: `/api/players/${player.body.id}/characters`, method: 'POST' }, {
-    name: `PilotMain-${unique}`,
+    name: 'PilotMain',
     clazz: 'Fighter'
   });
 
   const run = await request({ ...baseOptions, path: '/api/runs', method: 'POST' }, {
-    label: `Sample Run ${unique}`,
+    label: 'Sample Run',
     mode: 'High Roller',
     participants: [player.body.id]
   });

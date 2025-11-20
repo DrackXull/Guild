@@ -1,15 +1,18 @@
 {
-  "name": "guild",
-  "version": "1.0.0",
-  "description": "Guild Nexus – README",
+  "name": "guild-nexus",
+  "version": "0.1.0",
+  "description": "Guild Nexus prototype server",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "PORT=4000 node src/server.js",
-    "test": "node scripts/run-sample.js"
+    "dev": "node src/server.js",
+    "lint": "node -c src/server.js"
   },
-  "keywords": [],
+  "keywords": [
+    "guild",
+    "dark-and-darker"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs"
 }
