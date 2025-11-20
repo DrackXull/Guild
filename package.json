@@ -1,0 +1,15 @@
+{
+  "name": "guild",
+  "version": "1.0.0",
+  "description": "Guild Nexus – README",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "PORT=4000 node src/server.js",
+    "test": "node scripts/run-sample.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
