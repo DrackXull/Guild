@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guild Nexus Honor Deck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="badge">Guild Nexus</span>
+          <h1>Nexus Honor Deck</h1>
+          <p>Snappy controls for both the Members’ Hall and the Officer Lounge.</p>
+        </div>
+        <div class="view-toggle" id="viewToggle">
+          <button type="button" data-view="member" class="active">Members</button>
+          <button type="button" data-view="recruit">Recruits</button>
+          <button type="button" data-view="officer">Officers</button>
+        </div>
+        <nav class="nav" id="sectionNav">
+          <button type="button" data-scroll="#dashboard">Overview</button>
+          <button type="button" data-scroll="#presence-panel">Presence Radar</button>
+          <button type="button" data-scroll="#lfg">LFG board</button>
+          <button type="button" data-scroll="#lookup">Search Runs</button>
+          <button type="button" data-scroll="#players">Roster</button>
+          <button type="button" data-scroll="#applications" class="officer-only">Applications <span id="applicationBadge" class="mail-badge" aria-live="polite"></span></button>
+          <button type="button" data-scroll="#recruit" class="recruit-only">Apply to Join</button>
+          <button type="button" data-scroll="#runs">Runs & Reports</button>
+          <button type="button" data-scroll="#bounties">Bounty Board</button>
+          <button type="button" data-scroll="#settings">Settings & Ledger</button>
+          <button type="button" data-scroll="#admin-log">Admin Log</button>
+        </nav>
+        <div class="api-panel">
+          <label for="apiBase">API Base URL</label>
+          <input id="apiBase" type="text" placeholder="http://localhost:3000/api" />
+          <button id="refreshButton" class="ghost">Refresh data</button>
+          <p class="help-text">Point to prod/staging to manage a live guild.</p>
+        </div>
+      </aside>
+      <main>
+        <div class="topbar" aria-live="polite">
+          <div class="topbar-metric presence" id="topbarPresence">
+            <button type="button" id="presenceToggle" aria-expanded="false">
+              <span class="dot online"></span>
+              <div>
+                <strong id="topbarOnline">0 online</strong>
+                <p class="subtitle" id="topbarPresenceDetail">Live status</p>
+              </div>
+              <span class="chevron">▾</span>
+            </button>
+            <div id="presencePopover" class="presence-popover" hidden>
+              <div class="popover-header">
+                <h4>Active right now</h4>
+                <p class="subtitle">Hover or tap to see who is online and in game.</p>
+              </div>
+              <ul id="presencePopoverList"></ul>
+            </div>
+          </div>
+          <div class="topbar-metric inbox">
+            <button type="button" id="inboxToggle" aria-expanded="false">Messages <span id="inboxBadge" class="pill">0</span></button>
+            <div id="inboxPanel" class="inbox-panel" hidden>
+              <div class="inbox-panel-header">
+                <h4>Run & LFG alerts</h4>
+                <p class="subtitle">Tagged runs, LFG updates, and report mentions for you.</p>
+              </div>
+              <ul id="inboxList"></ul>
+            </div>
+          </div>
+        </div>
+        <header class="hero" id="dashboard">
+          <div>
+          <p class="eyebrow">Live Guild Snapshot</p>
+          <h2>Honor is earned, trust is built.</h2>
+          <p class="subtitle">Keep eyes on the roster, track Honor (HP), and glide between the Members’ Hall and Officer Lounge.</p>
+          <div class="quick-actions">
+            <button type="button" data-scroll="#lookup">Find a report</button>
+            <button type="button" data-scroll="#runs">Log a run</button>
+            <button type="button" data-scroll="#settings" class="ghost">Issue Honor</button>
+          </div>
+          </div>
+          <div class="hero-metrics" id="metricCards"></div>
+        </header>
+
+        <section class="panel presence-panel" id="presence-panel" aria-live="polite">
+          <div class="presence-bar">
+            <div>
+              <p class="eyebrow">Presence Radar</p>
+              <h3>Who is online right now?</h3>
+              <p class="subtitle">See members online or in-game; hover the chips for the latest context.</p>
+            </div>
+            <div class="presence-summary" id="presenceSummary">0 online</div>
+          </div>
+          <ul class="presence-list" id="presenceList"></ul>
+        </section>
+
+        <section class="panel member-only" id="lfg" aria-labelledby="lfg-title">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Members’ Hall</p>
+              <h3 id="lfg-title">Looking for Group</h3>
+              <p class="subtitle">Post a run, set the vibe, and let guildmates request a slot with one click.</p>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <form id="lfgPostForm" class="form-card">
+              <h4>Post a run</h4>
+              <label>Acting as<select id="lfgHostPlayerId" name="hostPlayerId" required></select></label>
+              <label>Character<select id="lfgHostCharacterId" name="characterId"></select></label>
+              <label>Mode
+                <select name="mode">
+                  <option>High Roller PvP</option>
+                  <option>High Roller</option>
+                  <option>Normal PvP</option>
+                  <option>PvE</option>
+                </select>
+              </label>
+              <label>Headline<input name="label" maxlength="80" placeholder="Torch patrol tonight" /></label>
+              <label>Schedule<input type="datetime-local" name="scheduledAt" /></label>
+              <label>Goal / request<textarea name="goal" rows="2" maxlength="180" placeholder="Looking for melee DPS and a bard"></textarea></label>
+              <button type="submit">Publish LFG</button>
+            </form>
+            <div class="form-card">
+              <h4>Act as</h4>
+              <p class="subtitle">Pick which member you’re speaking for, then join or moderate requests below.</p>
+              <label>Your identity<select id="lfgActorSelect"></select></label>
+              <div class="info-callout">
+                <p class="subtitle">Officers can reply on behalf of any host. Accepted requests will close the post unless you keep it open.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel-content" id="lfgList"></div>
+        </section>
+
+        <section class="panel recruit-only" id="recruit" aria-labelledby="recruit-title">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Recruit Desk</p>
+              <h3 id="recruit-title">Apply to join the guild</h3>
+              <p class="subtitle">Answer a few quick prompts so officers can respond with a glowing mailbox tag.</p>
+            </div>
+          </div>
+          <div class="panel-content split stack">
+            <form id="applicationForm" class="form-card">
+              <h4>Your basics</h4>
+              <label>Name or handle<input name="applicantName" required /></label>
+              <label>Discord tag<input name="discordTag" required placeholder="player#1234" /></label>
+              <label>Email (optional)<input name="email" type="email" placeholder="you@example.com" /></label>
+              <label>Server / region<input name="server" placeholder="NA-East, EU" /></label>
+              <label>Hours in Dark and Darker<input name="hoursInGame" type="number" min="0" /></label>
+              <label>Favorite mode<input name="favoriteMode" placeholder="High Roller, PvE, PvP" /></label>
+              <label>Most played mode<input name="mostPlayedMode" placeholder="Squire to Riches" /></label>
+            </form>
+            <form class="form-card" id="applicationSchedule">
+              <h4>Schedule & playstyle</h4>
+              <label>Days per week<input name="daysPerWeek" type="number" min="0" max="7" /></label>
+              <label>Usual days<input name="usualDays" placeholder="Mon / Wed / Sat" /></label>
+              <label>Time of day<input name="timeWindow" placeholder="Evenings after 7pm" /></label>
+              <label>Preferred roles/classes<textarea name="roles" rows="2" placeholder="Fighter, Cleric support"></textarea></label>
+              <label>Characters (comma separated)<textarea name="characters" rows="2" placeholder="PilotMain, DungeonRat"></textarea></label>
+              <label>Boss experience<textarea name="bosses" rows="2" placeholder="How many/which bosses do you usually clear?"></textarea></label>
+              <label>Anything else?<textarea name="notes" rows="2" placeholder="Callouts, goals, loot rules you like"></textarea></label>
+              <button type="submit">Submit application</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel member-only" id="lookup" aria-labelledby="lookup-title">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Member Hall</p>
+              <h3 id="lookup-title">Search runs & report IDs</h3>
+              <p class="subtitle">Lookup by day, teammate, character, or short report code.</p>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="clearSearch">Clear results</button>
+            </div>
+          </div>
+          <div class="panel-content split stack">
+            <form id="runSearchForm" class="form-card">
+              <h4>Run search</h4>
+              <label>Date<input type="date" name="date" /></label>
+              <label>Player / handle<input name="playerQuery" placeholder="Display name or Discord tag" /></label>
+              <label>Keyword<input name="q" placeholder="Mode, label, or run code" /></label>
+              <button type="submit">Search runs</button>
+            </form>
+            <form id="reportSearchForm" class="form-card">
+              <h4>Report search</h4>
+              <label>Date<input type="date" name="date" /></label>
+              <label>Player<input name="playerName" placeholder="Player display name" /></label>
+              <label>Character<input name="characterName" placeholder="Character name" /></label>
+              <label>Report code<input name="code" placeholder="REP-0007" /></label>
+              <button type="submit">Search reports</button>
+            </form>
+          </div>
+          <div class="panel-content">
+            <div class="cards" id="runSearchResults"></div>
+            <div class="panel-spacer"></div>
+            <div class="cards" id="reportSearchResults"></div>
+          </div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="players-title" id="players">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Roster</p>
+              <h3 id="players-title">Players & Characters</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncPlayers">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <div>
+              <form id="playerForm" class="form-card">
+                <h4>Add player</h4>
+                <label>Display name<input name="displayName" required /></label>
+                <label>Discord tag<input name="discordTag" placeholder="player#1234" required /></label>
+                <label>Rank
+                  <select name="rank">
+                    <option>Initiate</option>
+                    <option>Recruit</option>
+                    <option>Raider</option>
+                    <option>Veteran</option>
+                    <option>Champion</option>
+                    <option>Officer</option>
+                    <option>Overseer</option>
+                  </select>
+                </label>
+                <label>Role
+                  <select name="role">
+                    <option value="member">Member</option>
+                    <option value="officer">Officer</option>
+                    <option value="admin">Admin</option>
+                    <option value="guest">Guest</option>
+                  </select>
+                </label>
+                <label class="checkbox"><input type="checkbox" name="isMember" checked /> Guild member</label>
+                <button type="submit">Create player</button>
+              </form>
+              <form id="characterForm" class="form-card">
+                <h4>Add character</h4>
+                <label>Owner<select id="characterPlayerId" name="playerId" required></select></label>
+                <label>Character name<input name="name" required /></label>
+                <label>Class
+                  <select name="clazz" required>
+                    <option value="">Select class</option>
+                    <option>Barbarian</option>
+                    <option>Fighter</option>
+                    <option>Cleric</option>
+                    <option>Wizard</option>
+                    <option>Rogue</option>
+                    <option>Ranger</option>
+                    <option>Bard</option>
+                  </select>
+                </label>
+                <button type="submit">Create character</button>
+              </form>
+              <form id="membershipForm" class="form-card">
+                <h4>Manage rank & access</h4>
+                <label>Player<select id="membershipPlayerId" name="playerId" required></select></label>
+                <label>Rank<select name="rank" id="membershipRank"></select></label>
+                <label>Role<select name="role" id="membershipRole"></select></label>
+                <label class="checkbox"><input type="checkbox" name="isMember" id="membershipIsMember" checked /> Active guild member</label>
+                <label id="membershipReasonRow" class="removal-reason" hidden>
+                  Removal reason
+                  <textarea name="removalReason" id="membershipReason" rows="2" placeholder="Why is this player losing access?"></textarea>
+                  <span class="help-text">Required when removing someone from the guild.</span>
+                </label>
+                <button type="submit">Update player</button>
+              </form>
+            </div>
+            <div class="cards" id="playersList"></div>
+          </div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="applications-title" id="applications">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Officer Lounge</p>
+              <h3 id="applications-title">Applications inbox</h3>
+              <p class="subtitle">Glowing mailbox tags highlight fresh recruits. Approvals/denials require a note.</p>
+            </div>
+            <div class="panel-actions">
+              <label class="inline">Reviewer<select id="applicationReviewerId"></select></label>
+              <select id="applicationFilter">
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="denied">Denied</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-content">
+            <div id="applicationList" class="cards"></div>
+          </div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="runs-title" id="runs">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h3 id="runs-title">Runs & Reports</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncRuns">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <div class="stack">
+              <form id="runForm" class="form-card">
+                <h4>Schedule / log run</h4>
+                <label>Label<input name="label" placeholder="Guild High Roller" required /></label>
+                <label>Mode
+                  <select name="mode" required>
+                    <option value="High Roller">High Roller</option>
+                    <option value="Squire to Riches">Squire to Riches</option>
+                    <option value="PvE">PvE</option>
+                    <option value="PvP">PvP</option>
+                  </select>
+                </label>
+                <label>Participants
+                  <select name="participants" id="runParticipants" multiple size="4"></select>
+                  <span class="help-text">Hold Ctrl/Cmd to multi-select.</span>
+                </label>
+                <button type="submit">Create run</button>
+              </form>
+
+              <form id="reportForm" class="form-card">
+                <h4>Submit run report</h4>
+                <label>Run<select id="reportRunId" name="runId" required></select></label>
+                <label>Character<select id="reportCharacterId" name="characterId" required></select></label>
+                <label>Score<input type="number" min="1" max="10" name="score" required /></label>
+                <label>Comment<textarea name="comment" rows="3" placeholder="Share details to satisfy drastic score rules." required></textarea></label>
+                <div class="grid-3">
+                  <label>Kills<input type="number" name="kills" min="0" /></label>
+                  <label>Deaths<input type="number" name="deaths" min="0" /></label>
+                  <label>Boss kills<input type="number" name="bossKills" min="0" /></label>
+                </div>
+                <label class="checkbox">
+                  <input type="checkbox" name="extracted" /> Extracted
+                </label>
+                <fieldset id="traitOptions" class="trait-options"></fieldset>
+                <label>Screenshots
+                  <input type="file" id="reportScreenshotFiles" accept="image/*" multiple />
+                  <span class="help-text">Upload scoreboard or chat proof directly from your device.</span>
+                </label>
+                <label>External URLs (optional)<textarea name="screenshots" rows="2" placeholder="https://imgur.com/..."></textarea></label>
+                <details class="screenshot-tips">
+                  <summary>No uploader handy?</summary>
+                  <p>Drag + drop into Imgur, Discord attachments, or ImgBB and paste the share link above.</p>
+                </details>
+                <ul id="uploadPreview" class="upload-preview"></ul>
+                <button type="submit">Submit report</button>
+              </form>
+            </div>
+            <div class="cards" id="runsList"></div>
+          </div>
+          <div class="panel-content" id="reportsList"></div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="bounties-title" id="bounties">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Engagement</p>
+              <h3 id="bounties-title">Bounty Board</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncBounties">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <form id="bountyForm" class="form-card">
+              <h4>Create bounty</h4>
+              <label>Title<input name="title" required /></label>
+              <label>Description<textarea name="description" rows="2" required></textarea></label>
+              <label>Type
+                <select name="type" required>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="one_time">One-time</option>
+                </select>
+              </label>
+              <label>Requirements<textarea name="requirements" rows="2" placeholder="e.g. {\"runs\":3}"></textarea></label>
+              <label>Reward (Honor / HP)<input type="number" name="rewardAmount" min="1" required /></label>
+              <label class="checkbox"><input type="checkbox" name="isActive" checked /> Active</label>
+              <button type="submit">Create bounty</button>
+            </form>
+            <div class="cards" id="bountyList"></div>
+          </div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="settings-title" id="settings">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Control Room</p>
+              <h3 id="settings-title">Settings & Ledger</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncSettings">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content split">
+            <div class="stack">
+              <form id="settingsForm" class="form-card">
+                <h4>Drastic score rules</h4>
+                <div class="grid-2">
+                  <label>Low threshold<input type="number" name="lowThreshold" min="1" max="10" required /></label>
+                  <label>High threshold<input type="number" name="highThreshold" min="1" max="10" required /></label>
+                </div>
+                <div class="grid-2">
+                  <label>Low comment min<input type="number" name="lowCommentMinLength" min="0" /></label>
+                  <label>High comment min<input type="number" name="highCommentMinLength" min="0" /></label>
+                </div>
+                <h4>Run verification</h4>
+                <div class="grid-3">
+                  <label>Min reporters<input type="number" name="minReporters" min="1" /></label>
+                  <label>Participation Honor (HP)<input type="number" name="participationHonor" min="0" /></label>
+                  <label>Report Honor (HP)<input type="number" name="reportHonor" min="0" /></label>
+                </div>
+                <h4>Presence</h4>
+                <label>Minutes before auto-offline<input type="number" name="presenceTtl" min="1" /></label>
+                <label>Trait tags<textarea name="traitOptions" rows="2" placeholder="Comma separated"></textarea></label>
+                <button type="submit">Save settings</button>
+              </form>
+              <div class="locker-room">Honor is earned. Trust is built.</div>
+            </div>
+
+            <div class="stack">
+              <form id="presenceForm" class="form-card">
+                <h4>Manual presence ping</h4>
+                <label>Player<select id="presencePlayerId" name="playerId" required></select></label>
+                <label>Status
+                  <select id="presenceStatus" name="status" required>
+                    <option value="online">Online</option>
+                    <option value="in_game">In game</option>
+                    <option value="offline">Offline</option>
+                  </select>
+                </label>
+                <label>Note<input id="presenceNote" name="note" placeholder="Launching Dark and Darker" /></label>
+                <p class="help-text">Use this for quick overrides or pair it with the desktop helper script to auto-mark PCs online.</p>
+                <button type="submit">Send ping</button>
+              </form>
+
+              <form id="awardForm" class="form-card">
+                <h4>Honor ledger entry</h4>
+                <label>Player<select id="awardPlayerId" name="playerId" required></select></label>
+                <label>Amount (HP)<input type="number" name="amount" required /></label>
+                <label>Reason
+                  <select name="reason" required>
+                    <option value="run_participation">Run participation</option>
+                    <option value="report_submission">Run report</option>
+                    <option value="quest_reward">Quest reward</option>
+                    <option value="reward_purchase">Reward purchase</option>
+                    <option value="gold_donation">Gold donation</option>
+                    <option value="officer_bonus">Officer bonus</option>
+                    <option value="adjustment">Manual adjustment</option>
+                  </select>
+                </label>
+                <label>Why are you granting Honor?
+                  <textarea name="reasonDetail" rows="2" placeholder="Honor is earned—document the why." required></textarea>
+                </label>
+                <label>Metadata JSON (optional)<textarea name="detailsJson" rows="2"></textarea></label>
+                <button type="submit">Record entry</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel officer-only" aria-labelledby="admin-log-title" id="admin-log">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Transparency</p>
+              <h3 id="admin-log-title">Admin Log</h3>
+            </div>
+            <div class="panel-actions">
+              <button class="ghost" id="syncAdminLog">Sync</button>
+            </div>
+          </div>
+          <div class="panel-content" id="adminLogList"></div>
+        </section>
+      </main>
+    </div>
+    <div id="statusToast" class="status-toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
