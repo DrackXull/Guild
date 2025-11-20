@@ -1,0 +1,391 @@
+{
+  "players": [
+    {
+      "id": "119b99d3-8d26-40d6-9c7a-db5157a03117",
+      "discordTag": "tester#0001",
+      "displayName": "Test Pilot",
+      "rank": "Initiate",
+      "role": "member",
+      "isMember": true,
+      "friends": [],
+      "status": "offline",
+      "lastSeenAt": null,
+      "presenceSource": "web",
+      "presenceNote": "",
+      "characterIds": [
+        "27d03b9d-2a73-451f-a307-002a92b22aa9"
+      ],
+      "createdAt": "2025-11-19T16:48:09.599Z",
+      "memberNo": 1
+    },
+    {
+      "id": "c2e70f2f-785b-47c7-b67d-158dc7d0b2b2",
+      "discordTag": "tester#0001",
+      "displayName": "Test Pilot",
+      "rank": "Initiate",
+      "role": "member",
+      "isMember": true,
+      "friends": [],
+      "status": "offline",
+      "lastSeenAt": null,
+      "presenceSource": "web",
+      "presenceNote": "",
+      "characterIds": [],
+      "createdAt": "2025-11-19T21:06:50.424Z",
+      "memberNo": 2
+    },
+    {
+      "id": "98dec1c8-714d-4cab-a863-baa3af145d53",
+      "discordTag": "tester#0001",
+      "displayName": "Test Pilot",
+      "rank": "Initiate",
+      "role": "member",
+      "isMember": true,
+      "friends": [],
+      "status": "offline",
+      "lastSeenAt": null,
+      "presenceSource": "web",
+      "presenceNote": "",
+      "characterIds": [],
+      "createdAt": "2025-11-19T22:09:53.894Z",
+      "memberNo": 3
+    },
+    {
+      "id": "f471acad-3cff-4092-9809-8ea02f575e93",
+      "discordTag": "tester#215818",
+      "displayName": "Test Pilot 215818",
+      "rank": "Initiate",
+      "role": "member",
+      "isMember": true,
+      "friends": [],
+      "status": "offline",
+      "lastSeenAt": null,
+      "presenceSource": "web",
+      "presenceNote": "",
+      "characterIds": [
+        "37a87592-7e97-48ea-b010-54a6ffead0f5"
+      ],
+      "createdAt": "2025-11-19T22:10:15.832Z",
+      "memberNo": 4
+    },
+    {
+      "id": "f8c71377-ac68-4e07-9a02-81f08ccd8108",
+      "discordTag": "tester#035757",
+      "displayName": "Test Pilot 035757",
+      "rank": "Initiate",
+      "role": "member",
+      "isMember": true,
+      "friends": [],
+      "status": "offline",
+      "lastSeenAt": null,
+      "presenceSource": "web",
+      "presenceNote": "",
+      "characterIds": [
+        "c91d7751-bcbf-490c-ac12-fcb7dcbc1923"
+      ],
+      "createdAt": "2025-11-20T00:20:35.773Z",
+      "memberNo": 5
+    }
+  ],
+  "characters": [
+    {
+      "id": "27d03b9d-2a73-451f-a307-002a92b22aa9",
+      "playerId": "119b99d3-8d26-40d6-9c7a-db5157a03117",
+      "name": "PilotMain",
+      "clazz": "Fighter",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0,
+        "runs": 1,
+        "confirmedKills": 0,
+        "confirmedDeaths": 0,
+        "confirmedBossKills": 0
+      },
+      "createdAt": "2025-11-19T16:48:09.608Z"
+    },
+    {
+      "id": "37a87592-7e97-48ea-b010-54a6ffead0f5",
+      "playerId": "f471acad-3cff-4092-9809-8ea02f575e93",
+      "name": "PilotMain-215818",
+      "clazz": "Fighter",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0,
+        "runs": 1,
+        "confirmedKills": 0,
+        "confirmedDeaths": 0,
+        "confirmedBossKills": 0
+      },
+      "createdAt": "2025-11-19T22:10:15.839Z"
+    },
+    {
+      "id": "c91d7751-bcbf-490c-ac12-fcb7dcbc1923",
+      "playerId": "f8c71377-ac68-4e07-9a02-81f08ccd8108",
+      "name": "PilotMain-035757",
+      "clazz": "Fighter",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0,
+        "runs": 1,
+        "confirmedKills": 0,
+        "confirmedDeaths": 0,
+        "confirmedBossKills": 0
+      },
+      "createdAt": "2025-11-20T00:20:35.781Z"
+    }
+  ],
+  "runs": [
+    {
+      "id": "db3f24a6-85c6-4d4e-a97c-2cc0c95fd0b0",
+      "code": "RUN-0001",
+      "label": "Sample Run",
+      "mode": "High Roller",
+      "scheduledAt": "2025-11-19T16:48:09.610Z",
+      "participants": [
+        "119b99d3-8d26-40d6-9c7a-db5157a03117"
+      ],
+      "reporterIds": [
+        "119b99d3-8d26-40d6-9c7a-db5157a03117"
+      ],
+      "isVerified": false,
+      "screenshots": [],
+      "createdAt": "2025-11-19T16:48:09.610Z"
+    },
+    {
+      "id": "2210aa01-a44e-4849-921f-4f1c537a9e33",
+      "code": "RUN-0002",
+      "label": "Sample Run",
+      "mode": "High Roller",
+      "scheduledAt": "2025-11-19T21:06:50.436Z",
+      "participants": [
+        "c2e70f2f-785b-47c7-b67d-158dc7d0b2b2"
+      ],
+      "reporterIds": [],
+      "isVerified": false,
+      "screenshots": [],
+      "createdAt": "2025-11-19T21:06:50.436Z"
+    },
+    {
+      "id": "554bfedc-80f9-4c1b-bc5b-7f5eeef30c89",
+      "code": "RUN-0003",
+      "label": "Sample Run",
+      "mode": "High Roller",
+      "scheduledAt": "2025-11-19T22:09:53.906Z",
+      "participants": [
+        "98dec1c8-714d-4cab-a863-baa3af145d53"
+      ],
+      "reporterIds": [],
+      "isVerified": false,
+      "screenshots": [],
+      "createdAt": "2025-11-19T22:09:53.906Z"
+    },
+    {
+      "id": "fb3dac3d-705e-418a-bcb6-bf2867563c31",
+      "code": "RUN-0004",
+      "label": "Sample Run 215818",
+      "mode": "High Roller",
+      "scheduledAt": "2025-11-19T22:10:15.841Z",
+      "participants": [
+        "f471acad-3cff-4092-9809-8ea02f575e93"
+      ],
+      "reporterIds": [
+        "f471acad-3cff-4092-9809-8ea02f575e93"
+      ],
+      "isVerified": false,
+      "screenshots": [],
+      "createdAt": "2025-11-19T22:10:15.841Z"
+    },
+    {
+      "id": "6224c66b-c078-4f80-af40-1fd444626fbd",
+      "code": "RUN-005001",
+      "hostPlayerId": "f8c71377-ac68-4e07-9a02-81f08ccd8108",
+      "label": "Sample Run 035757",
+      "mode": "High Roller",
+      "scheduledAt": "2025-11-20T00:20:35.783Z",
+      "participants": [
+        "f8c71377-ac68-4e07-9a02-81f08ccd8108"
+      ],
+      "reporterIds": [
+        "f8c71377-ac68-4e07-9a02-81f08ccd8108"
+      ],
+      "isVerified": false,
+      "screenshots": [],
+      "createdAt": "2025-11-20T00:20:35.783Z"
+    }
+  ],
+  "reports": [
+    {
+      "id": "8d3e45f7-fdb4-451f-8cd1-606f39abccd1",
+      "code": "REP-0001",
+      "runId": "db3f24a6-85c6-4d4e-a97c-2cc0c95fd0b0",
+      "characterId": "27d03b9d-2a73-451f-a307-002a92b22aa9",
+      "playerId": "119b99d3-8d26-40d6-9c7a-db5157a03117",
+      "score": 5,
+      "comment": "Solid performance with detailed test script feedback to meet drastic rules requirements.",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0
+      },
+      "extracted": false,
+      "traits": [
+        "Team player"
+      ],
+      "screenshots": [],
+      "createdAt": "2025-11-19T16:48:09.614Z"
+    },
+    {
+      "id": "fa60b910-2086-4199-b94f-924810ab0f45",
+      "code": "REP-0002",
+      "runId": "fb3dac3d-705e-418a-bcb6-bf2867563c31",
+      "characterId": "37a87592-7e97-48ea-b010-54a6ffead0f5",
+      "playerId": "f471acad-3cff-4092-9809-8ea02f575e93",
+      "score": 5,
+      "comment": "Solid performance with detailed test script feedback to meet drastic rules requirements.",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0
+      },
+      "extracted": false,
+      "traits": [
+        "Team player"
+      ],
+      "screenshots": [],
+      "createdAt": "2025-11-19T22:10:15.843Z"
+    },
+    {
+      "id": "dae30460-7e25-4347-aa19-1535e8d25d42",
+      "code": "REP-005001",
+      "runId": "6224c66b-c078-4f80-af40-1fd444626fbd",
+      "characterId": "c91d7751-bcbf-490c-ac12-fcb7dcbc1923",
+      "playerId": "f8c71377-ac68-4e07-9a02-81f08ccd8108",
+      "score": 5,
+      "comment": "Solid performance with detailed test script feedback to meet drastic rules requirements.",
+      "stats": {
+        "kills": 3,
+        "deaths": 1,
+        "bossKills": 0
+      },
+      "extracted": false,
+      "traits": [
+        "Team player"
+      ],
+      "screenshots": [],
+      "createdAt": "2025-11-20T00:20:35.786Z"
+    }
+  ],
+  "applications": [],
+  "lfgPosts": [
+    {
+      "id": "c27fc26a-1e90-4909-a546-7e6295ea308e",
+      "code": "LFG-0001",
+      "hostPlayerId": "119b99d3-8d26-40d6-9c7a-db5157a03117",
+      "characterId": "27d03b9d-2a73-451f-a307-002a92b22aa9",
+      "mode": "High Roller PvP",
+      "label": "Torch patrol tonight",
+      "goal": "Looking for melee DPS and a utility bard. Quick PvP clears, loot and scoot. 140 chars is plenty.",
+      "scheduledAt": "2025-11-20T02:00:00.000Z",
+      "status": "open",
+      "requests": [],
+      "createdAt": "2025-11-19T21:08:00.000Z"
+    }
+  ],
+  "honorLedger": [],
+  "adminLog": [
+    {
+      "id": "87b37fd3-d246-4d91-8334-dcc7ea2b5497",
+      "createdAt": "2025-11-19T16:48:09.614Z",
+      "adminPlayerId": null,
+      "actionType": "submit_report",
+      "targetRunId": "db3f24a6-85c6-4d4e-a97c-2cc0c95fd0b0",
+      "targetPlayerId": "119b99d3-8d26-40d6-9c7a-db5157a03117",
+      "metadata": {
+        "reportId": "8d3e45f7-fdb4-451f-8cd1-606f39abccd1",
+        "score": 5
+      }
+    },
+    {
+      "id": "621669f1-af93-4ed1-b0c4-4b4225267a3c",
+      "createdAt": "2025-11-19T22:10:15.843Z",
+      "adminPlayerId": null,
+      "actionType": "submit_report",
+      "targetRunId": "fb3dac3d-705e-418a-bcb6-bf2867563c31",
+      "targetPlayerId": "f471acad-3cff-4092-9809-8ea02f575e93",
+      "metadata": {
+        "reportId": "fa60b910-2086-4199-b94f-924810ab0f45",
+        "score": 5
+      }
+    },
+    {
+      "id": "a022af99-b185-4f44-802e-740c566fc3fc",
+      "createdAt": "2025-11-20T00:20:35.786Z",
+      "adminPlayerId": null,
+      "actionType": "submit_report",
+      "targetRunId": "6224c66b-c078-4f80-af40-1fd444626fbd",
+      "targetPlayerId": "f8c71377-ac68-4e07-9a02-81f08ccd8108",
+      "metadata": {
+        "reportId": "dae30460-7e25-4347-aa19-1535e8d25d42",
+        "score": 5
+      }
+    }
+  ],
+  "bounties": [],
+  "notifications": [],
+  "messages": [],
+  "settings": {
+    "drasticScore": {
+      "lowThreshold": 3,
+      "highThreshold": 9,
+      "lowCommentMinLength": 140,
+      "highCommentMinLength": 80
+    },
+    "runVerification": {
+      "minReporters": 2,
+      "participationHonor": 5,
+      "reportHonor": 2
+    },
+    "presence": {
+      "ttlMinutes": 5
+    },
+    "traitOptions": [
+      "Great comms",
+      "Team player",
+      "Loot hog",
+      "Toxic",
+      "Clutch saver"
+    ]
+  },
+  "counters": {
+    "run": 5,
+    "report": 3,
+    "application": 1,
+    "lfg": 2,
+    "member": 6
+  },
+  "playerCounters": {
+    "119b99d3-8d26-40d6-9c7a-db5157a03117": {
+      "report": 1,
+      "run": 1
+    },
+    "c2e70f2f-785b-47c7-b67d-158dc7d0b2b2": {
+      "report": 0,
+      "run": 1
+    },
+    "98dec1c8-714d-4cab-a863-baa3af145d53": {
+      "report": 0,
+      "run": 1
+    },
+    "f471acad-3cff-4092-9809-8ea02f575e93": {
+      "report": 1,
+      "run": 1
+    },
+    "f8c71377-ac68-4e07-9a02-81f08ccd8108": {
+      "report": 1,
+      "run": 1
+    }
+  }
+}
