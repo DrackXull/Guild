@@ -57,9 +57,9 @@ export const allCharacters: Character[] = characters;
 
 export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'];
 
-export const gameModes: string[] = ["Normal Crypts", "High-Roller Crypts", "Normal Ruins", "High-Roller Ruins", "Normal Goblin Caves", "High-Roller Goblin Caves", "Ice Caverns"];
+export const gameModes: string[] = ["Normal", "High Roller", "Squires to Riches", "Adventure mode", "Arena", "PvE", "PvP", "Bosses"];
 
-export const bossList: string[] = ["Cave Troll", "Cyclops", "Lich", "Ghost King", "Warlord"];
+export const bossList: string[] = ["Cave Troll", "Cyclops", "Lich (Crypts)", "Ghost King", "Warlord (Crypts)", "Banshee (Ruins)", "Spectral Knight (Ruins)", "Wyvern (Ice Abyss)"];
 
 export const mockPlayer = players[0];
 
@@ -136,5 +136,3 @@ export const mockPlayerBounties: MemberBounty[] = [
         createdAt: '2024-07-28T15:00:00Z',
     }
 ];
-
-    

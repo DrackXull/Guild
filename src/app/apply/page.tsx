@@ -38,6 +38,10 @@ const applicationSchema = z.object({
   isContentCreator: z.boolean().default(false),
   twitchUrl: z.string().url().optional().or(z.literal('')),
   youtubeUrl: z.string().url().optional().or(z.literal('')),
+  kickUrl: z.string().url().optional().or(z.literal('')),
+  twitterUrl: z.string().url().optional().or(z.literal('')),
+  tiktokUrl: z.string().url().optional().or(z.literal('')),
+  otherUrl: z.string().url().optional().or(z.literal('')),
   availabilityDays: z.string().min(1, 'Please state which days you typically play.'),
   availabilityTimezone: z.string().min(1, 'Please select your timezone.'),
   availabilityStart: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please use HH:MM format.'),
@@ -72,6 +76,10 @@ export default function ApplyPage() {
       isContentCreator: false,
       twitchUrl: '',
       youtubeUrl: '',
+      kickUrl: '',
+      twitterUrl: '',
+      tiktokUrl: '',
+      otherUrl: '',
       availabilityDays: '',
       availabilityTimezone: 'GMT-5',
       availabilityStart: '17:00',
@@ -424,6 +432,34 @@ export default function ApplyPage() {
                           <FormMessage />
                         </FormItem>
                       )} />
+                       <FormField control={control} name="kickUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Kick URL</FormLabel>
+                          <FormControl><Input placeholder="https://kick.com/yourchannel" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                       <FormField control={control} name="twitterUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Twitter/X URL</FormLabel>
+                          <FormControl><Input placeholder="https://x.com/yourhandle" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={control} name="tiktokUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>TikTok URL</FormLabel>
+                          <FormControl><Input placeholder="https://tiktok.com/@yourhandle" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                       <FormField control={control} name="otherUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other URL</FormLabel>
+                          <FormControl><Input placeholder="Your personal site or other platform" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
                     </div>
                   )}
               </fieldset>
@@ -452,5 +488,3 @@ export default function ApplyPage() {
     </div>
   );
 }
-
-    
