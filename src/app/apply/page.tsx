@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -81,8 +80,11 @@ export default function ApplyPage() {
   const watchedValues = watch();
   
   useEffect(() => {
-    setSavedDraft(watchedValues);
-  }, [watchedValues, setSavedDraft]);
+    // By stringifying the watched values, we ensure this effect only runs
+    // when the actual data changes, not just on re-render. This breaks the infinite loop.
+    const stringifiedValues = JSON.stringify(watchedValues);
+    setSavedDraft(JSON.parse(stringifiedValues));
+  }, [JSON.stringify(watchedValues), setSavedDraft]);
 
   const onSubmit = async (data: ApplicationFormValues) => {
     if (!firestore || !user) {
@@ -340,3 +342,4 @@ export default function ApplyPage() {
     </div>
   );
 }
+    
