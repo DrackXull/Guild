@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Store, Gem } from "lucide-react";
 import { mockPlayer } from "@/lib/data";
 import { Button } from "@/components/ui/button";
