@@ -20,20 +20,64 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { players } from '@/lib/data';
 import type { Application, ApplicationReview as TApplicationReview } from '@/lib/types';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 type ApplicationReviewProps = {
   application: Application;
   reviews: TApplicationReview[];
 };
 
-export function ApplicationReview({ application, reviews }: ApplicationReviewProps) {
+export function ApplicationReview({ application, reviews: initialReviews }: ApplicationReviewProps) {
+  const { toast } = useToast();
   const [rating, setRating] = useState(5);
+  const [notes, setNotes] = useState('');
+  const [reviews, setReviews] = useState(initialReviews);
+  
   const getPlayer = (playerId: string) => players.find(p => p.id === playerId);
+  const loggedInOfficerId = 'player1'; // Mock logged in officer
+
+  const handleReviewSubmit = () => {
+    if (!notes.trim()) {
+        toast({
+            title: "Review Note Required",
+            description: "Please provide a note with your review.",
+            variant: "destructive"
+        });
+        return;
+    }
+
+    const newReview: TApplicationReview = {
+        applicationId: application.id,
+        adminPlayerId: loggedInOfficerId,
+        status: 'pending',
+        vote: rating,
+        note: notes,
+        createdAt: new Date().toISOString(),
+    };
+
+    // Replace existing review if officer already reviewed
+    const existingReviewIndex = reviews.findIndex(r => r.adminPlayerId === loggedInOfficerId);
+    if (existingReviewIndex !== -1) {
+        const updatedReviews = [...reviews];
+        updatedReviews[existingReviewIndex] = newReview;
+        setReviews(updatedReviews);
+    } else {
+        setReviews(prev => [...prev, newReview]);
+    }
+
+    toast({
+        title: "Review Submitted",
+        description: `Your ${rating}/10 review for ${application.applicantName} has been recorded.`,
+    });
+    setNotes('');
+    setRating(5);
+  }
+
+  const existingReview = reviews.find(r => r.adminPlayerId === loggedInOfficerId);
 
   return (
     <Dialog>
@@ -102,9 +146,17 @@ export function ApplicationReview({ application, reviews }: ApplicationReviewPro
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="officer-notes">Notes</Label>
-                    <Textarea id="officer-notes" placeholder="Private notes visible only to other officers..." />
+                    <Textarea 
+                        id="officer-notes" 
+                        placeholder="Private notes visible only to other officers..." 
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                    />
                 </div>
               </CardContent>
+               <CardFooter>
+                <Button className="w-full" onClick={handleReviewSubmit}>{existingReview ? "Update Your Review" : "Submit Your Review"}</Button>
+              </CardFooter>
             </Card>
           </div>
         </div>

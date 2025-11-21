@@ -6,6 +6,7 @@ import { UserNav } from '@/components/layout/user-nav';
 import { allCharacters, players } from '@/lib/data';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const onlineMembers = players.filter(p => p.isOnline).length;
@@ -14,8 +15,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isOfficerPage = pathname.startsWith('/officer');
 
+  useEffect(() => {
+    if (isOfficerPage) {
+      document.body.classList.add('view-officer');
+    } else {
+      document.body.classList.remove('view-officer');
+    }
+    // Cleanup function to remove the class when the component unmounts
+    // or when the path changes away from the officer page.
+    return () => {
+      document.body.classList.remove('view-officer');
+    };
+  }, [isOfficerPage]);
+
+
   return (
-    <div className={cn({ 'view-officer': isOfficerPage })}>
+    <div className={cn({ 'officer-theme': isOfficerPage })}>
       <SidebarProvider>
         <Sidebar>
           <SidebarNav />

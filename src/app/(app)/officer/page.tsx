@@ -1,7 +1,8 @@
+'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, ScrollText, Users, FileText } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,14 +13,70 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockApplications, mockReviews } from "@/lib/data";
+import { useEffect, useState, useTransition } from "react";
+import type { Quest } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
-export default async function OfficerPage() {
-  const bounties = await getBounties();
+
+export default function OfficerPage() {
+  const { toast } = useToast();
+  const [bounties, setBounties] = useState<Quest[]>([]);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    startTransition(async () => {
+      const fetchedBounties = await getBounties();
+      setBounties(fetchedBounties);
+    });
+  }, []);
+  
   const applications = mockApplications;
   const reviews = mockReviews;
 
+  const handleCreateBounty = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const type = formData.get('type') as 'daily' | 'weekly';
+    const reward = formData.get('reward') as string;
+
+    if (!title || !description || !type || !reward) {
+        toast({
+            title: "Missing Fields",
+            description: "Please fill out all bounty information.",
+            variant: "destructive",
+        });
+        return;
+    }
+
+    const newBounty: Quest = {
+        questName: title,
+        questDescription: description,
+        questType: type,
+        reward: `${reward} Honor`,
+    };
+
+    setBounties(prev => [newBounty, ...prev]);
+    toast({
+        title: "Bounty Created",
+        description: `The bounty "${title}" has been added.`,
+    });
+    (event.target as HTMLFormElement).reset();
+  }
+
+  const handleRemoveBounty = (questName: string) => {
+    setBounties(prev => prev.filter(b => b.questName !== questName));
+    toast({
+        title: "Bounty Removed",
+        description: `The bounty "${questName}" has been removed.`,
+        variant: "destructive"
+    });
+  }
+
   return (
-    <div className="officer-theme space-y-8">
+    <div className="space-y-8">
       <div className="flex items-center gap-4">
         <Shield className="h-10 w-10 text-primary" />
         <div>
@@ -87,6 +144,7 @@ export default async function OfficerPage() {
             <div className="space-y-6">
                 <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
+                    {isPending && <div className="flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}
                     {bounties.map(bounty => (
                         <Card key={bounty.questName} className="bg-background/50">
                             <CardHeader className="pb-4">
@@ -103,13 +161,17 @@ export default async function OfficerPage() {
                             </CardContent>
                             <CardFooter className="gap-2">
                                 <Button size="sm" variant="outline">Mark Complete</Button>
-                                <Button size="sm" variant="destructive">Remove</Button>
+                                <Button size="sm" variant="destructive" onClick={() => handleRemoveBounty(bounty.questName)}>
+                                    <Trash2 className="h-4 w-4 mr-2"/>
+                                    Remove
+                                </Button>
                             </CardFooter>
                         </Card>
                     ))}
+                    {!isPending && bounties.length === 0 && <p className="text-muted-foreground text-center py-8">No active bounties.</p>}
                 </div>
             </div>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleCreateBounty}>
                  <h3 className="font-headline text-xl font-semibold">Create New Bounty</h3>
                 <div className="space-y-2">
                     <Label htmlFor="bounty-title">Bounty Title</Label>
@@ -122,7 +184,7 @@ export default async function OfficerPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="bounty-type">Type</Label>
-                        <Select name="type">
+                        <Select name="type" required>
                             <SelectTrigger id="bounty-type">
                                 <SelectValue placeholder="Select type" />
                             </SelectTrigger>
