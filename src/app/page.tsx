@@ -48,6 +48,7 @@ export default function LandingPage() {
   
   const tabAudioRef = useRef<HTMLAudioElement>(null);
   const loginAudioRef = useRef<HTMLAudioElement>(null);
+  const typingAudioRef = useRef<HTMLAudioElement>(null);
 
   const signInForm = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -74,6 +75,10 @@ export default function LandingPage() {
   
   const playTabSound = () => {
     // tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
+  }
+
+  const playTypingSound = () => {
+    // typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
   }
 
   const handleSignIn = (data: SignInFormValues) => {
@@ -129,12 +134,12 @@ export default function LandingPage() {
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-signin">Email</Label>
-                    <Input id="email-signin" type="email" placeholder="m@example.com" {...signInForm.register('email')} />
+                    <Input id="email-signin" type="email" placeholder="m@example.com" {...signInForm.register('email')} onKeyDown={playTypingSound} />
                     {signInForm.formState.errors.email && <p className="text-destructive text-xs">{signInForm.formState.errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signin">Password</Label>
-                    <Input id="password-signin" type="password" {...signInForm.register('password')} />
+                    <Input id="password-signin" type="password" {...signInForm.register('password')} onKeyDown={playTypingSound} />
                     {signInForm.formState.errors.password && <p className="text-destructive text-xs">{signInForm.formState.errors.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
@@ -152,17 +157,17 @@ export default function LandingPage() {
                 <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-signup">Email</Label>
-                    <Input id="email-signup" type="email" placeholder="m@example.com" {...signUpForm.register('email')} />
+                    <Input id="email-signup" type="email" placeholder="m@example.com" {...signUpForm.register('email')} onKeyDown={playTypingSound}/>
                      {signUpForm.formState.errors.email && <p className="text-destructive text-xs">{signUpForm.formState.errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signup">Password</Label>
-                    <Input id="password-signup" type="password" {...signUpForm.register('password')} />
+                    <Input id="password-signup" type="password" {...signUpForm.register('password')} onKeyDown={playTypingSound}/>
                     {signUpForm.formState.errors.password && <p className="text-destructive text-xs">{signUpForm.formState.errors.password.message}</p>}
                   </div>
                    <div className="space-y-2">
                     <Label htmlFor="confirmPassword-signup">Confirm Password</Label>
-                    <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} />
+                    <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} onKeyDown={playTypingSound}/>
                     {signUpForm.formState.errors.confirmPassword && <p className="text-destructive text-xs">{signUpForm.formState.errors.confirmPassword.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Create Account</Button>
@@ -179,6 +184,7 @@ export default function LandingPage() {
       {/* Audio elements for sound effects - Add your audio files to the /public/sounds folder */}
       <audio ref={tabAudioRef} src="/sounds/rock-slide.mp3" preload="auto"></audio>
       <audio ref={loginAudioRef} src="/sounds/chest-unlock.mp3" preload="auto"></audio>
+      <audio ref={typingAudioRef} src="/sounds/quill-writing.mp3" preload="auto"></audio>
     </div>
   );
 }

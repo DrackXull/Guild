@@ -24,6 +24,7 @@ import {
 import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
+import { useRef } from 'react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -39,6 +40,11 @@ export function SidebarNav() {
   const pathname = usePathname();
   // Mock officer status
   const isOfficer = true; 
+  const hoverAudioRef = useRef<HTMLAudioElement>(null);
+
+  const playHoverSound = () => {
+    // hoverAudioRef.current?.play().catch(e => console.error("Error playing hover sound:", e));
+  }
 
   return (
     <>
@@ -53,7 +59,7 @@ export function SidebarNav() {
           {navItems.map((item) => {
             if (item.officerOnly && !isOfficer) return null;
             return (
-              <SidebarMenuItem key={item.label}>
+              <SidebarMenuItem key={item.label} onMouseEnter={playHoverSound}>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === item.href}
@@ -72,16 +78,17 @@ export function SidebarNav() {
       <SidebarFooter className="p-4">
         <Separator className="my-2" />
         <div className="flex flex-col gap-2">
-           <Button variant="ghost" className="justify-start gap-2">
+           <Button variant="ghost" className="justify-start gap-2" onMouseEnter={playHoverSound}>
             <LifeBuoy className="h-4 w-4" />
             <span className="text-sm">Support</span>
           </Button>
-          <Button variant="ghost" className="justify-start gap-2">
+          <Button variant="ghost" className="justify-start gap-2" onMouseEnter={playHoverSound}>
             <Settings className="h-4 w-4" />
             <span className="text-sm">Settings</span>
           </Button>
         </div>
       </SidebarFooter>
+      <audio ref={hoverAudioRef} src="/sounds/ui-hover.mp3" preload="auto"></audio>
     </>
   );
 }
