@@ -103,13 +103,12 @@ export default function ApplyPage() {
     }
   });
 
-  const { handleSubmit, control, watch, formState: { errors, isSubmitting } } = form;
+  const { handleSubmit, control, watch, formState: { isSubmitting } } = form;
 
   const watchedValues = watch();
   
   useEffect(() => {
-    const stringifiedValues = JSON.stringify(watchedValues);
-    setSavedDraft(JSON.parse(stringifiedValues));
+    setSavedDraft(JSON.parse(JSON.stringify(watchedValues)));
   }, [JSON.stringify(watchedValues), setSavedDraft]);
 
   const onSubmit = async (data: ApplicationFormValues) => {
@@ -295,71 +294,65 @@ export default function ApplyPage() {
                       </FormItem>
                     )} />
                  </div>
-                  <FormField control={control} name="favoriteModes" render={({ field }) => (
-                        <FormItem>
-                           <FormLabel>Favorite Game Modes</FormLabel>
-                           {gameModes.map((mode) => (
-                            <FormField
-                                key={mode}
-                                control={control}
-                                name="favoriteModes"
-                                render={({ field: innerField }) => {
-                                return (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-2">
-                                    <FormControl>
-                                        <Checkbox
-                                        checked={innerField.value?.includes(mode)}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                            ? innerField.onChange([...innerField.value, mode])
-                                            : innerField.onChange(
-                                                innerField.value?.filter(
-                                                (value) => value !== mode
-                                                )
-                                            );
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">{mode}</FormLabel>
-                                    </FormItem>
-                                );
-                                }}
-                            />
-                            ))}
-                           <FormMessage />
-                        </FormItem>
-                      )} />
-                     <FormField control={control} name="bossesKilled" render={({ field }) => (
-                        <FormItem>
-                           <FormLabel>Bosses Killed (Optional)</FormLabel>
-                           {bossList.map((boss) => (
-                            <FormField
-                                key={boss}
-                                control={control}
-                                name="bossesKilled"
-                                render={({ field: innerField }) => {
-                                return (
-                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 mt-2">
-                                    <FormControl>
-                                        <Checkbox
-                                        checked={innerField.value?.includes(boss)}
-                                        onCheckedChange={(checked) => {
-                                            const currentValues = innerField.value || [];
-                                            return checked
-                                            ? innerField.onChange([...currentValues, boss])
-                                            : innerField.onChange(currentValues.filter((value) => value !== boss));
-                                        }}
-                                        />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">{boss}</FormLabel>
-                                    </FormItem>
-                                );
-                                }}
-                            />
-                            ))}
-                           <FormMessage />
-                        </FormItem>
-                      )} />
+                  <FormField
+                    control={control}
+                    name="favoriteModes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Favorite Game Modes</FormLabel>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {gameModes.map((mode) => (
+                            <FormItem key={mode} className="flex flex-row items-start space-x-3 space-y-0 mt-2">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(mode)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, mode])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== mode
+                                          )
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">{mode}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={control}
+                    name="bossesKilled"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bosses Killed (Optional)</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {bossList.map((boss) => (
+                              <FormItem key={boss} className="flex flex-row items-start space-x-3 space-y-0 mt-2">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(boss)}
+                                    onCheckedChange={(checked) => {
+                                      const currentValues = field.value || [];
+                                      return checked
+                                        ? field.onChange([...currentValues, boss])
+                                        : field.onChange(currentValues.filter((value) => value !== boss));
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">{boss}</FormLabel>
+                              </FormItem>
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                  <FormField control={control} name="memorableExperience" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tell us a memorable or fun in-game experience.</FormLabel>
@@ -374,42 +367,33 @@ export default function ApplyPage() {
                     <FormField
                         control={control}
                         name="availabilityDays"
-                        render={() => (
+                        render={({ field }) => (
                             <FormItem>
                                 <FormLabel>What days of the week do you typically play?</FormLabel>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {daysOfWeek.map((day) => (
-                                    <FormField
-                                    key={day}
-                                    control={control}
-                                    name="availabilityDays"
-                                    render={({ field }) => {
-                                        return (
-                                        <FormItem
-                                            key={day}
-                                            className="flex flex-row items-start space-x-3 space-y-0"
-                                        >
-                                            <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(day)}
-                                                onCheckedChange={(checked) => {
-                                                return checked
-                                                    ? field.onChange([...field.value, day])
-                                                    : field.onChange(
-                                                        field.value?.filter(
-                                                        (value) => value !== day
-                                                        )
+                                    <FormItem
+                                        key={day}
+                                        className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                        <FormControl>
+                                        <Checkbox
+                                            checked={field.value?.includes(day)}
+                                            onCheckedChange={(checked) => {
+                                            return checked
+                                                ? field.onChange([...field.value, day])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                    (value) => value !== day
                                                     )
-                                                }}
-                                            />
-                                            </FormControl>
-                                            <FormLabel className="font-normal">
-                                            {day}
-                                            </FormLabel>
-                                        </FormItem>
-                                        )
-                                    }}
-                                    />
+                                                )
+                                            }}
+                                        />
+                                        </FormControl>
+                                        <FormLabel className="font-normal">
+                                        {day}
+                                        </FormLabel>
+                                    </FormItem>
                                 ))}
                                 </div>
                                 <FormMessage />
