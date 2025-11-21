@@ -60,7 +60,8 @@ export default function LandingPage() {
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
-  useEffect(() => {
+   useEffect(() => {
+    // This effect runs only on the client, after the initial render.
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
@@ -128,8 +129,8 @@ export default function LandingPage() {
           <TabsContent value="sign-in">
             <Card>
               <CardHeader>
-                <CardTitle>Member Login</CardTitle>
-                <CardDescription>Enter your credentials to access the guild hub.</CardDescription>
+                <CardTitle>Member & Applicant Login</CardTitle>
+                <CardDescription>Enter your credentials to access the hub.</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
@@ -189,3 +190,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    
