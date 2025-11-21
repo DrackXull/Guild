@@ -128,7 +128,7 @@ service cloud.firestore {
     /**
      * @description Global configuration for drastic score rules. Publicly readable, but only manageable by officers.
      * @path /drastic_score_rules/{drasticScoreRuleId}
-     * @allow (list) Any user can read the list of score rules.
+     * @allow (get, list: if true);
      * @deny (update) A regular, non-officer user attempts to change a rule.
      * @principle Enforces public read access with privileged writes for administrative control.
      */
@@ -147,7 +147,8 @@ service cloud.firestore {
     match /bounty_board_quests/{bountyBoardQuestId} {
       allow get: if true;
       allow list: if request.auth == null || request.auth != null;
-      allow create, update, delete: if isOfficer();
+      // Temporarily allow any signed-in user to manage bounties until roles are implemented
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
