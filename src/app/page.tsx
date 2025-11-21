@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -60,17 +60,18 @@ export default function LandingPage() {
     defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
-  if (isUserLoading) {
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background text-foreground">
         Loading...
       </div>
     );
-  }
-
-  if (user) {
-    router.push('/dashboard');
-    return null;
   }
   
   const playTabSound = () => {
