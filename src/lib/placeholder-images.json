@@ -1,3 +1,46 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-dungeon",
+      "description": "A dark and gritty dungeon corridor lit by a single torch, setting the atmosphere for the guild hub.",
+      "imageUrl": "https://images.unsplash.com/photo-1657401971372-ce72d30aa04c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkdW5nZW9uJTIwcGFzc2FnZXxlbnwwfHx8fDE3NjM2OTY5Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "dungeon passage"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Avatar for a guild member, a rugged male warrior.",
+      "imageUrl": "https://images.unsplash.com/photo-1635921481467-fba710b8e65c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmYW50YXN5JTIwd2FycmlvcnxlbnwwfHx8fDE3NjM2MzExOTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy warrior"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Avatar for a guild member, a mysterious female rogue.",
+      "imageUrl": "https://picsum.photos/seed/rogue/100/100",
+      "imageHint": "fantasy rogue"
+    },
+    {
+      "id": "character-fighter",
+      "description": "Portrait of a heavily armored fighter character.",
+      "imageUrl": "https://images.unsplash.com/photo-1760709880148-360699c33f29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhcm1vcmVkJTIwa25pZ2h0fGVufDB8fHx8MTc2MzY4NjQ2MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "armored knight"
+    },
+    {
+      "id": "character-ranger",
+      "description": "Portrait of an agile ranger with a bow.",
+      "imageUrl": "https://images.unsplash.com/photo-1654714685970-06386068b3f2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmYW50YXN5JTIwYXJjaGVyfGVufDB8fHx8MTc2MzU5Mzk3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy archer"
+    },
+    {
+      "id": "character-wizard",
+      "description": "Portrait of a powerful wizard casting a spell.",
+      "imageUrl": "https://images.unsplash.com/photo-1697590879902-a1f574f9dc63?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3aXphcmQlMjBzcGVsbHxlbnwwfHx8fDE3NjM2OTY5Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wizard spell"
+    },
+    {
+      "id": "run-screenshot-1",
+      "description": "Example scoreboard screenshot from a successful run.",
+      "imageUrl": "https://images.unsplash.com/photo-1533237122199-6c24ffac01ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnYW1lJTIwc2NvcmVib2FyZHxlbnwwfHx8fDE3NjM2OTY5Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "game scoreboard"
+    }
+  ]
 }
