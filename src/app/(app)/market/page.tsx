@@ -1,1 +1,0 @@
-// This file has been moved to src/app/market/page.tsx and is now deleted.
