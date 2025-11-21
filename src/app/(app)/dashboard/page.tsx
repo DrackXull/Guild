@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockPlayer, allCharacters } from "@/lib/data";
+import { mockPlayer, allCharacters, players } from "@/lib/data";
 import { getBounties } from "@/lib/actions";
 import { QuestCard } from "@/components/bounty-board/quest-card";
 import {
-  Activity,
+  Shield,
   Gem,
   Skull,
   Swords,
-  Target
+  Target,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -17,9 +18,9 @@ export default async function DashboardPage() {
   const bounties = await getBounties();
   const dailyBounties = bounties.filter(b => b.questType === 'daily').slice(0, 2);
 
-  const totalKills = player.characters.reduce((acc, char) => acc + char.totalKills, 0);
-  const totalDeaths = player.characters.reduce((acc, char) => acc + char.totalDeaths, 0);
-  const kdRatio = totalDeaths > 0 ? (totalKills / totalDeaths).toFixed(2) : totalKills;
+  const onlineMembers = players.filter(p => p.isOnline).length;
+  const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
+  const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
 
   return (
     <div className="flex flex-col gap-8">
@@ -31,42 +32,42 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Honor</CardTitle>
+            <CardTitle className="text-sm font-medium">Members Online</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{onlineMembers}</div>
+            <p className="text-xs text-muted-foreground">Ready for adventure</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Guild Kills</CardTitle>
+            <Swords className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalGuildKills}</div>
+            <p className="text-xs text-muted-foreground">Player kills confirmed</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Boss Kills</CardTitle>
+            <Skull className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalBossKills}</div>
+             <p className="text-xs text-muted-foreground">Across the entire guild</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Your Honor</CardTitle>
             <Gem className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{player.currentHonor.toLocaleString()} HP</div>
             <p className="text-xs text-muted-foreground">Lifetime: {player.lifetimeHonor.toLocaleString()} HP</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Kills</CardTitle>
-            <Swords className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalKills}</div>
-            <p className="text-xs text-muted-foreground">Across all characters</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Deaths</CardTitle>
-            <Skull className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalDeaths}</div>
-            <p className="text-xs text-muted-foreground">A necessary sacrifice</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">K/D Ratio</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kdRatio}</div>
-            <p className="text-xs text-muted-foreground">Overall performance</p>
           </CardContent>
         </Card>
       </div>

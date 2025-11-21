@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Gem, Shield, Users, UserCircle } from "lucide-react";
+import { Gem, Shield, Users, UserCircle, Crown } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,10 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <Gem className="h-4 w-4 text-primary" />
                   <span><span className="font-bold text-foreground">{player.currentHonor.toLocaleString()}</span> Current Honor</span>
+                </div>
+                 <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4" />
+                  <span><span className="font-bold text-foreground">{player.maxHonor.toLocaleString()}</span> Max Honor</span>
                 </div>
                  <div className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />

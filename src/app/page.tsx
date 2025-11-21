@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background text-foreground">
-      <Card className="w-full max-w-md bg-card/80">
-        <CardHeader className="text-center">
-          <CardTitle className="font-headline text-4xl tracking-wider">
-            Guild Nexus
+      <Card className="w-full max-w-md bg-card/80 relative">
+         <p className="absolute top-4 right-4 text-xs text-muted-foreground">Guild Nexus</p>
+        <CardHeader className="text-center pt-12">
+          <CardTitle className="font-headline text-5xl tracking-wider">
+            Soon TM
           </CardTitle>
           <CardDescription className="pt-2 text-base">
             Please log in or apply to join.

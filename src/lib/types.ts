@@ -7,6 +7,7 @@ export type Player = {
   isOnline: boolean;
   lifetimeHonor: number;
   currentHonor: number;
+  maxHonor: number;
   characters: Character[];
   avatarUrl: string;
   rank?: string;
