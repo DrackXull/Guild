@@ -3,79 +3,79 @@
     {
       "id": "hero-dungeon",
       "description": "A dark and gritty dungeon corridor lit by a single torch, setting the atmosphere for the guild hub.",
-      "imageUrl": "https://images.unsplash.com/photo-1657401971372-ce72d30aa04c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxkdW5nZW9uJTIwcGFzc2FnZXxlbnwwfHx8fDE3NjM2OTY5Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1599469803986-a68153205178?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       "imageHint": "dungeon passage"
     },
     {
       "id": "user-avatar-1",
       "description": "Avatar for a guild member, a rugged male warrior.",
-      "imageUrl": "https://placehold.co/100x100/0e0a09/f6ede0?text=Soon",
+      "imageUrl": "https://images.unsplash.com/photo-1618425978767-c0b3b9205423?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYW50YXN5JTIwd2FycmlvcnxlbnwwfHx8fDE3NjM3NDczODZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy warrior"
     },
     {
       "id": "user-avatar-2",
       "description": "Avatar for a guild member, a mysterious female rogue.",
-      "imageUrl": "https://placehold.co/100x100/0e0a09/f6ede0?text=Mercer",
+      "imageUrl": "https://picsum.photos/seed/avatar2/100/100",
       "imageHint": "fantasy rogue"
     },
     {
       "id": "character-fighter",
       "description": "Portrait of a heavily armored fighter character.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Fighter",
+      "imageUrl": "https://images.unsplash.com/photo-1672673321304-07d3c58247a0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhcm1vcmVkJTIwa25pZ2h0fGVufDB8fHx8MTc2MzY4NjQ2MXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "armored knight"
     },
     {
       "id": "character-ranger",
       "description": "Portrait of an agile ranger with a bow.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Ranger",
+      "imageUrl": "https://images.unsplash.com/photo-1633147967356-a5eac3aa214b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYW50YXN5JTIwYXJjaGVyfGVufDB8fHx8MTc2Mzc0Njc2MXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy archer"
     },
     {
       "id": "character-wizard",
       "description": "Portrait of a powerful wizard casting a spell.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Wizard",
+      "imageUrl": "https://images.unsplash.com/photo-1653292744182-8da2c038cb29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2l6YXJkJTIwc3BlbGx8ZW58MHx8fHwxNzYzNjk2OTM4fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "wizard spell"
     },
     {
       "id": "character-barbarian",
       "description": "Portrait of a fierce barbarian.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Barbarian",
+      "imageUrl": "https://images.unsplash.com/photo-1706399167737-18c17ceae44f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmYW50YXN5JTIwYmFyYmFyaWFufGVufDB8fHx8MTc2Mzc1ODIyM3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy barbarian"
     },
     {
       "id": "character-cleric",
       "description": "Portrait of a noble cleric.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Cleric",
+      "imageUrl": "https://images.unsplash.com/photo-1706399167806-13f9ee6df4be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmYW50YXN5JTIwY2xlcmljfGVufDB8fHx8MTc2MzY1Nzg3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy cleric"
     },
     {
       "id": "character-rogue",
       "description": "Portrait of a stealthy rogue.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Rogue",
+      "imageUrl": "https://picsum.photos/seed/rogue/600/600",
       "imageHint": "fantasy rogue"
     },
     {
       "id": "character-sorcerer",
       "description": "Portrait of a powerful sorcerer.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Sorcerer",
+      "imageUrl": "https://images.unsplash.com/photo-1634409884980-a30da0b2b010?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmYW50YXN5JTIwc29yY2VyZXJ8ZW58MHx8fHwxNzYzNzAxMjY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy sorcerer"
     },
     {
       "id": "character-warlock",
       "description": "Portrait of a mysterious warlock.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Warlock",
+      "imageUrl": "https://images.unsplash.com/photo-1760574772950-f37de9dce85c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmYW50YXN5JTIwd2FybG9ja3xlbnwwfHx8fDE3NjM3MDEyNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy warlock"
     },
     {
       "id": "character-druid",
       "description": "Portrait of a nature-bound druid.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Druid",
+      "imageUrl": "https://images.unsplash.com/photo-1675891558661-f5bfe803a31c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmYW50YXN5JTIwZHJ1aWR8ZW58MHx8fHwxNzYzNjc0ODkwfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "fantasy druid"
     },
     {
       "id": "character-bard",
       "description": "Portrait of a charming bard.",
-      "imageUrl": "https://placehold.co/600x600/0e0a09/f6ede0?text=Bard",
+      "imageUrl": "https://picsum.photos/seed/bard/600/600",
       "imageHint": "fantasy bard"
     },
     {

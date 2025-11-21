@@ -1,5 +1,5 @@
 'use client';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { UserNav } from '@/components/layout/user-nav';
@@ -7,6 +7,7 @@ import { allCharacters, players } from '@/lib/data';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
+import { useUser } from '@/firebase';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const onlineMembers = players.filter(p => p.isOnline).length;
@@ -14,6 +15,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
   const pathname = usePathname();
   const isOfficerPage = pathname.startsWith('/officer');
+  
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -26,6 +30,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
+  useEffect(() => {
+    // If auth is done loading and there's no user, redirect to login page.
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
+  // If user is loading, you can show a loading spinner or a blank page
+  if (isUserLoading || !user) {
+    return (
+        <div className="flex items-center justify-center h-screen bg-background">
+            <p>Loading...</p>
+        </div>
+    );
+  }
 
   return (
     <div className={cn({ 'officer-theme': isOfficerPage })}>

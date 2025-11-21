@@ -16,28 +16,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { mockPlayer } from '@/lib/data';
-import { Gem, LogOut, Shield, User } from 'lucide-react';
+import { useAuth, useUser } from '@/firebase';
+import { Gem, LogOut, Shield, User as UserIcon } from 'lucide-react';
+import { getAuth, signOut } from 'firebase/auth';
 
 export function UserNav() {
-  const player = mockPlayer;
+  const { user } = useUser();
+  const auth = useAuth();
+  
+  const handleLogout = () => {
+    signOut(auth);
+  };
+
+  if (!user) {
+    return null;
+  }
+  
+  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : '?';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={player.avatarUrl} alt={player.displayName} />
-            <AvatarFallback>{player.displayName.charAt(0)}</AvatarFallback>
+            {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
+            <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{player.displayName}</p>
+            <p className="text-sm font-medium leading-none">{user.displayName || 'Member'}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {player.discordTag}
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -45,7 +57,7 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link href="/profile">
-              <User className="mr-2 h-4 w-4" />
+              <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
@@ -58,16 +70,15 @@ export function UserNav() {
           <DropdownMenuItem>
             <Gem className="mr-2 h-4 w-4" />
             <span>
-              {player.currentHonor.toLocaleString()} HP
+              {/* This is mock data, replace later */}
+              2,500 HP
             </span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-            <Link href="/">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-            </Link>
+        <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
