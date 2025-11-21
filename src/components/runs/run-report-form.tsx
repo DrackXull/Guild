@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { suggestTraits, submitRunReport } from "@/lib/actions";
+import { submitRunReport } from "@/lib/actions";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,9 +29,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { BrainCircuit, Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import type { Character } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { mockPlayer } from "@/lib/data";
 
 const availableTraits = ["great comms", "team player", "loot hog", "toxic"];
 const RATING_LOW_THRESHOLD = 3;
@@ -53,7 +54,7 @@ const runReportSchema = z.object({
       bossKills: z.coerce.number().min(0),
       traits: z.array(z.string()),
     })
-  ).min(1, "Please add at least one teammate (yourself included)."),
+  ).min(2, "A guild run must have at least 2 teammates.").max(3, "A guild run can have at most 3 teammates."),
 }).refine(data => {
   if (data.rating <= RATING_LOW_THRESHOLD) {
     return data.runNotes && data.runNotes.length >= LOW_RATING_COMMENT_LENGTH;
@@ -76,8 +77,8 @@ type RunReportFormValues = z.infer<typeof runReportSchema>;
 
 export function RunReportForm({ allCharacters }: { allCharacters: Character[] }) {
   const [isPending, startTransition] = useTransition();
-  const [isSuggesting, startSuggestionTransition] = useTransition();
   const { toast } = useToast();
+  const playerCharacters = mockPlayer.characters;
 
   const form = useForm<RunReportFormValues>({
     resolver: zodResolver(runReportSchema),
@@ -85,6 +86,13 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
       gameMode: "Normal",
       rating: 5,
       teammates: [{
+        characterId: "",
+        kills: 0,
+        deaths: 0,
+        extracted: false,
+        bossKills: 0,
+        traits: [],
+      }, {
         characterId: "",
         kills: 0,
         deaths: 0,
@@ -118,34 +126,6 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
           title: "Submission Failed",
           description: result.message,
           variant: "destructive",
-        });
-      }
-    });
-  };
-
-  const handleSuggestTraits = (teammateIndex: number) => {
-    const notes = form.getValues("runNotes");
-    if (!notes || notes.trim().length < 20) {
-      toast({
-        title: "More Details Needed",
-        description: "Please write more detailed run notes (at least 20 characters) to get AI trait suggestions.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    startSuggestionTransition(async () => {
-      const result = await suggestTraits({ runNotes: notes });
-      if (result.suggestedTraits.length > 0) {
-        form.setValue(`teammates.${teammateIndex}.traits`, result.suggestedTraits);
-        toast({
-          title: "AI Traits Suggested!",
-          description: "Relevant traits have been selected based on your notes."
-        });
-      } else {
-         toast({
-          title: "No Traits Suggested",
-          description: "The AI could not find any relevant traits. Feel free to select them manually."
         });
       }
     });
@@ -237,10 +217,12 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
             {fields.map((field, index) => (
               <Card key={field.id}>
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="font-headline text-xl">Teammate {index + 1}</CardTitle>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <CardTitle className="font-headline text-xl">{index === 0 ? "Your Character" : `Teammate ${index + 1}`}</CardTitle>
+                  {fields.length > 2 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <FormField
@@ -252,7 +234,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a character" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {allCharacters.map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
+                            {(index === 0 ? playerCharacters : allCharacters).map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -305,10 +287,6 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                       </FormItem>
                     )}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={() => handleSuggestTraits(index)} disabled={isSuggesting || !runNotes}>
-                    {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-                    Suggest Traits with AI
-                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -318,6 +296,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
               size="sm"
               className="mt-2"
               onClick={() => append({ characterId: "", kills: 0, deaths: 0, extracted: false, bossKills: 0, traits: [] })}
+              disabled={fields.length >= 3}
             >
               Add Teammate
             </Button>
