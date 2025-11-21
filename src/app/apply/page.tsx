@@ -308,9 +308,9 @@ export default function ApplyPage() {
                                   checked={field.value?.includes(mode)}
                                   onCheckedChange={(checked) => {
                                     return checked
-                                      ? field.onChange([...field.value, mode])
+                                      ? field.onChange([...(field.value || []), mode])
                                       : field.onChange(
-                                          field.value?.filter(
+                                          (field.value || [])?.filter(
                                             (value) => value !== mode
                                           )
                                         );
@@ -381,9 +381,9 @@ export default function ApplyPage() {
                                             checked={field.value?.includes(day)}
                                             onCheckedChange={(checked) => {
                                             return checked
-                                                ? field.onChange([...field.value, day])
+                                                ? field.onChange([...(field.value || []), day])
                                                 : field.onChange(
-                                                    field.value?.filter(
+                                                    (field.value || [])?.filter(
                                                     (value) => value !== day
                                                     )
                                                 )
@@ -540,3 +540,5 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+    
