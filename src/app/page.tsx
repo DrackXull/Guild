@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,7 +24,16 @@ const signInSchema = z.object({
 
 const signUpSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters.' }),
+  password: z.string()
+    .min(8, { message: 'Password must be at least 8 characters.' })
+    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter.' })
+    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter.' })
+    .regex(/[0-9]/, { message: 'Password must contain at least one number.' })
+    .regex(/[^A-Za-z0-9]/, { message: 'Password must contain at least one special character.' }),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match.",
+  path: ['confirmPassword'],
 });
 
 type SignInFormValues = z.infer<typeof signInSchema>;
@@ -36,6 +45,9 @@ export default function LandingPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('sign-in');
+  
+  const tabAudioRef = useRef<HTMLAudioElement>(null);
+  const loginAudioRef = useRef<HTMLAudioElement>(null);
 
   const signInForm = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -44,7 +56,7 @@ export default function LandingPage() {
 
   const signUpForm = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
   if (isUserLoading) {
@@ -59,8 +71,13 @@ export default function LandingPage() {
     router.push('/dashboard');
     return null;
   }
+  
+  const playTabSound = () => {
+    tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
+  }
 
   const handleSignIn = (data: SignInFormValues) => {
+    loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
     initiateEmailSignIn(auth, data.email, data.password);
   };
 
@@ -91,13 +108,13 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="font-headline text-5xl text-primary leading-none">
-                <div className="text-2xl font-light text-foreground/80">The</div>
+                <div className="text-3xl font-light text-foreground/80 tracking-widest">The</div>
                 Black Lantern
-                <div className="text-4xl font-light text-foreground/80 -mt-2">Company</div>
+                <div className="text-4xl font-light text-foreground/80 -mt-2 tracking-widest">Company</div>
             </h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playTabSound(); }} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="sign-in">Sign In</TabsTrigger>
             <TabsTrigger value="sign-up">Create Account</TabsTrigger>
@@ -143,6 +160,11 @@ export default function LandingPage() {
                     <Input id="password-signup" type="password" {...signUpForm.register('password')} />
                     {signUpForm.formState.errors.password && <p className="text-destructive text-xs">{signUpForm.formState.errors.password.message}</p>}
                   </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="confirmPassword-signup">Confirm Password</Label>
+                    <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} />
+                    {signUpForm.formState.errors.confirmPassword && <p className="text-destructive text-xs">{signUpForm.formState.errors.confirmPassword.message}</p>}
+                  </div>
                   <Button type="submit" className="w-full">Create Account</Button>
                 </form>
               </CardContent>
@@ -153,6 +175,10 @@ export default function LandingPage() {
             Not affiliated with IRONMACE. All trademarks are the property of their respective owners.
         </p>
       </div>
+      
+      {/* Audio elements for sound effects - replace src with your actual audio files */}
+      <audio ref={tabAudioRef} src="/sounds/rock-slide.mp3" preload="auto"></audio>
+      <audio ref={loginAudioRef} src="/sounds/chest-unlock.mp3" preload="auto"></audio>
     </div>
   );
 }
