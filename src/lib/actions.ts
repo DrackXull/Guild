@@ -12,7 +12,7 @@ export async function getBounties(): Promise<Quest[]> {
     });
     return quests;
   } catch (error) {
-    console.error("Error generating bounties:", error);
+    console.error("Error generating bounties:", error instanceof Error ? error.message : String(error));
     // Return a set of fallback quests if AI fails
     return [
       { questName: 'Headhunter', questDescription: 'Get 10 player kills confirmed via screenshot.', questType: 'daily', reward: '100 Honor' },
