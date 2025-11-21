@@ -1,41 +1,175 @@
 'use client';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Trash2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, ScrollText, Users, FileText, Trash2, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { getBounties } from "@/lib/actions";
+import { getBountySuggestions } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { marketItems as initialMarketItems, mockApplications, mockReviews } from "@/lib/data";
-import { useEffect, useState, useTransition } from "react";
-import type { Quest, MarketItem } from "@/lib/types";
+import { useEffect, useState, useTransition, useMemo } from "react";
+import type { Quest, MarketItem, WithId } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { MarketAdmin } from "@/components/market/market-admin";
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, doc } from "firebase/firestore";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
-export default function OfficerPage() {
+function BountyAdmin() {
   const { toast } = useToast();
-  const [bounties, setBounties] = useState<Quest[]>([]);
-  const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
-  const [isBountyPending, startBountyTransition] = useTransition();
+  const firestore = useFirestore();
+  const [isSuggestionPending, startSuggestionTransition] = useTransition();
 
-  const fetchBounties = () => {
-    startBountyTransition(async () => {
-      const fetchedBounties = await getBounties();
-      setBounties(fetchedBounties);
-      toast({
-        title: "Bounties Loaded",
-        description: "The latest bounties have been loaded from the server."
-      })
-    });
+  const bountiesCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'bounty_board_quests');
+  }, [firestore]);
+
+  const bountiesQuery = useMemoFirebase(() => {
+    if (!bountiesCollectionRef) return null;
+    return query(bountiesCollectionRef, orderBy('questName'));
+  }, [bountiesCollectionRef]);
+
+  const { data: bounties, isLoading } = useCollection<Quest>(bountiesQuery);
+
+  const handleCreateBounty = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!bountiesCollectionRef) return;
+
+    const formData = new FormData(event.currentTarget);
+    const newBounty = {
+      questName: formData.get('questName') as string,
+      questDescription: formData.get('questDescription') as string,
+      reward: formData.get('reward') as string,
+      questType: formData.get('questType') as 'daily' | 'weekly',
+    };
+
+    if (!newBounty.questName || !newBounty.questDescription || !newBounty.reward || !newBounty.questType) {
+      toast({ title: "Missing Fields", description: "Please fill out all bounty information.", variant: "destructive" });
+      return;
+    }
+
+    addDocumentNonBlocking(bountiesCollectionRef, newBounty);
+    toast({ title: "Bounty Created", description: `"${newBounty.questName}" has been added.` });
+    (event.target as HTMLFormElement).reset();
+  };
+
+  const handleRemoveBounty = (bountyId: string, bountyName: string) => {
+    if (!firestore) return;
+    const bountyDocRef = doc(firestore, 'bounty_board_quests', bountyId);
+    deleteDocumentNonBlocking(bountyDocRef);
+    toast({ title: "Bounty Removed", description: `"${bountyName}" has been removed.`, variant: "destructive" });
   }
 
-  useEffect(() => {
-    fetchBounties();
-  }, []);
-  
+  const handleGenerateSuggestions = () => {
+    startSuggestionTransition(async () => {
+      const suggestions = await getBountySuggestions();
+      if (suggestions.length > 0 && bountiesCollectionRef) {
+        // For now, let's just add the first suggestion
+        const suggestionToAdd = suggestions[0];
+         addDocumentNonBlocking(bountiesCollectionRef, suggestionToAdd);
+         toast({ title: "Suggestion Added", description: `Added "${suggestionToAdd.questName}" to the board.` });
+      } else {
+        toast({ title: "No suggestions returned", variant: "destructive" });
+      }
+    })
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+          <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                  <ScrollText className="h-6 w-6" />
+                  <CardTitle className="font-headline text-2xl">Guild Bounty Administration</CardTitle>
+              </div>
+               <Button onClick={handleGenerateSuggestions} disabled={isSuggestionPending}>
+                  {isSuggestionPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Generate AI Suggestion
+              </Button>
+          </div>
+        <CardDescription>
+          Add, remove, and manage the guild's daily and weekly bounties.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="space-y-6">
+            <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
+                {isLoading && (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+                {!isLoading && (!bounties || bounties.length === 0) && (
+                    <p className="text-muted-foreground text-center py-8">No active bounties. Create one to get started.</p>
+                )}
+                {bounties?.map((bounty: WithId<Quest>) => (
+                    <Card key={bounty.id} className="bg-background/50">
+                        <CardHeader className="pb-4">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg font-semibold">{bounty.questName}</CardTitle>
+                                    <CardDescription className="text-xs pt-1 flex items-center gap-1.5"><Gem className="h-3 w-3" />{bounty.reward}</CardDescription>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={bounty.questType === 'daily' ? 'default' : 'secondary'}>{bounty.questType}</Badge>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRemoveBounty(bounty.id, bounty.questName)}>
+                                      <Trash2 className="h-4 w-4 text-destructive"/>
+                                  </Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">{bounty.questDescription}</p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+        <form className="space-y-4 sticky top-4" onSubmit={handleCreateBounty}>
+            <h3 className="font-headline text-xl font-semibold">Create New Bounty</h3>
+            <div className="space-y-2">
+                <Label htmlFor="questName">Bounty Name</Label>
+                <Input id="questName" name="questName" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="questDescription">Description</Label>
+                <Textarea id="questDescription" name="questDescription" rows={3} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="reward">Reward</Label>
+                    <Input id="reward" name="reward" placeholder="e.g., 100 Honor" required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="questType">Type</Label>
+                     <Select name="questType" required defaultValue="daily">
+                      <SelectTrigger id="questType">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <Button type="submit" className="w-full">Create Bounty</Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function OfficerPage() {
+  const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
   const applications = mockApplications;
   const reviews = mockReviews;
 
@@ -94,52 +228,7 @@ export default function OfficerPage() {
 
       <Separator />
 
-      <Card>
-        <CardHeader>
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <ScrollText className="h-6 w-6" />
-                    <CardTitle className="font-headline text-2xl">Guild Bounty Administration</CardTitle>
-                </div>
-                 <Button onClick={fetchBounties} disabled={isBountyPending}>
-                    {isBountyPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Generate New Bounties
-                </Button>
-            </div>
-          <CardDescription>
-            Generate a new set of daily and weekly bounties for the guild using AI.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
-                {isBountyPending && (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                )}
-                {!isBountyPending && bounties.length === 0 && (
-                    <p className="text-muted-foreground text-center py-8">No active bounties. Generate a new set to get started.</p>
-                )}
-                {bounties.map(bounty => (
-                    <Card key={bounty.questName} className="bg-background/50">
-                        <CardHeader className="pb-4">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg font-semibold">{bounty.questName}</CardTitle>
-                                    <CardDescription className="text-xs pt-1">{bounty.reward}</CardDescription>
-                                </div>
-                                <Badge variant={bounty.questType === 'daily' ? 'default' : 'secondary'}>{bounty.questType}</Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">{bounty.questDescription}</p>
-                        </CardContent>
-                    </Card>
-                ))}
-            </div>
-        </CardContent>
-      </Card>
+      <BountyAdmin />
       
       <Separator />
 

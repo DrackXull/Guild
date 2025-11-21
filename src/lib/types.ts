@@ -1,4 +1,6 @@
 
+export type WithId<T> = T & { id: string };
+
 export type Player = {
   id: string;
   displayName: string;
@@ -99,13 +101,6 @@ export type Quest = {
   questDescription: string;
   questType: 'daily' | 'weekly';
   reward: string;
-  requirements?: any;
-  rewardAmount?: number;
-  isActive?: boolean;
-  createdAt?: Date;
-  title?: string;
-  description?: string;
-  type?: 'daily' | 'weekly';
 };
 
 

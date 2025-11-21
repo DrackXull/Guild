@@ -213,33 +213,29 @@
       "type": "object",
       "description": "Represents a daily or weekly quest available on the bounty board.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the bounty board quest entity."
-        },
-        "name": {
+        "questName": {
           "type": "string",
           "description": "Name of the bounty board quest."
         },
-        "description": {
+        "questDescription": {
           "type": "string",
           "description": "Description of the bounty board quest."
         },
         "reward": {
-          "type": "number",
+          "type": "string",
           "description": "Honor point reward for completing the quest."
         },
-        "isDaily": {
-          "type": "boolean",
-          "description": "Indicates if the quest is a daily quest."
+        "questType": {
+          "type": "string",
+          "enum": ["daily", "weekly"],
+          "description": "Indicates if the quest is a daily or weekly quest."
         }
       },
       "required": [
-        "id",
-        "name",
-        "description",
+        "questName",
+        "questDescription",
         "reward",
-        "isDaily"
+        "questType"
       ]
     },
     "HonorPointLog": {
