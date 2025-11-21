@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Player": {
@@ -394,6 +395,10 @@
           "type": "string",
           "description": "The applicant's chosen name or handle."
         },
+        "inGameName": {
+          "type": "string",
+          "description": "The applicant's Dark and Darker account name."
+        },
         "discordTag": {
           "type": "string",
           "description": "The applicant's Discord tag."
@@ -491,7 +496,8 @@
           "description": "The applicant's other content platform URL."
         },
         "availabilityDays": {
-          "type": "string",
+          "type": "array",
+          "items": { "type": "string" },
           "description": "The days of the week the applicant typically plays."
         },
         "availabilityTimezone": {
@@ -514,6 +520,7 @@
       "required": [
         "userId",
         "applicantName",
+        "inGameName",
         "discordTag",
         "status",
         "createdAt",

@@ -1,3 +1,4 @@
+
 import { Player, Character, CharacterClass, Application, ApplicationReview, MarketItem, MemberBounty } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -59,7 +60,9 @@ export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard'
 
 export const gameModes: string[] = ["Normal", "High Roller", "Squires to Riches", "Adventure mode", "Arena", "PvE", "PvP", "Bosses"];
 
-export const bossList: string[] = ["Cave Troll", "Cyclops", "Lich (Crypts)", "Ghost King", "Warlord (Crypts)", "Banshee (Ruins)", "Spectral Knight (Ruins)", "Wyvern (Ice Abyss)"];
+export const bossList: string[] = ["Cave Troll (Goblin Caves)", "Cyclops (Goblin Caves)", "Lich (Crypts)", "Ghost King (Inferno)", "Warlord (Crypts)", "Banshee (Ruins)", "Spectral Knight (Ruins)", "Wyvern (Ice Abyss)"];
+
+export const daysOfWeek: string[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export const mockPlayer = players[0];
 

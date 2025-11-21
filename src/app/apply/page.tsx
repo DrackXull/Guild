@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -18,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Form, FormItem, FormLabel, FormControl, FormField, FormDescription, FormMessage } from '@/components/ui/form';
-import { characterClasses, gameModes, bossList } from '@/lib/data';
+import { characterClasses, gameModes, bossList, daysOfWeek } from '@/lib/data';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
@@ -27,6 +28,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 
 const applicationSchema = z.object({
   applicantName: z.string().min(1, 'Name is required.'),
+  inGameName: z.string().min(1, 'In-game name is required.'),
   discordTag: z.string().min(1, 'Discord tag is required.'),
   mainCharacters: z.string().min(1, "Please list your main character(s)."),
   mainClasses: z.array(z.string()).min(1, "Please select at least one class."),
@@ -42,16 +44,27 @@ const applicationSchema = z.object({
   twitterUrl: z.string().url().optional().or(z.literal('')),
   tiktokUrl: z.string().url().optional().or(z.literal('')),
   otherUrl: z.string().url().optional().or(z.literal('')),
-  availabilityDays: z.string().min(1, 'Please state which days you typically play.'),
+  availabilityDays: z.array(z.string()).min(1, 'Please select at least one day.'),
   availabilityTimezone: z.string().min(1, 'Please select your timezone.'),
-  availabilityStart: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please use HH:MM format.'),
-  availabilityEnd: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please use HH:MM format.'),
+  availabilityStart: z.string().min(1, 'Please select a start time.'),
+  availabilityEnd: z.string().min(1, 'Please select an end time.'),
   guildExpectations: z.string().min(20, 'Please share a bit more (at least 20 characters).'),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
 
 const LOCAL_STORAGE_KEY = 'application-draft';
+
+const timeOptions = Array.from({ length: 48 }, (_, i) => {
+    const hours = Math.floor(i / 2);
+    const minutes = i % 2 === 0 ? '00' : '30';
+    const time24 = `${String(hours).padStart(2, '0')}:${minutes}`;
+    const h12 = ((hours + 11) % 12 + 1);
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const time12 = `${h12}:${minutes} ${suffix}`;
+    return { value: time24, label: `${time24} (${time12})`};
+});
+
 
 export default function ApplyPage() {
   const { user } = useUser();
@@ -65,6 +78,7 @@ export default function ApplyPage() {
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       applicantName: '',
+      inGameName: '',
       discordTag: '',
       mainCharacters: '',
       mainClasses: [],
@@ -80,7 +94,7 @@ export default function ApplyPage() {
       twitterUrl: '',
       tiktokUrl: '',
       otherUrl: '',
-      availabilityDays: '',
+      availabilityDays: [],
       availabilityTimezone: 'GMT-5',
       availabilityStart: '17:00',
       availabilityEnd: '22:00',
@@ -138,15 +152,6 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
-  const convertTo12Hour = (time24: string) => {
-    if (!time24 || !time24.includes(':')) return '';
-    const [hours, minutes] = time24.split(':');
-    const h = parseInt(hours, 10);
-    const suffix = h >= 12 ? 'PM' : 'AM';
-    const h12 = ((h + 11) % 12 + 1);
-    return `${h12}:${minutes} ${suffix}`;
-  }
-
   return (
     <div className="container mx-auto max-w-4xl py-12">
       <div className="flex flex-col items-center text-center mb-8">
@@ -175,7 +180,20 @@ export default function ApplyPage() {
                       <FormItem>
                         <FormLabel>Name or Handle</FormLabel>
                         <FormControl>
-                          <Input placeholder="Your in-game name" {...field} />
+                          <Input placeholder="Your preferred name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="inGameName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dark and Darker Account Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your character name in-game" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -353,13 +371,51 @@ export default function ApplyPage() {
 
                <fieldset className="space-y-4">
                 <legend className="font-headline text-xl mb-2">Your Availability</legend>
-                  <FormField control={control} name="availabilityDays" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>What days of the week do you typically play?</FormLabel>
-                        <FormControl><Input placeholder="e.g., Weekdays, Weekends, Mon/Weds/Fri" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <FormField
+                        control={control}
+                        name="availabilityDays"
+                        render={() => (
+                            <FormItem>
+                                <FormLabel>What days of the week do you typically play?</FormLabel>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {daysOfWeek.map((day) => (
+                                    <FormField
+                                    key={day}
+                                    control={control}
+                                    name="availabilityDays"
+                                    render={({ field }) => {
+                                        return (
+                                        <FormItem
+                                            key={day}
+                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                        >
+                                            <FormControl>
+                                            <Checkbox
+                                                checked={field.value?.includes(day)}
+                                                onCheckedChange={(checked) => {
+                                                return checked
+                                                    ? field.onChange([...field.value, day])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                        (value) => value !== day
+                                                        )
+                                                    )
+                                                }}
+                                            />
+                                            </FormControl>
+                                            <FormLabel className="font-normal">
+                                            {day}
+                                            </FormLabel>
+                                        </FormItem>
+                                        )
+                                    }}
+                                    />
+                                ))}
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                       <FormField control={control} name="availabilityTimezone" render={({ field }) => (
                         <FormItem className="lg:col-span-2">
@@ -377,17 +433,29 @@ export default function ApplyPage() {
                       )} />
                        <FormField control={control} name="availabilityStart" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>From (24h)</FormLabel>
-                          <FormControl><Input placeholder="HH:MM" {...field} /></FormControl>
-                          <FormDescription>{convertTo12Hour(field.value)}</FormDescription>
+                          <FormLabel>From</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Select start time" /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {timeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={control} name="availabilityEnd" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>To (24h)</FormLabel>
-                          <FormControl><Input placeholder="HH:MM" {...field} /></FormControl>
-                           <FormDescription>{convertTo12Hour(field.value)}</FormDescription>
+                          <FormLabel>To</FormLabel>
+                           <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger><SelectValue placeholder="Select end time" /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {timeOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                           <FormMessage />
                         </FormItem>
                       )} />
