@@ -13,7 +13,7 @@ import {z} from 'genkit';
 const GenerateBountyBoardQuestsInputSchema = z.object({
   playerActivity: z
     .string()
-    .describe("Description of the player's recent in-game activity."),
+    .describe("Description of the player's recent in-game activity and stats that can be tracked by the app (e.g., number of runs, reports submitted, player kills confirmed via screenshot)."),
 });
 export type GenerateBountyBoardQuestsInput = z.infer<
   typeof GenerateBountyBoardQuestsInputSchema
@@ -45,7 +45,14 @@ const prompt = ai.definePrompt({
 
 You will generate a list of daily and weekly quests for players to complete.
 
-The quests should be engaging and tailored to the player's recent activity.
+The quests should be engaging and tailored to the player's recent activity. The quests must be based on actions that can be verified within the app's ecosystem, such as:
+- Number of player kills (verified by screenshot)
+- Number of guild runs completed (verified by at least 2 other players)
+- Number of run reports submitted
+- Number of boss kills (verified by screenshot)
+- Extracting from a run
+
+Do NOT generate quests for actions that cannot be tracked, such as killing a specific number of AI monsters (e.g., "Kill 50 Goblins").
 
 Player Activity: {{{playerActivity}}}
 

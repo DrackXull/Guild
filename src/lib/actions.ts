@@ -15,9 +15,9 @@ export async function getBounties(): Promise<Quest[]> {
     console.error("Error generating bounties:", error);
     // Return a set of fallback quests if AI fails
     return [
-      { questName: 'Goblin Slayer', questDescription: 'Kill 50 Goblins in the Goblin Caves.', questType: 'daily', reward: '50 Honor' },
-      { questName: 'Treasurer', questDescription: 'Extract with at least 1000 gold worth of loot.', questType: 'daily', reward: '75 Honor' },
-      { questName: 'Crypt Delver', questDescription: 'Successfully extract from the Crypts 5 times.', questType: 'weekly', reward: '250 Honor' },
+      { questName: 'Headhunter', questDescription: 'Get 10 player kills confirmed via screenshot.', questType: 'daily', reward: '100 Honor' },
+      { questName: 'Dedicated Reporter', questDescription: 'Submit 5 detailed run reports.', questType: 'daily', reward: '75 Honor' },
+      { questName: 'Dungeon Master', questDescription: 'Successfully complete and have 10 guild runs verified.', questType: 'weekly', reward: '300 Honor' },
     ];
   }
 }

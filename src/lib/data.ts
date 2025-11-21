@@ -15,8 +15,8 @@ const characters: Character[] = [
 export const players: Player[] = [
   {
     id: 'player1',
-    displayName: 'CritRoleFan',
-    discordTag: 'critrole#1234',
+    displayName: 'Soon',
+    discordTag: 'soon#1234',
     friends: ['player2'],
     isOnline: true,
     lifetimeHonor: 15000,
