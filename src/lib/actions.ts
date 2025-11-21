@@ -1,9 +1,7 @@
 "use server";
 
 import { generateBountyBoardQuests } from "@/ai/flows/generate-bounty-board-quests";
-import { suggestRunFeedbackTraits } from "@/ai/flows/suggest-run-feedback-traits";
 import type { Quest } from "./types";
-import { z } from "zod";
 
 export async function getBounties(): Promise<Quest[]> {
   try {
@@ -19,25 +17,6 @@ export async function getBounties(): Promise<Quest[]> {
       { questName: 'Dedicated Reporter', questDescription: 'Submit 5 detailed run reports.', questType: 'daily', reward: '75 Honor' },
       { questName: 'Dungeon Master', questDescription: 'Successfully complete and have 10 guild runs verified.', questType: 'weekly', reward: '300 Honor' },
     ];
-  }
-}
-
-const SuggestTraitsSchema = z.object({
-  runNotes: z.string(),
-});
-
-export async function suggestTraits(input: { runNotes: string }): Promise<{ suggestedTraits: string[] }> {
-  const parsedInput = SuggestTraitsSchema.safeParse(input);
-  if (!parsedInput.success) {
-    return { suggestedTraits: [] };
-  }
-  
-  try {
-    const result = await suggestRunFeedbackTraits(parsedInput.data);
-    return result;
-  } catch (error) {
-    console.error("Error suggesting traits:", error);
-    return { suggestedTraits: [] };
   }
 }
 
