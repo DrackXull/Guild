@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { FormItem, FormLabel, FormControl } from '@/components/ui/form';
 
 const applicationSchema = z.object({
   applicantName: z.string().min(1, 'Name is required.'),
@@ -297,4 +298,3 @@ export default function ApplyPage() {
     </div>
   );
 }
-    
