@@ -7,18 +7,18 @@ const avatar3 = PlaceHolderImages.find(img => img.id === 'user-avatar-3')?.image
 
 
 const characters: Character[] = [
-  { id: 'char1', playerId: 'player1', name: 'Grog', characterClass: 'Barbarian', totalKills: 120, totalDeaths: 30, totalBossKills: 5, isConfirmed: true },
-  { id: 'char2', playerId: 'player1', name: 'Vex', characterClass: 'Ranger', totalKills: 250, totalDeaths: 15, totalBossKills: 10, isConfirmed: true },
-  { id: 'char3', playerId: 'player2', name: 'Percy', characterClass: 'Fighter', totalKills: 180, totalDeaths: 25, totalBossKills: 8, isConfirmed: false },
-  { id: 'char4', playerId: 'player2', name: 'Scanlan', characterClass: 'Rogue', totalKills: 90, totalDeaths: 40, totalBossKills: 2, isConfirmed: true },
-  { id: 'char5', playerId: 'player1', name: 'Pike', characterClass: 'Cleric', totalKills: 50, totalDeaths: 10, totalBossKills: 1, isConfirmed: false },
+  { id: 'char1', playerId: 'player1', name: 'Valerius', characterClass: 'Barbarian', totalKills: 120, totalDeaths: 30, totalBossKills: 5, isConfirmed: true },
+  { id: 'char2', playerId: 'player1', name: 'Lyra', characterClass: 'Ranger', totalKills: 250, totalDeaths: 15, totalBossKills: 10, isConfirmed: true },
+  { id: 'char3', playerId: 'player2', name: 'Kael', characterClass: 'Fighter', totalKills: 180, totalDeaths: 25, totalBossKills: 8, isConfirmed: false },
+  { id: 'char4', playerId: 'player2', name: 'Zane', characterClass: 'Rogue', totalKills: 90, totalDeaths: 40, totalBossKills: 2, isConfirmed: true },
+  { id: 'char5', playerId: 'player1', name: 'Seraphina', characterClass: 'Cleric', totalKills: 50, totalDeaths: 10, totalBossKills: 1, isConfirmed: false },
 ];
 
 export const players: Player[] = [
   {
     id: 'player1',
-    displayName: 'Soon',
-    discordTag: 'soon#1234',
+    displayName: 'Shadow',
+    discordTag: 'shadow#1234',
     friends: ['player2'],
     isOnline: true,
     lifetimeHonor: 15000,
@@ -29,8 +29,8 @@ export const players: Player[] = [
   },
   {
     id: 'player2',
-    displayName: 'Mercer',
-    discordTag: 'matt#5678',
+    displayName: 'Ghost',
+    discordTag: 'ghost#5678',
     friends: ['player1'],
     isOnline: false,
     lifetimeHonor: 12000,
@@ -41,8 +41,8 @@ export const players: Player[] = [
   },
   {
     id: 'player3',
-    displayName: 'Marisha',
-    discordTag: 'marisha#8765',
+    displayName: 'Reaper',
+    discordTag: 'reaper#8765',
     friends: [],
     isOnline: true,
     lifetimeHonor: 200,
@@ -56,6 +56,10 @@ export const players: Player[] = [
 export const allCharacters: Character[] = characters;
 
 export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'];
+
+export const gameModes: string[] = ["Normal Crypts", "High-Roller Crypts", "Normal Ruins", "High-Roller Ruins", "Normal Goblin Caves", "High-Roller Goblin Caves", "Ice Caverns"];
+
+export const bossList: string[] = ["Cave Troll", "Cyclops", "Lich", "Ghost King", "Warlord"];
 
 export const mockPlayer = players[0];
 
@@ -132,3 +136,5 @@ export const mockPlayerBounties: MemberBounty[] = [
         createdAt: '2024-07-28T15:00:00Z',
     }
 ];
+
+    
