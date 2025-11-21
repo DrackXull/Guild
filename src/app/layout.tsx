@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dark and Darker Guild Hub",
-  description: "A guild hub for tracking runs, players, and bounties in Dark and Darker.",
+  title: "Guild Nexus",
+  description: "A guild hub for tracking runs, players, and bounties.",
 };
 
 export default function RootLayout({
