@@ -1,15 +1,10 @@
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Shield, ScrollText, Users, FileText, Trash2, Store } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getBounties } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { marketItems as initialMarketItems, mockApplications, mockReviews } from "@/lib/data";
@@ -24,58 +19,25 @@ export default function OfficerPage() {
   const { toast } = useToast();
   const [bounties, setBounties] = useState<Quest[]>([]);
   const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
-  const [isPending, startTransition] = useTransition();
+  const [isBountyPending, startBountyTransition] = useTransition();
 
-  useEffect(() => {
-    startTransition(async () => {
+  const fetchBounties = () => {
+    startBountyTransition(async () => {
       const fetchedBounties = await getBounties();
       setBounties(fetchedBounties);
+      toast({
+        title: "Bounties Loaded",
+        description: "The latest bounties have been loaded from the server."
+      })
     });
+  }
+
+  useEffect(() => {
+    fetchBounties();
   }, []);
   
   const applications = mockApplications;
   const reviews = mockReviews;
-
-  const handleCreateBounty = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const type = formData.get('type') as 'daily' | 'weekly';
-    const reward = formData.get('reward') as string;
-
-    if (!title || !description || !type || !reward) {
-        toast({
-            title: "Missing Fields",
-            description: "Please fill out all bounty information.",
-            variant: "destructive",
-        });
-        return;
-    }
-
-    const newBounty: Quest = {
-        questName: title,
-        questDescription: description,
-        questType: type,
-        reward: `${reward} Honor`,
-    };
-
-    setBounties(prev => [newBounty, ...prev]);
-    toast({
-        title: "Bounty Created",
-        description: `The bounty "${title}" has been added.`,
-    });
-    (event.target as HTMLFormElement).reset();
-  }
-
-  const handleRemoveBounty = (questName: string) => {
-    setBounties(prev => prev.filter(b => b.questName !== questName));
-    toast({
-        title: "Bounty Removed",
-        description: `The bounty "${questName}" has been removed.`,
-        variant: "destructive"
-    });
-  }
 
   return (
     <div className="space-y-8">
@@ -134,81 +96,48 @@ export default function OfficerPage() {
 
       <Card>
         <CardHeader>
-            <div className="flex items-center gap-3">
-                <ScrollText className="h-6 w-6" />
-                <CardTitle className="font-headline text-2xl">Guild Bounty Administration</CardTitle>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <ScrollText className="h-6 w-6" />
+                    <CardTitle className="font-headline text-2xl">Guild Bounty Administration</CardTitle>
+                </div>
+                 <Button onClick={fetchBounties} disabled={isBountyPending}>
+                    {isBountyPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Generate New Bounties
+                </Button>
             </div>
           <CardDescription>
-            Create and manage daily and weekly bounties for the guild.
+            Generate a new set of daily and weekly bounties for the guild using AI.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-6">
-                <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
-                    {isPending && <div className="flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}
-                    {bounties.map(bounty => (
-                        <Card key={bounty.questName} className="bg-background/50">
-                            <CardHeader className="pb-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="text-lg font-semibold">{bounty.questName}</CardTitle>
-                                        <CardDescription className="text-xs pt-1">{bounty.reward}</CardDescription>
-                                    </div>
-                                    <Badge variant={bounty.questType === 'daily' ? 'default' : 'secondary'}>{bounty.questType}</Badge>
+        <CardContent className="space-y-6">
+            <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
+                {isBountyPending && (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                )}
+                {!isBountyPending && bounties.length === 0 && (
+                    <p className="text-muted-foreground text-center py-8">No active bounties. Generate a new set to get started.</p>
+                )}
+                {bounties.map(bounty => (
+                    <Card key={bounty.questName} className="bg-background/50">
+                        <CardHeader className="pb-4">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg font-semibold">{bounty.questName}</CardTitle>
+                                    <CardDescription className="text-xs pt-1">{bounty.reward}</CardDescription>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">{bounty.questDescription}</p>
-                            </CardContent>
-                            <CardFooter className="gap-2">
-                                <Button size="sm" variant="outline">Mark Complete</Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleRemoveBounty(bounty.questName)}>
-                                    <Trash2 className="h-4 w-4 mr-2"/>
-                                    Remove
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                    {!isPending && bounties.length === 0 && <p className="text-muted-foreground text-center py-8">No active bounties.</p>}
-                </div>
+                                <Badge variant={bounty.questType === 'daily' ? 'default' : 'secondary'}>{bounty.questType}</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">{bounty.questDescription}</p>
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
-            <form className="space-y-4" onSubmit={handleCreateBounty}>
-                 <h3 className="font-headline text-xl font-semibold">Create New Bounty</h3>
-                <div className="space-y-2">
-                    <Label htmlFor="bounty-title">Bounty Title</Label>
-                    <Input id="bounty-title" name="title" required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="bounty-desc">Description</Label>
-                    <Textarea id="bounty-desc" name="description" rows={3} required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="bounty-type">Type</Label>
-                        <Select name="type" required>
-                            <SelectTrigger id="bounty-type">
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="daily">Daily</SelectItem>
-                                <SelectItem value="weekly">Weekly</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="bounty-reward">Honor Reward</Label>
-                        <Input id="bounty-reward" name="reward" type="number" placeholder="e.g., 100" required />
-                    </div>
-                </div>
-                 <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox id="bounty-active" name="isActive" defaultChecked/>
-                    <Label htmlFor="bounty-active" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Activate this bounty immediately
-                    </Label>
-                </div>
-                <Button type="submit" className="w-full">Create Bounty</Button>
-            </form>
         </CardContent>
       </Card>
       
