@@ -1,7 +1,6 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockPlayer } from "@/lib/data";
-import { getBounties } from "@/lib/actions";
 import { QuestCard } from "@/components/bounty-board/quest-card";
 import {
   Gem,
@@ -10,26 +9,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Quest, WithId } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, limit } from "firebase/firestore";
 
 export default function DashboardPage() {
   const player = mockPlayer;
-  const [bounties, setBounties] = useState<WithId<Quest>[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchBounties() {
-      setIsLoading(true);
-      const fetchedBounties = await getBounties();
-      setBounties(fetchedBounties);
-      setIsLoading(false);
-    }
-    fetchBounties();
-  }, []);
-
-  const dailyBounties = bounties.filter(b => b.questType === 'daily').slice(0, 2);
+  const firestore = useFirestore();
+  
+  const bountiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'bounty_board_quests'), orderBy('questName'), limit(2));
+  }, [firestore]);
+  
+  const { data: dailyBounties, isLoading } = useCollection<Quest>(bountiesQuery);
 
   return (
     <div className="flex flex-col gap-8">
@@ -86,11 +80,11 @@ export default function DashboardPage() {
                 <Skeleton className="h-64 w-full" />
               </>
             ) : (
-              dailyBounties.map((quest) => (
-                <QuestCard key={quest.questName} quest={quest} />
+              dailyBounties && dailyBounties.map((quest) => (
+                <QuestCard key={quest.id} quest={quest} />
               ))
             )}
-            {!isLoading && dailyBounties.length === 0 && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
+            {!isLoading && (!dailyBounties || dailyBounties.length === 0) && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
           </div>
         </div>
         <div className="lg:col-span-1">
