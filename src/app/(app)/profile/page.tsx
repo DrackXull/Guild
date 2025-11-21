@@ -1,14 +1,61 @@
+'use client';
 import { mockPlayer, characterClasses } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Gem, Shield, Users, UserCircle, Crown } from "lucide-react";
+import { Gem, Shield, Users, UserCircle, Crown, UserPlus } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
+
+function FirstAdminSetup() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+
+    if (!user || user.email !== 'Huzzinda@gmail.com') {
+        return null;
+    }
+
+    const handleBecomeAdmin = () => {
+        if (!firestore || !user) return;
+
+        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+        
+        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() }, {});
+
+        toast({
+            title: "Admin Role Assigned",
+            description: "You have been granted admin privileges. Please remove the temporary setup code now.",
+        });
+    };
+
+    return (
+        <Card className="border-destructive mb-8">
+            <CardHeader>
+                <div className="flex items-center gap-3">
+                    <UserPlus className="h-6 w-6 text-destructive" />
+                    <CardTitle className="font-headline text-2xl text-destructive">One-Time Admin Setup</CardTitle>
+                </div>
+                <CardDescription>
+                    This is a temporary panel to grant the first admin role (Guild Leader). Click the button below to become an admin.
+                    After succeeding, you should request to have this functionality removed.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button variant="destructive" className="w-full" onClick={handleBecomeAdmin}>
+                    Become Guild Leader
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function ProfilePage() {
   const player = mockPlayer;
@@ -23,6 +70,8 @@ export default function ProfilePage() {
   
   return (
     <div className="space-y-8">
+      <FirstAdminSetup />
+      
        <div className="flex items-center gap-4">
         <UserCircle className="h-10 w-10 text-primary" />
         <div>

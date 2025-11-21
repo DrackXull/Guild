@@ -1,6 +1,6 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Trash2, Gem, UserPlus } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2, Gem } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getBountySuggestions } from "@/lib/actions";
@@ -13,7 +13,7 @@ import type { Quest, MarketItem, WithId } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { MarketAdmin } from "@/components/market/market-admin";
-import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -168,49 +168,6 @@ function BountyAdmin() {
   )
 }
 
-function FirstAdminSetup() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-
-    if (!user || user.email !== 'Huzzinda@gmail.com') {
-        return null;
-    }
-
-    const handleBecomeAdmin = () => {
-        if (!firestore || !user) return;
-
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() }, {});
-
-        toast({
-            title: "Admin Role Assigned",
-            description: "You have been granted admin privileges. Please remove the temporary setup code now.",
-        });
-    };
-
-    return (
-        <Card className="border-destructive">
-            <CardHeader>
-                <div className="flex items-center gap-3">
-                    <UserPlus className="h-6 w-6 text-destructive" />
-                    <CardTitle className="font-headline text-2xl text-destructive">One-Time Admin Setup</CardTitle>
-                </div>
-                <CardDescription>
-                    This is a temporary panel to grant the first admin role. Click the button below to become an admin.
-                    After succeeding, you should remove this functionality.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button variant="destructive" className="w-full" onClick={handleBecomeAdmin}>
-                    Become Guild Admin
-                </Button>
-            </CardContent>
-        </Card>
-    );
-}
-
 export default function OfficerPage() {
   const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
   const applications = mockApplications;
@@ -226,8 +183,6 @@ export default function OfficerPage() {
         </div>
       </div>
       
-      <FirstAdminSetup />
-
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
