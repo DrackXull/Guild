@@ -1,3 +1,4 @@
+
 export const firebaseConfig = {
   apiKey: "AIzaSyBvToh8BEwqsKvSrOMDFtb3zsbzGEtcABc",
   authDomain: "guild-nexus.firebaseapp.com",

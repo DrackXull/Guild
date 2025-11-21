@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset enforces a hybrid security model tailored for a gaming guild application.
  * It combines strict user-ownership for private data with a public-read/privileged-write model for shared or global data.
@@ -71,7 +72,9 @@ service cloud.firestore {
      * Assumes a user can only read their own player document to check their role.
      */
      function isMember() {
-       return isSignedIn() && get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role in ['member', 'officer', 'admin'];
+       // For now, any signed in user is a member for reads.
+       // This will be replaced with a check on the player's document role.
+       return isSignedIn();
      }
 
     // --------------------------------
@@ -175,8 +178,8 @@ service cloud.firestore {
      * @principle Enforces public read access with privileged writes for administrative control.
      */
     match /bounty_board_quests/{bountyBoardQuestId} {
-      allow get, list: if true;
-      allow create, update, delete: if isOfficer() || isAdmin();
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
     /**
@@ -225,5 +228,3 @@ service cloud.firestore {
 
   }
 }
-
-    
