@@ -18,6 +18,7 @@ import {
   Shield,
   LifeBuoy,
   Settings,
+  Store,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +27,7 @@ import { Button } from '../ui/button';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
   { href: '/bounty-board', label: 'Bounty Board', icon: <ScrollText /> },
+  { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
   { href: '/officer', label: 'Officer Admin', icon: <Shield />, officerOnly: true },
