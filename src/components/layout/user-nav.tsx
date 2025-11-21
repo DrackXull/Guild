@@ -64,7 +64,7 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/officer">
               <Shield className="mr-2 h-4 w-4" />
-              <span>Admin</span>
+              <span>Council</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>

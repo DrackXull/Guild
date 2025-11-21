@@ -110,7 +110,7 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
 
             <Card>
               <CardHeader>
-                 <CardTitle className='font-headline'>Officer Reviews ({reviews.length})</CardTitle>
+                 <CardTitle className='font-headline'>Council Reviews ({reviews.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {reviews.length > 0 ? reviews.map(review => {
@@ -138,7 +138,7 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
             <Card className="sticky top-0">
               <CardHeader>
                  <CardTitle className='font-headline'>Your Review</CardTitle>
-                 <CardDescription>Rate the applicant and leave a note for other officers.</CardDescription>
+                 <CardDescription>Rate the applicant and leave a note for other council members.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -149,7 +149,7 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
                     <Label htmlFor="officer-notes">Notes</Label>
                     <Textarea 
                         id="officer-notes" 
-                        placeholder="Private notes visible only to other officers..." 
+                        placeholder="Private notes visible only to other council members..." 
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                     />
