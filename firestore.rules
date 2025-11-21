@@ -145,7 +145,8 @@ service cloud.firestore {
      * @principle Enforces public read access with privileged writes for administrative control.
      */
     match /bounty_board_quests/{bountyBoardQuestId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if request.auth == null || request.auth != null;
       allow create, update, delete: if isOfficer();
     }
 
