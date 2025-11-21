@@ -3,9 +3,8 @@
 import { generateBountyBoardQuests } from '@/ai/flows/generate-bounty-board-quests';
 import { Quest, WithId } from './types';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
-import { initializeApp, getApps } from 'firebase/app';
-import { firebaseConfig } from '@/firebase/config';
+import { getAdminFirestore } from '@/lib/firebase-admin';
+
 
 // This function is now simplified to only be used for AI generation,
 // not for fetching the main list of bounties.
@@ -37,13 +36,7 @@ export async function submitRunReport(formData: unknown) {
 }
 
 export async function getBounties(): Promise<WithId<Quest>[]> {
-    // HACK: This is a workaround to initialize Firebase on the server.
-    // In a real app, you would want to use a singleton pattern to ensure
-    // Firebase is only initialized once.
-    if (!getApps().length) {
-        initializeApp(firebaseConfig);
-    }
-    const { firestore } = getSdks(getApps()[0]);
+    const firestore = getAdminFirestore();
     const bountiesCollectionRef = collection(firestore, 'bounty_board_quests');
     const q = query(bountiesCollectionRef, orderBy('questName'));
     const querySnapshot = await getDocs(q);

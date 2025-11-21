@@ -1,3 +1,4 @@
+'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockPlayer } from "@/lib/data";
 import { getBounties } from "@/lib/actions";
@@ -9,10 +10,25 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Quest, WithId } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
   const player = mockPlayer;
-  const bounties = await getBounties();
+  const [bounties, setBounties] = useState<WithId<Quest>[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchBounties() {
+      setIsLoading(true);
+      const fetchedBounties = await getBounties();
+      setBounties(fetchedBounties);
+      setIsLoading(false);
+    }
+    fetchBounties();
+  }, []);
+
   const dailyBounties = bounties.filter(b => b.questType === 'daily').slice(0, 2);
 
   return (
@@ -64,9 +80,17 @@ export default async function DashboardPage() {
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {dailyBounties.map((quest) => (
-              <QuestCard key={quest.questName} quest={quest} />
-            ))}
+            {isLoading ? (
+              <>
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </>
+            ) : (
+              dailyBounties.map((quest) => (
+                <QuestCard key={quest.questName} quest={quest} />
+              ))
+            )}
+            {!isLoading && dailyBounties.length === 0 && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
           </div>
         </div>
         <div className="lg:col-span-1">
