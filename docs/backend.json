@@ -1,0 +1,548 @@
+{
+  "entities": {
+    "Player": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Player",
+      "type": "object",
+      "description": "Represents a player in the Dark and Darker Guild Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the player entity."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player's display name."
+        },
+        "discordTag": {
+          "type": "string",
+          "description": "Player's Discord tag."
+        },
+        "friendIds": {
+          "type": "array",
+          "description": "References to other Players who are friends. (Relationship: Player N:N Player)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isOnline": {
+          "type": "boolean",
+          "description": "Indicates whether the player is currently online."
+        },
+        "lifetimeHonor": {
+          "type": "number",
+          "description": "Player's lifetime honor points."
+        },
+        "currentHonor": {
+          "type": "number",
+          "description": "Player's current honor points."
+        }
+      },
+      "required": [
+        "id",
+        "displayName",
+        "discordTag",
+        "lifetimeHonor",
+        "currentHonor"
+      ]
+    },
+    "Character": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Character",
+      "type": "object",
+      "description": "Represents a character within the Dark and Darker Guild Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the character entity."
+        },
+        "playerId": {
+          "type": "string",
+          "description": "Reference to the Player that owns this character. (Relationship: Player 1:N Character)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Character's name."
+        },
+        "class": {
+          "type": "string",
+          "description": "Character's class."
+        },
+        "kills": {
+          "type": "number",
+          "description": "Number of kills for this character."
+        },
+        "deaths": {
+          "type": "number",
+          "description": "Number of deaths for this character."
+        },
+        "bossKills": {
+          "type": "number",
+          "description": "Number of boss kills for this character."
+        }
+      },
+      "required": [
+        "id",
+        "playerId",
+        "name",
+        "class",
+        "kills",
+        "deaths",
+        "bossKills"
+      ]
+    },
+    "RunReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RunReport",
+      "type": "object",
+      "description": "Represents a run report submitted by a player.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the run report entity."
+        },
+        "characterId": {
+          "type": "string",
+          "description": "Reference to the Character associated with this run report. (Relationship: Character 1:N RunReport)"
+        },
+        "runId": {
+          "type": "string",
+          "description": "Reference to the Run this report is for. (Relationship: Run 1:N RunReport)"
+        },
+        "overallRunRating": {
+          "type": "number",
+          "description": "Overall rating of the run."
+        },
+        "kills": {
+          "type": "number",
+          "description": "Number of kills during the run."
+        },
+        "deaths": {
+          "type": "number",
+          "description": "Number of deaths during the run."
+        },
+        "extracted": {
+          "type": "boolean",
+          "description": "Indicates whether the player extracted successfully."
+        },
+        "bossKills": {
+          "type": "number",
+          "description": "Number of boss kills during the run."
+        },
+        "traits": {
+          "type": "array",
+          "description": "Array of traits associated with the run.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "runNotes": {
+          "type": "string",
+          "description": "Optional notes about the run."
+        },
+        "screenshotUrl": {
+          "type": "string",
+          "description": "URL of the screenshot uploaded for scoreboard proof.",
+          "format": "uri"
+        },
+        "isConfirmed": {
+          "type": "boolean",
+          "description": "Indicates if the stats in the run report have been confirmed by a screenshot or officer."
+        }
+      },
+      "required": [
+        "id",
+        "characterId",
+        "runId",
+        "overallRunRating",
+        "kills",
+        "deaths",
+        "extracted",
+        "bossKills"
+      ]
+    },
+    "Run": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Run",
+      "type": "object",
+      "description": "Represents a single run in the Dark and Darker Guild Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the run entity."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the run occurred.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "timestamp"
+      ]
+    },
+    "DrasticScoreRule": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DrasticScoreRule",
+      "type": "object",
+      "description": "Represents a rule for drastic ratings to discourage trolling.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the drastic score rule entity."
+        },
+        "threshold": {
+          "type": "number",
+          "description": "The score threshold for this rule."
+        },
+        "minimumCharacters": {
+          "type": "number",
+          "description": "The minimum number of characters required in the comment for this score."
+        }
+      },
+      "required": [
+        "id",
+        "threshold",
+        "minimumCharacters"
+      ]
+    },
+    "BountyBoardQuest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BountyBoardQuest",
+      "type": "object",
+      "description": "Represents a daily or weekly quest available on the bounty board.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the bounty board quest entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the bounty board quest."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the bounty board quest."
+        },
+        "reward": {
+          "type": "number",
+          "description": "Honor point reward for completing the quest."
+        },
+        "isDaily": {
+          "type": "boolean",
+          "description": "Indicates if the quest is a daily quest."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "reward",
+        "isDaily"
+      ]
+    },
+    "HonorPointLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HonorPointLog",
+      "type": "object",
+      "description": "Represents a log of honor point awards or deductions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the honor point log entity."
+        },
+        "playerId": {
+          "type": "string",
+          "description": "Reference to the Player associated with this log entry. (Relationship: Player 1:N HonorPointLog)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of honor points awarded or deducted (negative for deductions)."
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for the honor point change."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the honor point change occurred.",
+          "format": "date-time"
+        },
+        "officerNotes": {
+          "type": "string",
+          "description": "Notes that are written by officers when adjusting a score."
+        }
+      },
+      "required": [
+        "id",
+        "playerId",
+        "amount",
+        "reason",
+        "timestamp"
+      ]
+    },
+    "GuildBankItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuildBankItem",
+      "type": "object",
+      "description": "Represent an item available in the guild bank.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the guild bank item."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the item and its benefits."
+        },
+        "cost": {
+          "type": "number",
+          "description": "Cost in honor points to purchase the item."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of this item that is available."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "cost",
+        "quantity"
+      ]
+    },
+    "RunReview": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RunReview",
+      "type": "object",
+      "description": "Reviews of other characters in a run.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the run review."
+        },
+        "runReportId": {
+          "type": "string",
+          "description": "Reference to run report that this review is for. (Relationship RunReport 1:N RunReview)"
+        },
+        "reviewerCharacterId": {
+          "type": "string",
+          "description": "Reference to the character completing the review. (Relationship Character 1:N RunReview)"
+        },
+        "reviewedCharacterId": {
+          "type": "string",
+          "description": "Reference to the character being reviewed. (Relationship Character 1:N RunReview)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The score given to the character. Can range from 1-10"
+        },
+        "comments": {
+          "type": "string",
+          "description": "Comments that the reviewer made."
+        }
+      },
+      "required": [
+        "id",
+        "runReportId",
+        "reviewerCharacterId",
+        "reviewedCharacterId",
+        "score",
+        "comments"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/players/{playerId}",
+        "definition": {
+          "entityName": "Player",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Stores player information. Player ID is used for document ID, and for path-based ownership. The `friendIds` field facilitates tracking friends, but the relationship itself isn't explicitly enforced in the data structure beyond storing the IDs.",
+          "params": [
+            {
+              "name": "playerId",
+              "description": "The unique identifier for the player. This is the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/characters/{characterId}",
+        "definition": {
+          "entityName": "Character",
+          "schema": {
+            "$ref": "#/backend/entities/Character"
+          },
+          "description": "Stores character information for each player. Includes `playerId` (denormalized) for authorization independence. This enforces the Player 1:N Character relationship.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player)."
+            },
+            {
+              "name": "characterId",
+              "description": "The unique identifier for the character."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/runs/{runId}/run_reports/{runReportId}",
+        "definition": {
+          "entityName": "RunReport",
+          "schema": {
+            "$ref": "#/backend/entities/RunReport"
+          },
+          "description": "Stores run reports. References the `characterId` and `runId`. Includes fields for run rating, stats, traits, notes, and screenshot URL.",
+          "params": [
+            {
+              "name": "runId",
+              "description": "The unique identifier for the run."
+            },
+            {
+              "name": "runReportId",
+              "description": "The unique identifier for the run report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/runs/{runId}",
+        "definition": {
+          "entityName": "Run",
+          "schema": {
+            "$ref": "#/backend/entities/Run"
+          },
+          "description": "Stores run information. Includes a timestamp for when the run occurred. Used in conjunction with `RunReport` to facilitate the Verified Run System",
+          "params": [
+            {
+              "name": "runId",
+              "description": "The unique identifier for the run."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/drastic_score_rules/{drasticScoreRuleId}",
+        "definition": {
+          "entityName": "DrasticScoreRule",
+          "schema": {
+            "$ref": "#/backend/entities/DrasticScoreRule"
+          },
+          "description": "Stores drastic score rules. Includes thresholds and minimum character counts for comments.",
+          "params": [
+            {
+              "name": "drasticScoreRuleId",
+              "description": "The unique identifier for the drastic score rule."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/bounty_board_quests/{bountyBoardQuestId}",
+        "definition": {
+          "entityName": "BountyBoardQuest",
+          "schema": {
+            "$ref": "#/backend/entities/BountyBoardQuest"
+          },
+          "description": "Stores bounty board quests. Includes name, description, reward, and whether it's a daily quest.",
+          "params": [
+            {
+              "name": "bountyBoardQuestId",
+              "description": "The unique identifier for the bounty board quest."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/honor_point_logs/{honorPointLogId}",
+        "definition": {
+          "entityName": "HonorPointLog",
+          "schema": {
+            "$ref": "#/backend/entities/HonorPointLog"
+          },
+          "description": "Stores honor point logs for each player. Includes amount, reason, timestamp, and officer notes. The Officer Notes field is only visible to officers.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player)."
+            },
+            {
+              "name": "honorPointLogId",
+              "description": "The unique identifier for the honor point log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/guild_bank_items/{guildBankItemId}",
+        "definition": {
+          "entityName": "GuildBankItem",
+          "schema": {
+            "$ref": "#/backend/entities/GuildBankItem"
+          },
+          "description": "Stores guild bank items. Includes name, description, cost, and quantity.",
+          "params": [
+            {
+              "name": "guildBankItemId",
+              "description": "The unique identifier for the guild bank item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/run_reports/{runReportId}/run_reviews/{runReviewId}",
+        "definition": {
+          "entityName": "RunReview",
+          "schema": {
+            "$ref": "#/backend/entities/RunReview"
+          },
+          "description": "Stores reviews for other characters in a run. Includes reviewer and reviewed character IDs, score, and comments.",
+          "params": [
+            {
+              "name": "runReportId",
+              "description": "The unique identifier for the run report."
+            },
+            {
+              "name": "runReviewId",
+              "description": "The unique identifier for the run review."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_officer/{userId}",
+        "definition": {
+          "entityName": "officerRole",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Documents in this collection denote a user as an officer. Existence of the document is sufficient; content is ignored.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player) who is an officer."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed to support the Dark and Darker Guild Hub application, focusing on secure, scalable, and debuggable data management. The structure incorporates denormalization to ensure Authorization Independence, simplifies security rules, and enables efficient data retrieval. The core of this design is separation of concerns through Structural Segregation, Access Modeling, and Data Clarity.&#x20;  \n\n**Authorization Independence (Denormalization):**  Authorization Independence is achieved by denormalizing authorization data directly into child documents.  For example, the `Player` ID is included in the `Character` documents, removing the need for `get()` calls in security rules.  This ensures atomic operations are possible and security rules remain simple and efficient. For Collaborative Data, we use Membership Maps. For example, officer status is checked by the existence of a document in `/roles_officer/{userId}`.\n\n**Structural Segregation (Homogeneous Security Posture):**  Collections are segregated based on their security requirements.  User-specific data (e.g., `/users/{userId}/characters/{characterId}`) is separated from global data (e.g., `/bounty_board_quests/{questId}`). This segregation makes security rules easier to write and maintain as each collection has a clear and consistent security posture. Sensitive data, like officer notes in honor point logs, can be stored in a separate collection accessible only to officers.\n\n**Access Modeling (Standardization and Consistency):**  Access is modeled consistently throughout the application. User-owned data is stored under `/users/{userId}`, while collaborative data uses membership maps where appropriate. Global roles are managed using the existence of documents in dedicated role collections.\n\n**QAPs (Rules are not Filters):**  The data structure is designed to support secure `list` operations. Segregation prevents the need to filter based on access control within the rules themselves. For example, listing characters under `/users/{userId}/characters` is secure because only the user has access to their characters. Officers can access all Run Reviews for moderation via `/run_reviews`, while players can only access their own, as each review is related to a report which belongs to a character which belongs to a player.\n\n**Invariants:**  The data structure supports data integrity. Ownership is enforced through path-based ownership. Timestamp fields are consistently named and used for ordering and filtering. Denormalized data maintains consistency by avoiding updates to parent documents that would require cascading updates to child documents.\n\nThe design ensures all collections maintain a homogeneous security posture, allowing for simple and robust security rules."
+  }
+}
