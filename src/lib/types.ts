@@ -173,9 +173,10 @@ export type Application = {
 };
 
 export type ApplicationReview = {
+  applicationId: string;
   adminPlayerId: string;
   status: 'pending' | 'approved' | 'denied';
-  vote?: number;
+  vote: number;
   note: string;
   createdAt: string;
 };

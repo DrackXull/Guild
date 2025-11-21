@@ -30,7 +30,7 @@ const navItems = [
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
-  { href: '/officer', label: 'Officer Admin', icon: <Shield />, officerOnly: true },
+  { href: '/officer', label: 'Officer Lounge', icon: <Shield />, officerOnly: true },
 ];
 
 export function SidebarNav() {

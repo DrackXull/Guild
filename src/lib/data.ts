@@ -1,8 +1,10 @@
-import { Player, Character, CharacterClass } from './types';
+import { Player, Character, CharacterClass, Application, ApplicationReview } from './types';
 import { PlaceHolderImages } from './placeholder-images';
 
 const avatar1 = PlaceHolderImages.find(img => img.id === 'user-avatar-1')?.imageUrl || 'https://picsum.photos/seed/warrior/100/100';
 const avatar2 = PlaceHolderImages.find(img => img.id === 'user-avatar-2')?.imageUrl || 'https://picsum.photos/seed/rogue/100/100';
+const avatar3 = PlaceHolderImages.find(img => img.id === 'user-avatar-3')?.imageUrl || 'https://picsum.photos/seed/mage/100/100';
+
 
 const characters: Character[] = [
   { id: 'char1', playerId: 'player1', name: 'Grog', characterClass: 'Barbarian', totalKills: 120, totalDeaths: 30, totalBossKills: 5, isConfirmed: true },
@@ -37,6 +39,18 @@ export const players: Player[] = [
     characters: characters.filter(c => c.playerId === 'player2'),
     avatarUrl: avatar2,
   },
+  {
+    id: 'player3',
+    displayName: 'Marisha',
+    discordTag: 'marisha#8765',
+    friends: [],
+    isOnline: true,
+    lifetimeHonor: 200,
+    currentHonor: 200,
+    maxHonor: 200,
+    characters: [],
+    avatarUrl: avatar3,
+  }
 ];
 
 export const allCharacters: Character[] = characters;
@@ -44,3 +58,43 @@ export const allCharacters: Character[] = characters;
 export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'];
 
 export const mockPlayer = players[0];
+
+export const mockApplications: Application[] = [
+    {
+        id: 'app1',
+        applicantName: 'Taryon Darrington',
+        discordTag: 'tary#1111',
+        server: 'NA East (Virginia)',
+        status: 'pending',
+        notes: 'I am a best-selling author and a renowned adventurer. My skills would be a great asset to your guild. Also, I have a construct named Doty.',
+        createdAt: '2024-07-28T10:00:00Z',
+    },
+    {
+        id: 'app2',
+        applicantName: 'Calianna',
+        discordTag: 'cali#2222',
+        server: 'EU Central (Frankfurt)',
+        status: 'pending',
+        notes: 'Quiet, but a very capable sorcerer. Seeking a group that values teamwork and discretion. I have a secret I must protect.',
+        createdAt: '2024-07-27T18:30:00Z',
+    }
+];
+
+export const mockReviews: ApplicationReview[] = [
+    {
+        applicationId: 'app1',
+        adminPlayerId: 'player2',
+        status: 'approved',
+        vote: 8,
+        note: 'Seems a bit eccentric, but his stories check out. Could bring some flair to the guild. Let\'s give him a shot.',
+        createdAt: '2024-07-28T12:00:00Z',
+    },
+     {
+        applicationId: 'app1',
+        adminPlayerId: 'player1',
+        status: 'pending',
+        vote: 6,
+        note: 'A bit of a peacock. Worried about himgrandstanding, but the golem is a plus. On the fence.',
+        createdAt: '2024-07-28T14:00:00Z',
+    }
+];

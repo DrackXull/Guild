@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, ScrollText } from "lucide-react";
+import { Shield, ScrollText, Users, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,9 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getBounties } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ApplicationReview } from "@/components/officer/application-review";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { mockApplications, mockReviews } from "@/lib/data";
 
 export default async function OfficerPage() {
   const bounties = await getBounties();
+  const applications = mockApplications;
+  const reviews = mockReviews;
 
   return (
     <div className="officer-theme space-y-8">
@@ -22,6 +27,51 @@ export default async function OfficerPage() {
           <p className="text-muted-foreground mt-1">Manage guild settings, rules, and bounties from the command center.</p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+              <Users className="h-6 w-6" />
+              <CardTitle className="font-headline text-2xl">Applicant Review</CardTitle>
+          </div>
+          <CardDescription>Review, rate, and decide on new guild applicants.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Applicant</TableHead>
+                <TableHead className="hidden md:table-cell">Date</TableHead>
+                <TableHead className="text-center">Reviews</TableHead>
+                <TableHead className="text-center">Score</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map(app => {
+                const appReviews = reviews.filter(r => r.applicationId === app.id);
+                const avgScore = appReviews.length > 0 ? appReviews.reduce((acc, r) => acc + r.vote, 0) / appReviews.length : 0;
+                return (
+                  <TableRow key={app.id}>
+                    <TableCell>
+                      <div className="font-medium">{app.applicantName}</div>
+                      <div className="text-sm text-muted-foreground">{app.discordTag}</div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{new Date(app.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-center">{appReviews.length}</TableCell>
+                    <TableCell className="text-center font-mono">{avgScore.toFixed(1)}</TableCell>
+                    <TableCell className="text-right">
+                      <ApplicationReview application={app} reviews={appReviews} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Separator />
 
       <Card>
         <CardHeader>
@@ -36,7 +86,7 @@ export default async function OfficerPage() {
         <CardContent className="grid md:grid-cols-2 gap-8 items-start">
             <div className="space-y-6">
                 <h3 className="font-headline text-xl font-semibold">Active Bounties</h3>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4">
                     {bounties.map(bounty => (
                         <Card key={bounty.questName} className="bg-background/50">
                             <CardHeader className="pb-4">
@@ -102,53 +152,19 @@ export default async function OfficerPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Drastic Score Rules</CardTitle>
+          <div className="flex items-center gap-3">
+            <FileText className="h-6 w-6" />
+            <CardTitle className="font-headline text-2xl">Admin Activity Log</CardTitle>
+          </div>
           <CardDescription>
-            Set character count requirements for run report notes to discourage trolling.
+            A transparent record of all officer and automated guild actions.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="low-score-chars">Low Score Comment Length (Score ≤ 3)</Label>
-              <Input id="low-score-chars" type="number" defaultValue="140" />
-              <p className="text-sm text-muted-foreground">Minimum characters required for very low ratings.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="high-score-chars">High Score Comment Length (Score ≥ 9)</Label>
-              <Input id="high-score-chars" type="number" defaultValue="80" />
-               <p className="text-sm text-muted-foreground">Minimum characters required for very high ratings.</p>
-            </div>
-          </div>
-          <Button>Save Drastic Score Rules</Button>
+        <CardContent>
+           <p className="text-muted-foreground text-sm">Activity log coming soon...</p>
         </CardContent>
       </Card>
 
-      <Separator />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">Verified Run System</CardTitle>
-          <CardDescription>
-            Configure honor point awards and verification requirements.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="min-reporters">Minimum Reporters for Verification</Label>
-              <Input id="min-reporters" type="number" defaultValue="2" />
-              <p className="text-sm text-muted-foreground">Runs with fewer reports will not grant honor.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="honor-per-run">Honor per Verified Run</Label>
-              <Input id="honor-per-run" type="number" defaultValue="50" />
-               <p className="text-sm text-muted-foreground">HP awarded to each participant of a verified run.</p>
-            </div>
-          </div>
-          <Button>Save Verification Rules</Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
