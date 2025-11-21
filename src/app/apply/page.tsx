@@ -2,10 +2,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus } from "lucide-react";
 
 export default function ApplyPage() {
+  const servers = [
+    "NA East (Virginia)",
+    "NA West (Oregon)",
+    "EU Central (Frankfurt)",
+    "Asia (Seoul)",
+    "Asia (Tokyo)",
+  ];
+
   return (
     <div className="container mx-auto max-w-4xl py-12">
        <div className="flex flex-col items-center text-center mb-8">
@@ -37,7 +46,18 @@ export default function ApplyPage() {
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="server">Server / Region</Label>
-                    <Input id="server" name="server" placeholder="e.g., NA-East" />
+                    <Select name="server">
+                      <SelectTrigger id="server">
+                        <SelectValue placeholder="Select a server" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {servers.map((server) => (
+                          <SelectItem key={server} value={server}>
+                            {server}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                 </div>
                 <div className="md:col-span-2 space-y-2">
                     <Label htmlFor="notes">Tell us about your playstyle</Label>
