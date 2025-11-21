@@ -13,8 +13,7 @@ export const Icons = {
       {...props}
     >
       <title>Dark and Darker Guild Hub Logo</title>
-      <path d="M12 2l3.09 6.31L22 9.27l-5 4.87L18.18 22 12 18.31 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
-      <path d="M9 12l2 2 4-4" />
+      <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 11.91 4.59-2.15 8-6.86 8-11.91V5l-8-3z" />
     </svg>
   ),
 };

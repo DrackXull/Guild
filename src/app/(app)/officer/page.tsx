@@ -11,8 +11,8 @@ export default function OfficerPage() {
       <div className="flex items-center gap-4">
         <Shield className="h-10 w-10 text-primary" />
         <div>
-          <h1 className="font-headline text-4xl font-bold tracking-wide">Officer Admin Panel</h1>
-          <p className="text-muted-foreground mt-1">Manage guild settings and rules.</p>
+          <h1 className="font-headline text-4xl font-bold tracking-wide">Officer Lounge</h1>
+          <p className="text-muted-foreground mt-1">Manage guild settings, rules, and bounties from the command center.</p>
         </div>
       </div>
       

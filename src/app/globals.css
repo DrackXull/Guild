@@ -38,7 +38,7 @@
     --accent: var(--accent);
     --accent-foreground: var(--text);
 
-    --destructive: 0 100% 75%;
+    --destructive: 0 57% 34%;
     --destructive-foreground: var(--text);
 
     --border: 29 63% 27%;
@@ -85,7 +85,7 @@
     --accent: var(--accent);
     --accent-foreground: var(--text);
 
-    --destructive: 0 100% 75%;
+    --destructive: 0 57% 34%;
     --destructive-foreground: var(--text);
 
     --border: 29 63% 27%;
@@ -128,6 +128,7 @@
   --primary: hsl(var(--destructive));
   --primary-foreground: hsl(var(--destructive-foreground));
   --ring: hsl(var(--destructive));
+  --border: hsl(var(--destructive) / 0.5);
   --sidebar-primary: hsl(var(--destructive));
   --sidebar-primary-foreground: hsl(var(--destructive-foreground));
   --sidebar-ring: hsl(var(--destructive));
