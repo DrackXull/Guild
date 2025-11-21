@@ -17,16 +17,13 @@ export default function ProfilePage() {
   const totalKills = player.characters.reduce((acc, char) => acc + char.totalKills, 0);
   const totalDeaths = player.characters.reduce((acc, char) => acc + char.totalDeaths, 0);
 
-  const rangerImage = PlaceHolderImages.find(p => p.id === 'character-ranger');
-  const fighterImage = PlaceHolderImages.find(p => p.id === 'character-fighter');
-  const wizardImage = PlaceHolderImages.find(p => p.id === 'character-wizard');
-
-  const charImages = {
-    'Ranger': rangerImage?.imageUrl,
-    'Fighter': fighterImage?.imageUrl,
-    'Wizard': wizardImage?.imageUrl
-  }
-
+  const charImages = Object.fromEntries(
+    PlaceHolderImages.filter(p => p.id.startsWith('character-')).map(p => {
+        const className = p.id.replace('character-', '');
+        return [className.charAt(0).toUpperCase() + className.slice(1), p.imageUrl];
+    })
+  );
+  
   return (
     <div className="space-y-8">
        <div className="flex items-center gap-4">

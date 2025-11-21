@@ -37,6 +37,48 @@
       "imageHint": "wizard spell"
     },
     {
+      "id": "character-barbarian",
+      "description": "Portrait of a fierce barbarian.",
+      "imageUrl": "https://images.unsplash.com/photo-1750092701416-174aaa737e55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmYW50YXN5JTIwYmFyYmFyaWFufGVufDB8fHx8MTc2MzYyODQ3N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy barbarian"
+    },
+    {
+      "id": "character-cleric",
+      "description": "Portrait of a noble cleric.",
+      "imageUrl": "https://images.unsplash.com/photo-1649105703438-0992d6844823?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmYW50YXN5JTIwY2xlcmljfGVufDB8fHx8MTc2MzY1Nzg3M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy cleric"
+    },
+    {
+      "id": "character-rogue",
+      "description": "Portrait of a stealthy rogue.",
+      "imageUrl": "https://picsum.photos/seed/rogue-char/600/600",
+      "imageHint": "fantasy rogue"
+    },
+    {
+      "id": "character-sorcerer",
+      "description": "Portrait of a powerful sorcerer.",
+      "imageUrl": "https://images.unsplash.com/photo-1763244734635-72b34a167bd5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmYW50YXN5JTIwc29yY2VyZXJ8ZW58MHx8fHwxNzYzNzAxMjY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy sorcerer"
+    },
+    {
+      "id": "character-warlock",
+      "description": "Portrait of a mysterious warlock.",
+      "imageUrl": "https://images.unsplash.com/photo-1760574772950-f37de9dce85c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmYW50YXN5JTIwd2FybG9ja3xlbnwwfHx8fDE3NjM3MDEyNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy warlock"
+    },
+    {
+      "id": "character-druid",
+      "description": "Portrait of a nature-bound druid.",
+      "imageUrl": "https://images.unsplash.com/photo-1713007002756-58ae362376c1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmYW50YXN5JTIwZHJ1aWR8ZW58MHx8fHwxNzYzNjc0ODkwfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fantasy druid"
+    },
+    {
+      "id": "character-bard",
+      "description": "Portrait of a charming bard.",
+      "imageUrl": "https://picsum.photos/seed/bard/600/600",
+      "imageHint": "fantasy bard"
+    },
+    {
       "id": "run-screenshot-1",
       "description": "Example scoreboard screenshot from a successful run.",
       "imageUrl": "https://images.unsplash.com/photo-1533237122199-6c24ffac01ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnYW1lJTIwc2NvcmVib2FyZHxlbnwwfHx8fDE3NjM2OTY5Mzh8MA&ixlib=rb-4.1.0&q=80&w=1080",

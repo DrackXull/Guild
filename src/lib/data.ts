@@ -39,6 +39,6 @@ export const players: Player[] = [
 
 export const allCharacters: Character[] = characters;
 
-export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian'];
+export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'];
 
 export const mockPlayer = players[0];

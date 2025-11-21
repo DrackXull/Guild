@@ -24,7 +24,7 @@ export type Presence = {
   expiresAt: string;
 };
 
-export type CharacterClass = 'Fighter' | 'Ranger' | 'Wizard' | 'Rogue' | 'Cleric' | 'Barbarian';
+export type CharacterClass = 'Fighter' | 'Ranger' | 'Wizard' | 'Rogue' | 'Cleric' | 'Barbarian' | 'Sorcerer' | 'Warlock' | 'Druid' | 'Bard';
 
 export type Character = {
   id: string;
