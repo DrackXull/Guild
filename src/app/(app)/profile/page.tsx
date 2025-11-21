@@ -1,10 +1,9 @@
-import { mockPlayer, characterClasses, allCharacters } from "@/lib/data";
+import { mockPlayer, characterClasses } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Gem, Shield, Star, Swords, UserCircle, Users } from "lucide-react";
+import { Gem, Shield, Users, UserCircle } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +13,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 export default function ProfilePage() {
   const player = mockPlayer;
   const friendCount = player.friends.length;
-  const totalKills = player.characters.reduce((acc, char) => acc + char.totalKills, 0);
-  const totalDeaths = player.characters.reduce((acc, char) => acc + char.totalDeaths, 0);
-
+  
   const charImages = Object.fromEntries(
     PlaceHolderImages.filter(p => p.id.startsWith('character-')).map(p => {
         const className = p.id.replace('character-', '');
@@ -59,7 +56,27 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-             <Button>Edit Profile</Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>Edit Profile</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-headline text-2xl">Edit Profile</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="displayName" className="text-right">Display Name</Label>
+                    <Input id="displayName" defaultValue={player.displayName} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="discordTag" className="text-right">Discord Tag</Label>
+                    <Input id="discordTag" defaultValue={player.discordTag} className="col-span-3" />
+                  </div>
+                </div>
+                <Button type="submit">Save Changes</Button>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
       </Card>
