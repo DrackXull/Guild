@@ -1,4 +1,3 @@
-
 'use client';
 import '@/app/globals.css';
 import { usePathname, useRouter } from 'next/navigation';
@@ -8,10 +7,12 @@ import { UserNav } from '@/components/layout/user-nav';
 import { allCharacters, players } from '@/lib/data';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { useEffect, useState } from 'react';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { doc } from 'firebase/firestore';
+import { Player } from '@/lib/types';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const onlineMembers = players.filter(p => p.isOnline).length;
@@ -22,6 +23,44 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, `players/${user.uid}`);
+  }, [user, firestore]);
+
+  const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
+
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const isMember = playerProfile?.role === 'member' || playerProfile?.role === 'officer' || playerProfile?.role === 'admin';
+    const finishedLoading = !isUserLoading && !isProfileLoading;
+
+    if (finishedLoading) {
+      if (user) {
+        if (isMember) {
+          // If they are a member but somehow on the apply/landing page, send to dashboard
+          if (pathname === '/' || pathname.startsWith('/apply')) {
+            router.push('/dashboard');
+          }
+        } else {
+          // If they are not a member, they should only be on the apply page or landing page (to log out)
+          if (pathname !== '/apply' && pathname !== '/') {
+            router.push('/apply');
+          }
+        }
+      } else {
+        // If no user, they should only be on public pages
+        if (pathname !== '/' && !pathname.startsWith('/apply')) {
+          router.push('/');
+        }
+      }
+      setAuthChecked(true);
+    }
+  }, [user, playerProfile, isUserLoading, isProfileLoading, pathname, router]);
+
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -34,31 +73,18 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  useEffect(() => {
-    // If auth is done loading and there's no user, redirect to login page.
-    if (!isUserLoading && !user) {
-      if (pathname !== '/' && !pathname.startsWith('/apply')) {
-        router.push('/');
-      }
-    }
-  }, [user, isUserLoading, router, pathname]);
+  const isPublicPage = pathname === '/' || pathname.startsWith('/apply');
 
-  // If user is loading for a protected route, show loading.
-  if (isUserLoading && pathname !== '/' && !pathname.startsWith('/apply')) {
-    return (
+  if (!authChecked) {
+      return (
         <div className="flex items-center justify-center h-screen bg-background">
-            <p>Loading...</p>
+            <p>Loading Guild Hall...</p>
         </div>
     );
   }
-
-  // If not a protected page, render children immediately
-   if (pathname === '/' || pathname.startsWith('/apply')) {
+  
+  if (isPublicPage) {
     return <>{children}</>;
-  }
-
-  if (!user) {
-    return null; // or a redirect component
   }
 
   return (
