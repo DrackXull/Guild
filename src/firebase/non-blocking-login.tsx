@@ -4,26 +4,51 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
+import { toast } from '@/hooks/use-toast';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): void {
-  // CRITICAL: Call signInAnonymously directly. Do NOT use 'await signInAnonymously(...)'.
-  signInAnonymously(authInstance);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  signInAnonymously(authInstance).catch((error) => {
+    console.error("Anonymous sign-in error:", error);
+    toast({
+      variant: "destructive",
+      title: "Authentication Error",
+      description: "Could not sign in anonymously. Please try again later.",
+    });
+  });
 }
 
 /** Initiate email/password sign-up (non-blocking). */
 export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call createUserWithEmailAndPassword directly. Do NOT use 'await createUserWithEmailAndPassword(...)'.
-  createUserWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  createUserWithEmailAndPassword(authInstance, email, password)
+    .catch((error) => {
+        console.error("Sign-up error:", error);
+        let description = "An unknown error occurred during sign-up.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "This email is already in use. Please sign in or use a different email.";
+        }
+        toast({
+            variant: "destructive",
+            title: "Sign-Up Failed",
+            description: description,
+        });
+    });
 }
 
 /** Initiate email/password sign-in (non-blocking). */
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  // CRITICAL: Call signInWithEmailAndPassword directly. Do NOT use 'await signInWithEmailAndPassword(...)'.
-  signInWithEmailAndPassword(authInstance, email, password);
-  // Code continues immediately. Auth state change is handled by onAuthStateChanged listener.
+  signInWithEmailAndPassword(authInstance, email, password)
+    .catch((error) => {
+        console.error("Sign-in error:", error);
+        let description = "An unknown error occurred during sign-in.";
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+            description = "Invalid credentials. Please check your email and password.";
+        }
+        toast({
+            variant: "destructive",
+            title: "Sign-In Failed",
+            description: description,
+        });
+    });
 }
