@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import { Form, FormItem, FormLabel, FormControl, FormField } from '@/components/ui/form';
 
 const applicationSchema = z.object({
   applicantName: z.string().min(1, 'Name is required.'),
@@ -76,7 +76,7 @@ export default function ApplyPage() {
     }
   });
 
-  const { register, handleSubmit, control, watch, formState: { errors, isSubmitting } } = form;
+  const { handleSubmit, control, watch, formState: { errors, isSubmitting } } = form;
 
   const watchedValues = watch();
   
@@ -140,159 +140,201 @@ export default function ApplyPage() {
           <CardDescription>Provide as much detail as you can. Your responses here will form our first impression of you.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            
-            {/* Basic Info */}
-            <fieldset className="space-y-4">
-              <legend className="font-headline text-xl mb-2">Your Identity</legend>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="applicantName">Name or Handle</Label>
-                  <Input id="applicantName" {...register('applicantName')} />
-                  {errors.applicantName && <p className="text-destructive text-xs">{errors.applicantName.message}</p>}
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              
+              {/* Basic Info */}
+              <fieldset className="space-y-4">
+                <legend className="font-headline text-xl mb-2">Your Identity</legend>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="applicantName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name or Handle</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        {errors.applicantName && <p className="text-destructive text-xs">{errors.applicantName.message}</p>}
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discordTag"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discord Tag</FormLabel>
+                        <FormControl>
+                          <Input placeholder="player#1234" {...field} />
+                        </FormControl>
+                        {errors.discordTag && <p className="text-destructive text-xs">{errors.discordTag.message}</p>}
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discordTag">Discord Tag</Label>
-                  <Input id="discordTag" placeholder="player#1234" {...register('discordTag')} />
-                  {errors.discordTag && <p className="text-destructive text-xs">{errors.discordTag.message}</p>}
-                </div>
-              </div>
-            </fieldset>
+              </fieldset>
 
-            {/* In-Game Experience */}
-            <fieldset className="space-y-4">
-               <legend className="font-headline text-xl mb-2">Your Experience</legend>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                      <Label htmlFor="mainCharacters">Main Characters</Label>
-                      <Input id="mainCharacters" {...register('mainCharacters')} placeholder="e.g., Grog, Pike" />
-                      {errors.mainCharacters && <p className="text-destructive text-xs">{errors.mainCharacters.message}</p>}
-                  </div>
-                   <div className="space-y-2">
-                      <Label htmlFor="mainClasses">Main Classes</Label>
-                      <Input id="mainClasses" {...register('mainClasses')} placeholder="e.g., Barbarian, Cleric" />
-                      {errors.mainClasses && <p className="text-destructive text-xs">{errors.mainClasses.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="mainRoles">Main Roles (Optional)</Label>
-                      <Input id="mainRoles" {...register('mainRoles')} placeholder="e.g., Frontline, Support, DPS" />
-                  </div>
-                  <div className="space-y-2">
-                      <Label htmlFor="hoursInGame">Hours in Game (Approx.)</Label>
-                      <Input id="hoursInGame" type="number" {...register('hoursInGame')} />
-                      {errors.hoursInGame && <p className="text-destructive text-xs">{errors.hoursInGame.message}</p>}
-                  </div>
-                   <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="favoriteModes">Favorite Game Modes</Label>
-                      <Input id="favoriteModes" {...register('favoriteModes')} placeholder="e.g., High-Roller Crypts, Normal Goblin Caves"/>
-                      {errors.favoriteModes && <p className="text-destructive text-xs">{errors.favoriteModes.message}</p>}
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="bossesKilled">Bosses Killed (Optional)</Label>
-                      <Input id="bossesKilled" {...register('bossesKilled')} placeholder="e.g., Lich, Ghost King, Cave Troll"/>
-                  </div>
-               </div>
-               <div className="space-y-2">
-                    <Label htmlFor="memorableExperience">Tell us a memorable or fun in-game experience.</Label>
-                    <Textarea id="memorableExperience" rows={4} {...register('memorableExperience')} />
-                    {errors.memorableExperience && <p className="text-destructive text-xs">{errors.memorableExperience.message}</p>}
-                </div>
-            </fieldset>
+              {/* In-Game Experience */}
+              <fieldset className="space-y-4">
+                 <legend className="font-headline text-xl mb-2">Your Experience</legend>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField control={form.control} name="mainCharacters" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Main Characters</FormLabel>
+                        <FormControl><Input placeholder="e.g., Grog, Pike" {...field} /></FormControl>
+                        {errors.mainCharacters && <p className="text-destructive text-xs">{errors.mainCharacters.message}</p>}
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="mainClasses" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Main Classes</FormLabel>
+                        <FormControl><Input placeholder="e.g., Barbarian, Cleric" {...field} /></FormControl>
+                        {errors.mainClasses && <p className="text-destructive text-xs">{errors.mainClasses.message}</p>}
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="mainRoles" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Main Roles (Optional)</FormLabel>
+                        <FormControl><Input placeholder="e.g., Frontline, Support, DPS" {...field} /></FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="hoursInGame" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Hours in Game (Approx.)</FormLabel>
+                        <FormControl><Input type="number" {...field} /></FormControl>
+                        {errors.hoursInGame && <p className="text-destructive text-xs">{errors.hoursInGame.message}</p>}
+                      </FormItem>
+                    )} />
+                     <FormField control={form.control} name="favoriteModes" render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Favorite Game Modes</FormLabel>
+                        <FormControl><Input placeholder="e.g., High-Roller Crypts, Normal Goblin Caves" {...field} /></FormControl>
+                        {errors.favoriteModes && <p className="text-destructive text-xs">{errors.favoriteModes.message}</p>}
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="bossesKilled" render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Bosses Killed (Optional)</FormLabel>
+                        <FormControl><Input placeholder="e.g., Lich, Ghost King, Cave Troll" {...field} /></FormControl>
+                      </FormItem>
+                    )} />
+                 </div>
+                 <FormField control={form.control} name="memorableExperience" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tell us a memorable or fun in-game experience.</FormLabel>
+                        <FormControl><Textarea rows={4} {...field} /></FormControl>
+                        {errors.memorableExperience && <p className="text-destructive text-xs">{errors.memorableExperience.message}</p>}
+                      </FormItem>
+                    )} />
+              </fieldset>
 
-            {/* Availability */}
-             <fieldset className="space-y-4">
-              <legend className="font-headline text-xl mb-2">Your Availability</legend>
-                <div className="space-y-2">
-                  <Label htmlFor="availabilityDays">What days of the week do you typically play?</Label>
-                  <Input id="availabilityDays" {...register('availabilityDays')} placeholder="e.g., Weekdays, Weekends, Mon/Weds/Fri" />
-                  {errors.availabilityDays && <p className="text-destructive text-xs">{errors.availabilityDays.message}</p>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                    <div className="space-y-2 lg:col-span-2">
-                      <Label htmlFor="availabilityTimezone">Your Timezone</Label>
-                       <Controller
-                        name="availabilityTimezone"
-                        control={control}
-                        render={({ field }) => (
+              {/* Availability */}
+               <fieldset className="space-y-4">
+                <legend className="font-headline text-xl mb-2">Your Availability</legend>
+                  <FormField control={form.control} name="availabilityDays" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>What days of the week do you typically play?</FormLabel>
+                        <FormControl><Input placeholder="e.g., Weekdays, Weekends, Mon/Weds/Fri" {...field} /></FormControl>
+                        {errors.availabilityDays && <p className="text-destructive text-xs">{errors.availabilityDays.message}</p>}
+                      </FormItem>
+                    )} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                      <FormField control={form.control} name="availabilityTimezone" render={({ field }) => (
+                        <FormItem className="lg:col-span-2">
+                           <FormLabel>Your Timezone</FormLabel>
                            <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger id="availabilityTimezone"><SelectValue placeholder="Select your timezone" /></SelectTrigger>
+                            <FormControl>
+                               <SelectTrigger id="availabilityTimezone"><SelectValue placeholder="Select your timezone" /></SelectTrigger>
+                            </FormControl>
                             <SelectContent>
                               {timezones.map(tz => <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                        )}
-                      />
-                      {errors.availabilityTimezone && <p className="text-destructive text-xs">{errors.availabilityTimezone.message}</p>}
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="availabilityStart">From (24h)</Label>
-                        <Input id="availabilityStart" {...register('availabilityStart')} placeholder="HH:MM"/>
-                        {errors.availabilityStart && <p className="text-destructive text-xs">{errors.availabilityStart.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="availabilityEnd">To (24h)</Label>
-                        <Input id="availabilityEnd" {...register('availabilityEnd')} placeholder="HH:MM"/>
-                         {errors.availabilityEnd && <p className="text-destructive text-xs">{errors.availabilityEnd.message}</p>}
-                    </div>
-                </div>
-                 {estTime.start && (
-                  <div className="p-3 bg-muted/30 rounded-md border border-dashed text-sm flex items-center gap-3">
-                    <Info className="h-5 w-5 text-primary shrink-0"/>
-                    <div>
-                      For coordination, your typical hours convert to <span className="font-bold text-foreground">{estTime.start} - {estTime.end} {estAbbreviation}</span>. This helps us find you party members.
-                    </div>
+                          {errors.availabilityTimezone && <p className="text-destructive text-xs">{errors.availabilityTimezone.message}</p>}
+                        </FormItem>
+                      )} />
+                       <FormField control={form.control} name="availabilityStart" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>From (24h)</FormLabel>
+                          <FormControl><Input placeholder="HH:MM" {...field} /></FormControl>
+                          {errors.availabilityStart && <p className="text-destructive text-xs">{errors.availabilityStart.message}</p>}
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="availabilityEnd" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>To (24h)</FormLabel>
+                          <FormControl><Input placeholder="HH:MM" {...field} /></FormControl>
+                          {errors.availabilityEnd && <p className="text-destructive text-xs">{errors.availabilityEnd.message}</p>}
+                        </FormItem>
+                      )} />
                   </div>
-                )}
-            </fieldset>
-
-            {/* Content Creator */}
-             <fieldset className="space-y-4">
-                <legend className="font-headline text-xl mb-2">Content Creation (Optional)</legend>
-                <Controller
-                  name="isContentCreator"
-                  control={control}
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <FormLabel className="font-normal">Are you a content creator?</FormLabel>
-                    </FormItem>
+                   {estTime.start && (
+                    <div className="p-3 bg-muted/30 rounded-md border border-dashed text-sm flex items-center gap-3">
+                      <Info className="h-5 w-5 text-primary shrink-0"/>
+                      <div>
+                        For coordination, your typical hours convert to <span className="font-bold text-foreground">{estTime.start} - {estTime.end} {estAbbreviation}</span>. This helps us find you party members.
+                      </div>
+                    </div>
                   )}
-                />
-                {watch('isContentCreator') && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="twitchUrl">Twitch URL</Label>
-                      <Input id="twitchUrl" {...register('twitchUrl')} placeholder="https://twitch.tv/yourchannel" />
-                       {errors.twitchUrl && <p className="text-destructive text-xs">{errors.twitchUrl.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="youtubeUrl">YouTube URL</Label>
-                      <Input id="youtubeUrl" {...register('youtubeUrl')} placeholder="https://youtube.com/yourchannel" />
-                       {errors.youtubeUrl && <p className="text-destructive text-xs">{errors.youtubeUrl.message}</p>}
-                    </div>
-                  </div>
-                )}
-            </fieldset>
-            
-            {/* Final Question */}
-             <fieldset className="space-y-4">
-                <legend className="font-headline text-xl mb-2">Your Intentions</legend>
-                 <div className="space-y-2">
-                    <Label htmlFor="guildExpectations">What are you looking to gain from and add to The Black Lantern Company?</Label>
-                    <Textarea id="guildExpectations" rows={4} {...register('guildExpectations')} />
-                    {errors.guildExpectations && <p className="text-destructive text-xs">{errors.guildExpectations.message}</p>}
-                </div>
-            </fieldset>
+              </fieldset>
 
-            <div className="flex justify-end pt-4">
-              <Button type="submit" size="lg" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Petition
-              </Button>
-            </div>
-          </form>
+              {/* Content Creator */}
+               <fieldset className="space-y-4">
+                  <legend className="font-headline text-xl mb-2">Content Creation (Optional)</legend>
+                  <FormField
+                    control={form.control}
+                    name="isContentCreator"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="font-normal">Are you a content creator?</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  {watch('isContentCreator') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="twitchUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Twitch URL</FormLabel>
+                          <FormControl><Input placeholder="https://twitch.tv/yourchannel" {...field} /></FormControl>
+                          {errors.twitchUrl && <p className="text-destructive text-xs">{errors.twitchUrl.message}</p>}
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="youtubeUrl" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>YouTube URL</FormLabel>
+                          <FormControl><Input placeholder="https://youtube.com/yourchannel" {...field} /></FormControl>
+                          {errors.youtubeUrl && <p className="text-destructive text-xs">{errors.youtubeUrl.message}</p>}
+                        </FormItem>
+                      )} />
+                    </div>
+                  )}
+              </fieldset>
+              
+              {/* Final Question */}
+               <fieldset className="space-y-4">
+                  <legend className="font-headline text-xl mb-2">Your Intentions</legend>
+                   <FormField control={form.control} name="guildExpectations" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>What are you looking to gain from and add to The Black Lantern Company?</FormLabel>
+                        <FormControl><Textarea rows={4} {...field} /></FormControl>
+                        {errors.guildExpectations && <p className="text-destructive text-xs">{errors.guildExpectations.message}</p>}
+                      </FormItem>
+                    )} />
+              </fieldset>
+
+              <div className="flex justify-end pt-4">
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Submit Petition
+                </Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
