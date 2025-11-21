@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -299,26 +300,40 @@ export default function ApplyPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Favorite Game Modes</FormLabel>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                           {gameModes.map((mode) => (
-                            <div key={mode} className="flex flex-row items-start space-x-3 space-y-0 mt-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(mode)}
-                                  onCheckedChange={(checked) => {
-                                    const currentValues = field.value || [];
-                                    return checked
-                                      ? field.onChange([...currentValues, mode])
-                                      : field.onChange(
-                                          currentValues.filter(
-                                            (value) => value !== mode
-                                          )
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">{mode}</FormLabel>
-                            </div>
+                            <FormField
+                              key={mode}
+                              control={form.control}
+                              name="favoriteModes"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={mode}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(mode)}
+                                        onCheckedChange={(checked) => {
+                                          const currentValues = Array.isArray(field.value) ? field.value : [];
+                                          return checked
+                                            ? field.onChange([...currentValues, mode])
+                                            : field.onChange(
+                                                currentValues.filter(
+                                                  (value) => value !== mode
+                                                )
+                                              );
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {mode}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
                           ))}
                         </div>
                         <FormMessage />
@@ -333,20 +348,38 @@ export default function ApplyPage() {
                         <FormLabel>Bosses Killed (Optional)</FormLabel>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {bossList.map((boss) => (
-                            <div key={boss} className="flex flex-row items-start space-x-3 space-y-0 mt-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(boss)}
-                                  onCheckedChange={(checked) => {
-                                    const currentValues = field.value || [];
-                                    return checked
-                                      ? field.onChange([...currentValues, boss])
-                                      : field.onChange(currentValues.filter((value) => value !== boss));
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">{boss}</FormLabel>
-                            </div>
+                             <FormField
+                              key={boss}
+                              control={form.control}
+                              name="bossesKilled"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={boss}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(boss)}
+                                        onCheckedChange={(checked) => {
+                                           const currentValues = Array.isArray(field.value) ? field.value : [];
+                                          return checked
+                                            ? field.onChange([...currentValues, boss])
+                                            : field.onChange(
+                                                currentValues.filter(
+                                                  (value) => value !== boss
+                                                )
+                                              );
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      {boss}
+                                    </FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
                           ))}
                         </div>
                         <FormMessage />
@@ -372,29 +405,38 @@ export default function ApplyPage() {
                             <FormLabel>What days of the week do you typically play?</FormLabel>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {daysOfWeek.map((day) => (
-                                <div
-                                    key={day}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                    <FormControl>
-                                    <Checkbox
-                                        checked={field.value?.includes(day)}
-                                        onCheckedChange={(checked) => {
-                                          const currentValues = field.value || [];
-                                          return checked
-                                            ? field.onChange([...currentValues, day])
-                                            : field.onChange(
-                                                currentValues.filter(
-                                                  (value) => value !== day
-                                                )
-                                              )
-                                        }}
-                                    />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">
-                                    {day}
-                                    </FormLabel>
-                                </div>
+                               <FormField
+                                key={day}
+                                control={form.control}
+                                name="availabilityDays"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem
+                                      key={day}
+                                      className="flex flex-row items-start space-x-3 space-y-0"
+                                    >
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(day)}
+                                          onCheckedChange={(checked) => {
+                                            const currentValues = Array.isArray(field.value) ? field.value : [];
+                                            return checked
+                                              ? field.onChange([...currentValues, day])
+                                              : field.onChange(
+                                                  currentValues.filter(
+                                                    (value) => value !== day
+                                                  )
+                                                );
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="font-normal">
+                                        {day}
+                                      </FormLabel>
+                                    </FormItem>
+                                  );
+                                }}
+                              />
                             ))}
                             </div>
                             <FormMessage />
