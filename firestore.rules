@@ -68,12 +68,9 @@ service cloud.firestore {
 
     /**
      * Checks if a user is at least a member.
-     * This is determined by checking the 'role' field on their own player document.
-     * Assumes a user can only read their own player document to check their role.
+     * For now, any authenticated user is considered a member.
      */
      function isMember() {
-       // For now, any signed in user is a member for reads.
-       // This will be replaced with a check on the player's document role.
        return isSignedIn();
      }
 
@@ -179,7 +176,7 @@ service cloud.firestore {
      */
     match /bounty_board_quests/{bountyBoardQuestId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isOfficer() || isAdmin();
     }
 
     /**
@@ -217,13 +214,15 @@ service cloud.firestore {
     }
     
     /**
-     * @description Defines which users have admin privileges. This collection is not accessible by any client.
+     * @description Defines which users have admin privileges.
      * @path /roles_admin/{userId}
-     * @deny (read, write) All client requests to this collection are rejected.
-     * @principle Role-granting collections must be protected from all client access and managed by a trusted backend service only.
+     * @allow (create) TEMPORARY RULE: Allows user Huzzinda@gmail.com to create their own admin document.
+     * @deny (read, write) All other client requests are rejected.
+     * @principle This is a temporary, one-time setup rule. It should be removed after the first admin is created.
      */
     match /roles_admin/{userId} {
-        allow read, write: if false;
+        allow create: if request.auth != null && request.auth.token.email == 'Huzzinda@gmail.com' && request.auth.uid == userId;
+        allow read, update, delete: if false;
     }
 
   }
