@@ -73,11 +73,11 @@ export default function LandingPage() {
   }
   
   const playTabSound = () => {
-    tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
+    // tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
   }
 
   const handleSignIn = (data: SignInFormValues) => {
-    loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
+    // loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
     initiateEmailSignIn(auth, data.email, data.password);
   };
 
@@ -108,9 +108,9 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="font-headline text-5xl text-primary leading-none">
-                <div className="text-3xl font-light text-foreground/80 tracking-widest">The</div>
+                <div className="text-3xl font-semibold text-foreground/80 tracking-widest">The</div>
                 Black Lantern
-                <div className="text-4xl font-light text-foreground/80 -mt-2 tracking-widest">Company</div>
+                <div className="text-4xl font-semibold text-foreground/80 -mt-2 tracking-widest">Company</div>
             </h1>
         </div>
 
@@ -176,7 +176,7 @@ export default function LandingPage() {
         </p>
       </div>
       
-      {/* Audio elements for sound effects - replace src with your actual audio files */}
+      {/* Audio elements for sound effects - Add your audio files to the /public/sounds folder */}
       <audio ref={tabAudioRef} src="/sounds/rock-slide.mp3" preload="auto"></audio>
       <audio ref={loginAudioRef} src="/sounds/chest-unlock.mp3" preload="auto"></audio>
     </div>
