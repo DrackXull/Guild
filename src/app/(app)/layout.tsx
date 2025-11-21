@@ -21,8 +21,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     } else {
       document.body.classList.remove('view-officer');
     }
-    // Cleanup function to remove the class when the component unmounts
-    // or when the path changes away from the officer page.
     return () => {
       document.body.classList.remove('view-officer');
     };

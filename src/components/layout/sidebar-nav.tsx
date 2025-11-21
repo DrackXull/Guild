@@ -19,6 +19,7 @@ import {
   LifeBuoy,
   Settings,
   Store,
+  Scroll,
 } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
@@ -26,7 +27,8 @@ import { Button } from '../ui/button';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
-  { href: '/bounty-board', label: 'Bounty Board', icon: <ScrollText /> },
+  { href: '/bounty-board', label: 'Guild Bounties', icon: <ScrollText /> },
+  { href: '/member-bounties', label: 'Member Bounties', icon: <Scroll /> },
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },

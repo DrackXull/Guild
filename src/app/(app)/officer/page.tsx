@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield, ScrollText, Users, FileText, Trash2 } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,16 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockApplications, mockReviews } from "@/lib/data";
+import { marketItems as initialMarketItems, mockApplications, mockReviews } from "@/lib/data";
 import { useEffect, useState, useTransition } from "react";
-import type { Quest } from "@/lib/types";
+import type { Quest, MarketItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { MarketAdmin } from "@/components/market/market-admin";
 
 
 export default function OfficerPage() {
   const { toast } = useToast();
   const [bounties, setBounties] = useState<Quest[]>([]);
+  const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function OfficerPage() {
         <Shield className="h-10 w-10 text-primary" />
         <div>
           <h1 className="font-headline text-4xl font-bold tracking-wide">Officer Lounge</h1>
-          <p className="text-muted-foreground mt-1">Manage guild settings, rules, and bounties from the command center.</p>
+          <p className="text-muted-foreground mt-1">Manage guild settings, applications, bounties, and the market.</p>
         </div>
       </div>
 
@@ -134,7 +136,7 @@ export default function OfficerPage() {
         <CardHeader>
             <div className="flex items-center gap-3">
                 <ScrollText className="h-6 w-6" />
-                <CardTitle className="font-headline text-2xl">Bounty Administration</CardTitle>
+                <CardTitle className="font-headline text-2xl">Guild Bounty Administration</CardTitle>
             </div>
           <CardDescription>
             Create and manage daily and weekly bounties for the guild.
@@ -210,6 +212,10 @@ export default function OfficerPage() {
         </CardContent>
       </Card>
       
+      <Separator />
+
+      <MarketAdmin items={marketItems} setItems={setMarketItems} />
+
       <Separator />
 
       <Card>

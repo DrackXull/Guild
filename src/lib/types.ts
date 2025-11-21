@@ -116,6 +116,28 @@ export type NavItem = {
   disabled?: boolean;
 };
 
+export type MarketItem = {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+};
+
+export type MemberBounty = {
+    id: string;
+    requestingPlayerId: string;
+    requestingPlayerName: string;
+    acceptedPlayerId?: string;
+
+    acceptedPlayerName?: string;
+    title: string;
+    description: string;
+    reward: number;
+    status: 'open' | 'in_progress' | 'complete';
+    createdAt: string;
+    completedAt?: string;
+}
+
 // Types from the provided script
 export type LfgPost = {
   id: string;
