@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { ApplicationStatus } from '@/components/apply/application-status';
-import type { Application, WithId } from '@/lib/types';
+import type { Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,20 +14,28 @@ export default function ApplicationStatusPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
+  // IMPORTANT: Only create the query if the user and firestore are available.
   const applicationsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
   }, [firestore, user]);
 
+  // The hook will wait until applicationsQuery is not null.
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
   const existingApplication = applications?.[0];
 
+  // Show a loading state while checking for user or fetching application.
   if (isUserLoading || (user && isLoadingApplications)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <p>Loading application status...</p>
       </div>
     );
+  }
+
+  // If there's no logged-in user, they shouldn't be here, but as a fallback, show nothing.
+  if (!user) {
+    return null;
   }
 
   return (

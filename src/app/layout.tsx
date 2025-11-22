@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { UserNav } from '@/components/layout/user-nav';
-import { allCharacters, players } from '@/lib/data';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
@@ -14,6 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc } from 'firebase/firestore';
 import { Player } from '@/lib/types';
+import { allCharacters, players } from '@/lib/data'; // Mock data, remove when not needed
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,14 +22,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
 
   const isOfficerPage = pathname.startsWith('/officer');
-  
+
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, `players/${user.uid}`);
   }, [user, firestore]);
 
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
-  
+
   useEffect(() => {
     if (isOfficerPage) {
       document.body.classList.add('view-officer');
@@ -41,34 +41,42 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  // Handle routing while auth state is loading or user is logged out.
+  // Main navigation and routing logic
   useEffect(() => {
-    if (isUserLoading) return; // Wait until auth check is complete
+    // Wait until we know the auth and profile status
+    if (isUserLoading || (user && isProfileLoading)) {
+      return;
+    }
 
-    const publicRoutes = ['/', '/apply', '/application-status'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+    const isPublicRoute = ['/'].includes(pathname);
+    const isApplicantRoute = ['/application-status', '/apply'].includes(pathname);
 
-    if (!user && !isPublicRoute) {
-      // If user is not logged in and not on a public route, redirect to login
-      router.push('/');
-    } else if (user) {
-      // If user is logged in, handle their routing
-      if (!isProfileLoading) {
-        if (playerProfile) {
-           // User is a full member, should not be on public or applicant-only pages
-           if (isPublicRoute) {
-             router.push('/dashboard');
-           }
-        } else {
-          // User is logged in but not a member (is an applicant)
-          if (pathname !== '/application-status' && pathname !== '/apply') {
-            router.push('/application-status');
-          }
+    if (user) {
+      // User is logged in
+      if (playerProfile) {
+        // User is a full member (has a player profile)
+        // If they are on a public or applicant page, redirect to dashboard
+        if (isPublicRoute || isApplicantRoute) {
+          router.push('/dashboard');
         }
+      } else {
+        // User is logged in but has no player profile (is an applicant)
+        // If they are NOT on an applicant route, redirect them to check status
+        if (!isApplicantRoute) {
+          router.push('/application-status');
+        }
+      }
+    } else {
+      // User is not logged in
+      // If they are on a protected route, redirect to the login page
+      if (!isPublicRoute && !isApplicantRoute) {
+        router.push('/');
       }
     }
   }, [user, isUserLoading, playerProfile, isProfileLoading, pathname, router]);
 
+
+  // Show loading state while determining user status
   if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -77,11 +85,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // For logged-out users, just render the content of public pages without the full layout.
+  // For logged-out users, only render the public pages.
   if (!user) {
      return <>{children}</>;
   }
-  
+
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
   const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
