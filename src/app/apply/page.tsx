@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Swords, Loader2, Info } from 'lucide-react';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
@@ -24,6 +24,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ApplicationStatus } from '@/components/apply/application-status';
+import type { Application, WithId } from '@/lib/types';
 
 
 const applicationSchema = z.object({
@@ -49,6 +51,7 @@ const applicationSchema = z.object({
   availabilityStart: z.string().min(1, 'Please select a start time.'),
   availabilityEnd: z.string().min(1, 'Please select an end time.'),
   guildExpectations: z.string().min(20, 'Please share a bit more (at least 20 characters).'),
+  references: z.string().optional(),
 });
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>;
@@ -73,6 +76,14 @@ export default function ApplyPage() {
   const router = useRouter();
   
   const [savedDraft, setSavedDraft] = useLocalStorage<Partial<ApplicationFormValues>>(LOCAL_STORAGE_KEY, {});
+
+  const applicationsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
+  }, [firestore, user]);
+
+  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
+  const existingApplication = applications?.[0];
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
@@ -99,6 +110,7 @@ export default function ApplyPage() {
       availabilityStart: '17:00',
       availabilityEnd: '22:00',
       guildExpectations: '',
+      references: '',
       ...savedDraft,
     }
   });
@@ -108,8 +120,9 @@ export default function ApplyPage() {
   const watchedValues = watch();
   
   useEffect(() => {
-    setSavedDraft(watchedValues);
+      setSavedDraft(watchedValues);
   }, [JSON.stringify(watchedValues), setSavedDraft]);
+
 
   const onSubmit = async (data: ApplicationFormValues) => {
     if (!firestore || !user) {
@@ -138,7 +151,7 @@ export default function ApplyPage() {
       });
       setSavedDraft({});
       form.reset();
-      router.refresh(); 
+      // No need to router.refresh() as useCollection will update
     } catch (error) {
       toast({
         title: 'Submission Failed',
@@ -151,15 +164,29 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
+  if (isLoadingApplications) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-background">
+            <p>Loading application status...</p>
+        </div>
+      );
+  }
+
   return (
     <div className="container mx-auto max-w-4xl py-12">
       <div className="flex flex-col items-center text-center mb-8">
         <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to The Black Lantern Company</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition.
+            {existingApplication 
+                ? "Below is the current status of your petition."
+                : "We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition."
+            }
         </p>
       </div>
 
+      {existingApplication ? (
+        <ApplicationStatus application={existingApplication} />
+      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-2xl flex items-center gap-3"><Swords/> Petition for Membership</CardTitle>
@@ -553,6 +580,14 @@ export default function ApplyPage() {
                         <FormMessage />
                       </FormItem>
                     )} />
+                     <FormField control={control} name="references" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>References (Optional)</FormLabel>
+                        <FormControl><Textarea rows={2} placeholder="List any current guild members who can vouch for you." {...field} /></FormControl>
+                        <FormDescription>Recruiting new members benefits both you and the guild!</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
               </fieldset>
 
               <div className="flex justify-end pt-4">
@@ -565,8 +600,7 @@ export default function ApplyPage() {
           </Form>
         </CardContent>
       </Card>
+    )}
     </div>
   );
 }
-
-    

@@ -515,6 +515,10 @@
         "guildExpectations": {
           "type": "string",
           "description": "What the applicant is looking to gain from and add to the guild."
+        },
+        "references": {
+          "type": "string",
+          "description": "Guild members who can vouch for the applicant."
         }
       },
       "required": [

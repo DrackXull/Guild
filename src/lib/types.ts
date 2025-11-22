@@ -1,4 +1,5 @@
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -159,34 +160,45 @@ export type LfgRequest = {
   responderId?: string;
 };
 
+export type ApplicationReviewDecision = 'approved' | 'denied';
+
+export type ApplicationReviewLog = {
+    officerId: string,
+    decision: ApplicationReviewDecision,
+    notes: string,
+    timestamp: string,
+}
+
 export type Application = {
   id: string;
   applicantName: string;
+  inGameName: string;
   discordTag: string;
-  email?: string;
-  server?: string;
-  status: 'pending' | 'approved' | 'denied';
-  isRepeat?: boolean;
-  notes?: string;
-  decisionNote?: string;
+  status: 'pending' | 'approved' | 'denied' | 'withdrawn';
   createdAt: string;
-  code?: string;
-  roles?: string[];
-  characters?: { name: string }[];
-  bosses?: string;
-  availability?: {
-    daysPerWeek?: string;
-    usualDays?: string;
-    timeWindow?: string;
-  };
-  gameplay?: {
-    hoursInGame?: string;
-    favoriteMode?: string;
-    mostPlayedMode?: string;
-    bosses?: string;
-  };
-  reviewTrail?: ApplicationReview[];
-  vote?: number;
+  mainCharacters: string;
+  mainClasses: string[];
+  hoursInGame: number;
+  favoriteModes: string[];
+  memorableExperience: string;
+  availabilityDays: string[];
+  availabilityTimezone: string;
+  availabilityStart: string;
+  availabilityEnd: string;
+  guildExpectations: string;
+  isContentCreator?: boolean;
+  twitchUrl?: string;
+  youtubeUrl?: string;
+  kickUrl?: string;
+  twitterUrl?: string;
+  tiktokUrl?: string;
+  otherUrl?: string;
+  userId: string;
+  attemptCount: number;
+  reviewHistory?: ApplicationReviewLog[];
+  references?: string;
+  bossesKilled?: string[];
+  mainRoles?: string;
 };
 
 export type ApplicationReview = {
