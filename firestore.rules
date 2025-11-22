@@ -155,9 +155,9 @@ service cloud.firestore {
     match /applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      // Allow a user to query the collection, but ONLY if they are filtering by their own userId.
+      // Allow a user to query their own application, but ONLY if they filter by their own userId.
       // This prevents a user from listing all applications.
-      allow list: if (request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
+      allow list: if (request.query.where.size() == 1 && request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 

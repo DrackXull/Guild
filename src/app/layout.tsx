@@ -41,39 +41,39 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  // Simplified routing logic
+  // This is the core redirection logic based on user role (applicant vs member)
   useEffect(() => {
     if (isUserLoading || isProfileLoading) {
-      return; // Wait for auth and profile to load
+      return; // Wait until we know the user's auth state and profile status
     }
 
-    const isPublicRoute = ['/'].includes(pathname);
-    
+    const isMember = !!playerProfile;
+    const isPublicApplicantArea = pathname.startsWith('/apply') || pathname.startsWith('/application-status');
+
     if (user) {
-      // User is logged in.
-      if (playerProfile) {
-        // User has a profile, they are a member.
-        // If they are on the landing page, send them to the dashboard.
-        if (isPublicRoute) {
+      // User is logged in
+      if (isMember) {
+        // User is a full member. Send them to the dashboard if they land on a public page.
+        if (pathname === '/' || isPublicApplicantArea) {
           router.push('/dashboard');
         }
       } else {
-        // User does not have a profile, they are an applicant.
-        // If they are NOT on the application status page or apply page, send them there.
-        if (!pathname.startsWith('/application-status') && !pathname.startsWith('/apply')) {
-          router.push('/application-status');
+        // User is logged in but NOT a member (i.e., they are an applicant).
+        // Force them to the application area.
+        if (!isPublicApplicantArea && pathname !== '/') {
+           router.push('/application-status');
         }
       }
     } else {
-      // User is NOT logged in.
-      // If they are trying to access a protected page, send them to the landing page.
-       if (!isPublicRoute && !pathname.startsWith('/application-status') && !pathname.startsWith('/apply')) {
+      // User is not logged in. Protect non-public pages.
+      const isProtectedRoute = !['/', '/apply', '/application-status'].some(p => pathname.startsWith(p));
+      if (isProtectedRoute) {
         router.push('/');
       }
     }
   }, [user, isUserLoading, playerProfile, isProfileLoading, pathname, router]);
 
-  // Consistent loading state
+  // Consistent loading state to prevent layout shifts and errors
   if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -82,16 +82,29 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // For logged-out users, only render the public pages (children).
-  if (!user) {
-    return <>{children}</>;
+  // Render content based on whether the user is a logged-in member
+  const isMember = !!playerProfile;
+
+  if (user && !isMember) {
+    // Applicant View: Show only the application-related pages.
+     const isPublicApplicantArea = pathname.startsWith('/apply') || pathname.startsWith('/application-status') || pathname === '/';
+     if (isPublicApplicantArea) {
+        return <>{children}</>;
+     }
+     // Render loading or null while redirecting
+     return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
   }
   
-  // If user is logged in but is an applicant, only render the applicant pages.
-  if (!playerProfile) {
-      return <>{children}</>;
+  if (!user) {
+    // Logged-out view
+    const isPublicRoute = ['/', '/apply', '/application-status'].some(p => pathname.startsWith(p));
+    if (isPublicRoute) {
+        return <>{children}</>;
+    }
+    return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
   }
 
+  // If we've reached here, the user is a logged-in member. Show the full app.
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
   const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
