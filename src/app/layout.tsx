@@ -13,7 +13,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc } from 'firebase/firestore';
 import { Player } from '@/lib/types';
-import { allCharacters, players } from '@/lib/data'; // Mock data, remove when not needed
+import { allCharacters, players } from '@/lib/data';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,12 +22,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
 
   const isOfficerPage = pathname.startsWith('/officer');
-
+  
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, `players/${user.uid}`);
   }, [user, firestore]);
-
+  
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
 
   useEffect(() => {
@@ -41,42 +41,39 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  // Main navigation and routing logic
+  // Simplified routing logic
   useEffect(() => {
-    // Wait until we know the auth and profile status
-    if (isUserLoading || (user && isProfileLoading)) {
-      return;
+    if (isUserLoading || isProfileLoading) {
+      return; // Wait for auth and profile to load
     }
 
     const isPublicRoute = ['/'].includes(pathname);
-    const isApplicantRoute = ['/application-status', '/apply'].includes(pathname);
-
+    
     if (user) {
-      // User is logged in
+      // User is logged in.
       if (playerProfile) {
-        // User is a full member (has a player profile)
-        // If they are on a public or applicant page, redirect to dashboard
-        if (isPublicRoute || isApplicantRoute) {
+        // User has a profile, they are a member.
+        // If they are on the landing page, send them to the dashboard.
+        if (isPublicRoute) {
           router.push('/dashboard');
         }
       } else {
-        // User is logged in but has no player profile (is an applicant)
-        // If they are NOT on an applicant route, redirect them to check status
-        if (!isApplicantRoute) {
+        // User does not have a profile, they are an applicant.
+        // If they are NOT on the application status page or apply page, send them there.
+        if (!pathname.startsWith('/application-status') && !pathname.startsWith('/apply')) {
           router.push('/application-status');
         }
       }
     } else {
-      // User is not logged in
-      // If they are on a protected route, redirect to the login page
-      if (!isPublicRoute && !isApplicantRoute) {
+      // User is NOT logged in.
+      // If they are trying to access a protected page, send them to the landing page.
+       if (!isPublicRoute && !pathname.startsWith('/application-status') && !pathname.startsWith('/apply')) {
         router.push('/');
       }
     }
   }, [user, isUserLoading, playerProfile, isProfileLoading, pathname, router]);
 
-
-  // Show loading state while determining user status
+  // Consistent loading state
   if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -85,9 +82,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // For logged-out users, only render the public pages.
+  // For logged-out users, only render the public pages (children).
   if (!user) {
-     return <>{children}</>;
+    return <>{children}</>;
+  }
+  
+  // If user is logged in but is an applicant, only render the applicant pages.
+  if (!playerProfile) {
+      return <>{children}</>;
   }
 
   const onlineMembers = players.filter(p => p.isOnline).length;

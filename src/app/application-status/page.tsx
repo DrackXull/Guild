@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FilePlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
 
 export default function ApplicationStatusPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
 
   // IMPORTANT: Only create the query if the user and firestore are available.
   const applicationsQuery = useMemoFirebase(() => {
@@ -20,7 +23,6 @@ export default function ApplicationStatusPage() {
     return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
   }, [firestore, user]);
 
-  // The hook will wait until applicationsQuery is not null.
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
   const existingApplication = applications?.[0];
 
@@ -33,8 +35,9 @@ export default function ApplicationStatusPage() {
     );
   }
 
-  // If there's no logged-in user, they shouldn't be here, but as a fallback, show nothing.
+  // If there's no logged-in user, redirect them to the home page to log in.
   if (!user) {
+    router.push('/');
     return null;
   }
 
