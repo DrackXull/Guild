@@ -148,14 +148,14 @@ service cloud.firestore {
      * @path /applications/{applicationId}
      * @allow (create) Any authenticated user can create an application for themselves.
      * @allow (get) An applicant can read their own application. Officers/admins can read any.
-     * @allow (list) An applicant can query for their own application. Officers/admins can list all.
+     * @allow (list) An applicant can query for their own application using their userId. Officers/admins can list all.
      * @allow (update, delete) An applicant can withdraw/update their own application. Officers/admins can manage any.
      * @principle Public write for applying, owner-read for status checking, privileged access for review/management.
      */
     match /applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.query.where.size() == 1 && request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
+      allow list: if (request.query.limit == 1 && request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
