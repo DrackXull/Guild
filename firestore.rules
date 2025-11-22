@@ -155,7 +155,7 @@ service cloud.firestore {
     match /applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
+      allow list: if request.query.where.userId == request.auth.uid || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
@@ -221,11 +221,10 @@ service cloud.firestore {
      * @description Defines which users have admin privileges. This collection is not accessible by any client.
      * @path /roles_admin/{userId}
      * @deny (read, write) All client requests to this collection are rejected.
-     * @principle This is a temporary, one-time setup rule. It should be removed after the first admin is created.
+     * @principle Role-granting collections must be protected from all client access and managed by a trusted backend service only.
      */
     match /roles_admin/{userId} {
-        allow write: if isAdmin();
-        allow read: if false;
+        allow read, write: if false;
     }
 
   }
