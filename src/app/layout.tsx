@@ -32,38 +32,34 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, firestore]);
 
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
-
-  const [authChecked, setAuthChecked] = useState(false);
-
+  
   useEffect(() => {
-    const isMember = playerProfile?.role === 'member' || playerProfile?.role === 'officer' || playerProfile?.role === 'admin';
-    const finishedLoading = !isUserLoading && !isProfileLoading;
     const isPublicPage = pathname === '/' || pathname.startsWith('/apply');
+    const isMember = playerProfile?.role === 'member' || playerProfile?.role === 'officer' || playerProfile?.role === 'admin';
 
-    if (finishedLoading) {
-      if (user) {
-        // User is logged in
-        if (isMember) {
-          // User is a member
-          if (isPublicPage) {
-            router.push('/dashboard');
-          }
-        } else {
-          // User is not a member (applicant)
-          if (!isPublicPage) {
-             router.push('/apply');
-          }
+    if (isUserLoading || isProfileLoading) {
+      return; // Wait for auth and profile to load
+    }
+    
+    if (user) {
+      // User is logged in
+      if (isMember) {
+        if (isPublicPage) {
+          router.push('/dashboard');
         }
       } else {
-        // User is not logged in
-        if (!isPublicPage) {
-          router.push('/');
+        // Not a member, must be an applicant
+        if (pathname !== '/apply') {
+          router.push('/apply');
         }
       }
-      setAuthChecked(true);
+    } else {
+      // User is not logged in
+      if (!isPublicPage) {
+        router.push('/');
+      }
     }
   }, [user, playerProfile, isUserLoading, isProfileLoading, pathname, router]);
-
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -76,27 +72,37 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  const isPublicPage = pathname === '/' || pathname.startsWith('/apply');
-
-  if (!authChecked) {
-      return (
-        <div className="flex items-center justify-center h-screen bg-background">
-            <p>Loading Guild Hall...</p>
-        </div>
+  // Initial loading state while we determine auth status
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+          <p>Loading Guild Hall...</p>
+      </div>
     );
   }
-  
-  if (isPublicPage && !user) {
+
+  // Render public pages for logged-out users
+  const isPublicPage = pathname === '/';
+  if (!user && isPublicPage) {
     return <>{children}</>;
   }
-
-  // If user is logged in but not a member, they can only see the apply page
+  
+  // Render application page for applicants
   if (user && !playerProfile && pathname.startsWith('/apply')) {
     return <>{children}</>;
   }
-  
-  // If user is logged in and a member, show the full layout
-  if(user && playerProfile) {
+
+  // If we're still loading profile or user is logged in but not a member on a protected page
+  if (isProfileLoading || (user && !playerProfile && !pathname.startsWith('/apply'))) {
+     return (
+      <div className="flex items-center justify-center h-screen bg-background">
+          <p>Verifying membership...</p>
+      </div>
+    );
+  }
+
+  // Show full app layout for members
+  if (user && playerProfile) {
     return (
       <div className={cn({ 'officer-theme': isOfficerPage })}>
         <SidebarProvider>
@@ -135,10 +141,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Fallback for loading state or redirection
+  // Fallback for any other case (e.g., logged out user on a non-public page being redirected)
   return (
     <div className="flex items-center justify-center h-screen bg-background">
-        <p>Loading Guild Hall...</p>
+        <p>Redirecting...</p>
     </div>
   );
 }
