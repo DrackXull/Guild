@@ -151,9 +151,9 @@ service cloud.firestore {
      * @principle Public write, owner-read for status checking, privileged read/write for review.
      */
     match /applications/{applicationId} {
-      allow create: if true;
+      allow create: if isSignedIn();
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.query.limit == 1 && request.query.filters[0].field == 'userId' && request.query.filters[0].value == request.auth.uid) || isOfficer() || isAdmin();
+      allow list: if (request.query.get('userId') == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
