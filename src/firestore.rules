@@ -144,17 +144,21 @@ service cloud.firestore {
     }
     
     /**
-     * @description Stores guild applications. Anyone can create (apply). Users can read their own application. Officers/admins can read/update/delete any.
+     * @description Stores guild applications.
      * @path /applications/{applicationId}
-     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
-     * @allow (get) An applicant reads their own application document.
-     * @principle Public write, owner-read for status checking, privileged read/write for review.
+     * @allow (create) Any authenticated user can create an application.
+     * @allow (get) An applicant can read their own application document. Officers/admins can read any.
+     * @allow (list) An applicant can query for their own application. Officers/admins can list all.
+     * @allow (update, delete) An applicant can update or delete their own application (e.g., withdraw). Officers/admins can manage any.
+     * @principle Public write for applying, owner-read for status checking, privileged access for review/management.
      */
     match /applications/{applicationId} {
-      allow create: if isSignedIn();
-      allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.query.get("userId") == request.auth.uid) || isOfficer() || isAdmin();
-      allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow create: if isSignedIn();
+        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        // A user can list applications IF their query is filtered by their own userId.
+        // Officers/Admins can list all applications without this filter.
+        allow list: if (request.query.limit <= 10 && request.auth.uid == request.query.resource.data.userId) || isOfficer() || isAdmin();
+        allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
     /**
@@ -229,3 +233,5 @@ service cloud.firestore {
 
   }
 }
+
+    
