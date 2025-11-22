@@ -235,3 +235,6 @@ export type GuildSettings = {
   };
   traitOptions: string[];
 };
+
+// This is not a complete type, but it's what we need for the setup button
+export type PartialPlayer = Omit<Player, 'id' | 'characters'>;

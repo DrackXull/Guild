@@ -13,6 +13,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import type { Player } from "@/lib/types";
 
 function FirstAdminSetup() {
     const { user } = useUser();
@@ -28,13 +29,27 @@ function FirstAdminSetup() {
         if (!firestore || !user) return;
 
         const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+        const playerDocRef = doc(firestore, `players/${user.uid}`);
+
+        const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+            displayName: user.email?.split('@')[0] || 'Guild Leader',
+            discordTag: 'Admin#0001',
+            friends: [],
+            isOnline: true,
+            lifetimeHonor: 100000,
+            currentHonor: 100000,
+            maxHonor: 100000,
+            avatarUrl: '',
+            role: 'admin',
+        };
         
-        // This function does not block and handles errors via a global emitter.
+        // These functions do not block and handle errors via a global emitter.
         setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+        setDocumentNonBlocking(playerDocRef, newPlayerData);
 
         toast({
             title: "Guild Leader Role Assigned",
-            description: "You have been granted Guild Leader privileges. Please request to have this temporary setup removed now.",
+            description: "You have been granted Guild Leader privileges and your player profile has been created.",
         });
     };
 
@@ -46,7 +61,7 @@ function FirstAdminSetup() {
                     <CardTitle className="font-headline text-2xl text-destructive">One-Time Guild Leader Setup</CardTitle>
                 </div>
                 <CardDescription>
-                    This is a temporary panel to grant the first Guild Leader role. Click the button below to claim your title.
+                    This is a temporary panel to grant the first Guild Leader role and create your player profile. Click the button below to claim your title.
                     After succeeding, you should request to have this functionality removed for security.
                 </CardDescription>
             </CardHeader>
