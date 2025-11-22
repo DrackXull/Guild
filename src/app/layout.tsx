@@ -48,17 +48,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         if (isPublicPage || isApplyPage) {
           router.push('/dashboard');
         }
-      } else {
-        // This is an applicant (logged in, but no player profile).
-        // Force them to the apply page.
-        if (!isApplyPage) {
-          router.push('/apply');
-        }
-      }
+      } 
     } else {
       // USER IS LOGGED OUT
-      // If they are on any page other than the public landing page, redirect them.
-      if (!isPublicPage) {
+      // If they are on any page other than the public landing page or apply page, redirect them.
+      if (!isPublicPage && !isApplyPage) {
         router.push('/');
       }
     }
@@ -79,7 +73,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   // --- RENDER LOGIC ---
 
   // 1. Show a loading screen while we determine the user's status.
-  if (isUserLoading || (user && isProfileLoading)) {
+  if (isUserLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <p>Loading Guild Hall...</p>
@@ -87,19 +81,26 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 2. If the user is logged out, only render the public page.
-  // The useEffect above will handle redirecting them here if they are elsewhere.
+  // 2. If the user is logged out, render children (e.g. public page, apply page)
   if (!user) {
-    return pathname === '/' ? <>{children}</> : null;
+     return <>{children}</>;
   }
   
-  // 3. If the user is logged in but is an applicant (no profile), only render the apply page.
-  // The useEffect will handle redirecting them here.
-  if (!playerProfile) {
-    return pathname === '/apply' ? <>{children}</> : null;
+  // 3. If user is logged in, but we are still fetching their guild member profile, show loading.
+  if (isProfileLoading) {
+      return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <p>Loading Guild Hall...</p>
+      </div>
+    );
   }
 
-  // 4. If we reach here, the user is a logged-in member with a profile.
+  // 4. If logged in user is an applicant (no profile), render children (apply page).
+  if (!playerProfile) {
+      return <>{children}</>;
+  }
+
+  // 5. If we reach here, the user is a logged-in member with a profile.
   // Render the full application layout.
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
@@ -160,3 +161,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+    
