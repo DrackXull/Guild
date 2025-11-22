@@ -146,15 +146,14 @@ service cloud.firestore {
     /**
      * @description Stores guild applications. Anyone can create (apply). Users can read their own application. Officers/admins can read/update/delete any.
      * @path /applications/{applicationId}
-     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
      * @allow (get) An applicant reads their own application document.
+     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
      * @principle Public write, owner-read for status checking, privileged read/write for review.
      */
     match /applications/{applicationId} {
         allow create: if isSignedIn();
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        // Allow a user to query for their OWN application. Allow officers to query for any/all.
-        allow list: if (request.query.get('userId') == request.auth.uid && request.query.limit <= 10) || isOfficer() || isAdmin();
+        allow list: if (request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
         allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
