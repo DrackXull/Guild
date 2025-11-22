@@ -153,7 +153,7 @@ service cloud.firestore {
     match /applications/{applicationId} {
       allow create: if isSignedIn();
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.query.get('userId') == request.auth.uid) || isOfficer() || isAdmin();
+      allow list: if (request.query.get("userId") == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
@@ -229,5 +229,3 @@ service cloud.firestore {
 
   }
 }
-
-    
