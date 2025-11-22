@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { ApplicationStatus } from '@/components/apply/application-status';
@@ -40,6 +41,15 @@ export default function ApplicationStatusPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
+  useEffect(() => {
+    // If there's no logged-in user and we are done loading, redirect them to the home page to log in.
+    // This runs as a side effect after rendering to avoid state update errors.
+    if (!isUserLoading && !user) {
+      router.push('/');
+    }
+  }, [isUserLoading, user, router]);
+
+
   // IMPORTANT: Only create the query if the user and firestore are available.
   const applicationsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -52,10 +62,13 @@ export default function ApplicationStatusPage() {
   const isLoading = isUserLoading || (user && isLoadingApplications);
 
 
-  // If there's no logged-in user, redirect them to the home page to log in.
-  if (!isUserLoading && !user) {
-    router.push('/');
-    return null;
+  // Render a loading state or null while redirecting to avoid flashing content.
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+          <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
