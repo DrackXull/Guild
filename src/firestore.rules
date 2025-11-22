@@ -153,12 +153,10 @@ service cloud.firestore {
      * @principle Public write for applying, owner-read for status checking, privileged access for review/management.
      */
     match /applications/{applicationId} {
-        allow create: if isSignedIn();
-        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        // A user can list applications IF their query is filtered by their own userId.
-        // Officers/Admins can list all applications without this filter.
-        allow list: if (request.query.limit <= 10 && request.auth.uid == request.query.resource.data.userId) || isOfficer() || isAdmin();
-        allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      allow list: if (request.query.get("where").get("userId") == request.auth.uid) || isOfficer() || isAdmin();
+      allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
     /**
