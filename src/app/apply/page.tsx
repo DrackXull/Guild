@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Swords, Loader2, Info, Save } from 'lucide-react';
-import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
@@ -24,9 +24,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ApplicationStatus } from '@/components/apply/application-status';
-import type { Application, WithId } from '@/lib/types';
-
 
 const applicationSchema = z.object({
   applicantName: z.string().min(1, 'Name is required.'),
@@ -117,15 +114,8 @@ export default function ApplyPage() {
         description: "Your previous application draft has been loaded.",
       });
     }
-  }, []);
+  }, [reset, savedDraft, toast]);
 
-  const applicationsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
-  }, [firestore, user]);
-
-  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
-  const existingApplication = applications?.[0];
 
   const handleSaveDraft = () => {
     const currentValues = getValues();
@@ -152,7 +142,7 @@ export default function ApplyPage() {
       userId: user.uid,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      attemptCount: (existingApplication?.attemptCount || 0) + 1, 
+      attemptCount: 1, // This would be incremented if re-applying was handled here
     };
 
     try {
@@ -162,7 +152,7 @@ export default function ApplyPage() {
         description: 'Thank you for your summons. The council will review your application.',
       });
       setSavedDraft({}); // Clear the draft
-      reset(); // Reset form
+      router.push('/application-status'); // Redirect to status page
     } catch (error) {
        console.error("Error submitting application:", error);
        toast({
@@ -177,14 +167,15 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
-  if (isUserLoading || (user && isLoadingApplications)) {
+  if (isUserLoading) {
       return (
         <div className="flex items-center justify-center h-screen bg-background">
-            <p>Loading application status...</p>
+            <p>Loading...</p>
         </div>
       );
   }
   
+  // If not loading and not logged in, redirect to home to sign up/in.
   if (!user) {
     router.push('/');
     return (
@@ -199,16 +190,10 @@ export default function ApplyPage() {
       <div className="flex flex-col items-center text-center mb-8">
         <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to The Black Lantern Company</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
-            {existingApplication 
-                ? "Below is the current status of your petition."
-                : "We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition."
-            }
+            We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition.
         </p>
       </div>
 
-      {existingApplication ? (
-        <ApplicationStatus application={existingApplication} />
-      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-2xl flex items-center gap-3"><Swords/> Petition for Membership</CardTitle>
@@ -637,9 +622,6 @@ export default function ApplyPage() {
           </Form>
         </CardContent>
       </Card>
-    )}
     </div>
   );
 }
-
-    

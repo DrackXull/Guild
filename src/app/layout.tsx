@@ -17,6 +17,7 @@ import { Player } from '@/lib/types';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
@@ -28,7 +29,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user, firestore]);
 
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
-
+  
   useEffect(() => {
     if (isOfficerPage) {
       document.body.classList.add('view-officer');
@@ -40,6 +41,33 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
+  // Handle routing while auth state is loading or user is logged out.
+  useEffect(() => {
+    if (isUserLoading) return; // Wait until auth check is complete
+
+    const publicRoutes = ['/', '/apply'];
+    const isPublicRoute = publicRoutes.includes(pathname);
+
+    if (!user && !isPublicRoute) {
+      // If user is not logged in and not on a public route, redirect to login
+      router.push('/');
+    } else if (user) {
+      // If user is logged in, handle their routing
+      if (!isProfileLoading) {
+        if (playerProfile) {
+           // User is a full member, should not be on public or applicant-only pages
+           if (isPublicRoute || pathname === '/application-status') {
+             router.push('/dashboard');
+           }
+        } else {
+          // User is logged in but not a member (is an applicant)
+          if (pathname !== '/application-status' && pathname !== '/apply') {
+            router.push('/application-status');
+          }
+        }
+      }
+    }
+  }, [user, isUserLoading, playerProfile, isProfileLoading, pathname, router]);
 
   if (isUserLoading || (user && isProfileLoading)) {
     return (
@@ -49,21 +77,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If logged out or not a member yet, show the page content without the full layout
-  if (!user || pathname === '/') {
+  // For logged-out users, just render the content of public pages without the full layout.
+  if (!user) {
      return <>{children}</>;
-  }
-
-  // If user is logged in, but has no profile, they are an applicant.
-  // The /apply page handles displaying their application status.
-  if (user && !playerProfile) {
-    if (pathname === '/apply') {
-      return <>{children}</>;
-    }
-    // For any other page, you might want to redirect them to apply,
-    // but we'll let the apply page handle its own logic for now.
-    // This prevents redirect loops.
-    return <>{children}</>
   }
   
   const onlineMembers = players.filter(p => p.isOnline).length;
@@ -93,7 +109,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-2" title={`${totalBossKills} total boss kills`}>
                       <Skull className="h-4 w-4 text-muted-foreground"/>
                       <span className="font-bold">{totalBossKills}</span>
-                        <span className="hidden sm:inline text-muted-foreground">Bosses</span>
+                        <span className="hidden sm_inline text-muted-foreground">Bosses</span>
                   </div>
               </div>
               <UserNav />
