@@ -19,16 +19,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isUserLoading } = useUser();
-  const firestore = useFirestore();
-
+  
   const isOfficerPage = pathname.startsWith('/officer');
-  
-  const playerDocRef = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return doc(firestore, `players/${user.uid}`);
-  }, [user, firestore]);
-  
-  const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -41,40 +33,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  // This is the core redirection logic based on user role (applicant vs member)
-  useEffect(() => {
-    if (isUserLoading || isProfileLoading) {
-      return; // Wait until we know the user's auth state and profile status
-    }
-
-    const isMember = !!playerProfile;
-    const isPublicApplicantArea = pathname.startsWith('/apply') || pathname.startsWith('/application-status');
-
-    if (user) {
-      // User is logged in
-      if (isMember) {
-        // User is a full member. Send them to the dashboard if they land on a public page.
-        if (pathname === '/' || isPublicApplicantArea) {
-          router.push('/dashboard');
-        }
-      } else {
-        // User is logged in but NOT a member (i.e., they are an applicant).
-        // Force them to the application area.
-        if (!isPublicApplicantArea && pathname !== '/') {
-           router.push('/application-status');
-        }
-      }
-    } else {
-      // User is not logged in. Protect non-public pages.
-      const isProtectedRoute = !['/', '/apply', '/application-status'].some(p => pathname.startsWith(p));
-      if (isProtectedRoute) {
-        router.push('/');
-      }
-    }
-  }, [user, isUserLoading, playerProfile, isProfileLoading, pathname, router]);
-
-  // Consistent loading state to prevent layout shifts and errors
-  if (isUserLoading || (user && isProfileLoading)) {
+  // If user state is still loading, show a loading screen.
+  if (isUserLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <p>Loading Guild Hall...</p>
@@ -82,29 +42,30 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Render content based on whether the user is a logged-in member
-  const isMember = !!playerProfile;
-
-  if (user && !isMember) {
-    // Applicant View: Show only the application-related pages.
-     const isPublicApplicantArea = pathname.startsWith('/apply') || pathname.startsWith('/application-status') || pathname === '/';
-     if (isPublicApplicantArea) {
-        return <>{children}</>;
-     }
-     // Render loading or null while redirecting
-     return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
+  // If there is no user, and the current page is not the public landing page, redirect to landing page.
+  if (!user && pathname !== '/') {
+      // Allow access to apply and application-status if needed for logged-out users,
+      // but for now, we simplify to just redirecting to home.
+      const publicRoutes = ['/', '/apply', '/application-status'];
+      if (!publicRoutes.includes(pathname)) {
+        router.push('/');
+        return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
+      }
   }
   
-  if (!user) {
-    // Logged-out view
-    const isPublicRoute = ['/', '/apply', '/application-status'].some(p => pathname.startsWith(p));
-    if (isPublicRoute) {
-        return <>{children}</>;
-    }
-    return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
+  // If the user is logged in, but on the landing page, redirect to the dashboard.
+  if (user && pathname === '/') {
+      router.push('/dashboard');
+      return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
   }
 
-  // If we've reached here, the user is a logged-in member. Show the full app.
+  // If the user is logged out, only show the children (which should be the public page)
+  if (!user) {
+      return <>{children}</>;
+  }
+
+  // --- If we reach here, the user is logged in. Show the full app layout. ---
+
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
   const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
