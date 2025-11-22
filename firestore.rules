@@ -144,17 +144,21 @@ service cloud.firestore {
     }
     
     /**
-     * @description Stores guild applications. Anyone can create (apply). Users can read their own application. Officers/admins can read/update/delete any.
+     * @description Stores guild applications.
      * @path /applications/{applicationId}
-     * @allow (get) An applicant reads their own application document.
-     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
-     * @principle Public write, owner-read for status checking, privileged read/write for review.
+     * @allow (create) Any authenticated user can create an application.
+     * @allow (get) An applicant can read their own application document. Officers/admins can read any.
+     * @allow (list) An applicant can query for their own application. Officers/admins can list all.
+     * @allow (update, delete) An applicant can update or delete their own application (e.g., withdraw). Officers/admins can manage any.
+     * @principle Public write for applying, owner-read for status checking, privileged access for review/management.
      */
     match /applications/{applicationId} {
-        allow create: if isSignedIn();
-        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        allow list: if (request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
-        allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      allow create: if isSignedIn();
+      allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      // Users can list applications if their query filters by their own userId.
+      // Officers/Admins can list all applications.
+      allow list: if (request.query.limit <= 10 && request.auth.uid == request.query.where.userId) || isOfficer() || isAdmin();
+      allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
     /**
