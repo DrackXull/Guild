@@ -1,0 +1,233 @@
+
+/**
+ * Core Philosophy: This ruleset enforces a hybrid security model tailored for a gaming guild application.
+ * It combines strict user-ownership for private data with a public-read/privileged-write model for shared or global data.
+ * A role-based access control (RBAC) system is implemented to grant special permissions to "officer" and "admin" users.
+ *
+ * Data Structure:
+ * - User-specific data (like characters and honor logs) is nested under `/users/{userId}/`, ensuring a clear ownership boundary.
+ * - Publicly accessible data (like bounty quests, guild bank items) resides in top-level collections.
+ * - Dedicated role collections (`/roles_officer/{userId}`, `/roles_admin/{userId}`) manage privileges. The existence of a document grants the role.
+ * - Player profiles contain a `role` field, but for critical write permissions, the existence check in role collections is authoritative.
+ *
+ * Key Security Decisions:
+ * - User-Owned Data: All documents and subcollections under a user's private path (`/users/{userId}`) are accessible only by that authenticated user.
+ * - Public Data: Global collections like `/bounty_board_quests` and `/guild_bank_items` are publicly readable by any client but can only be modified by users with the "officer" or "admin" role.
+ * - Player Profiles & Roster: The top-level `/players` collection is readable by any authenticated member to facilitate the guild roster. Each user can only create and manage their own profile document.
+ * - Role-Based Access: A user's role is primarily checked using helper functions (`isOfficer`, `isAdmin`) that verify document existence in the respective role collections. This is more secure than relying solely on a field in a user-modifiable document.
+ * - Application Process: The `/applications` collection is writable by anyone to allow new players to apply. An applicant can read their own application to check its status. Only officers/admins can read all applications for review.
+ * - Default Deny: The default security posture is to deny all access. Permissions are granted explicitly on a per-collection basis.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------
+    // Helper Functions
+    // --------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user's UID matches the provided userId.
+     * This is the primary function for enforcing document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document.
+     * CRITICAL: Used for all update and delete operations to prevent acting on non-existent data.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Checks if the authenticated user has the 'officer' role.
+     * Role is granted if a document with the user's UID exists in the '/roles_officer' collection.
+     */
+    function isOfficer() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
+    }
+    
+    /**
+     * Checks if the authenticated user has the 'admin' role.
+     * Role is granted if a document with the user's UID exists in the '/roles_admin' collection.
+     * Admins are implicitly officers.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if a user is at least a member.
+     * For now, any authenticated user is considered a member.
+     */
+     function isMember() {
+       return isSignedIn();
+     }
+
+    // --------------------------------
+    // Collection Rules
+    // --------------------------------
+
+    /**
+     * @description Stores public player profiles. Readable by all guild members, but a user can only write to their own profile.
+     * @path /players/{playerId}
+     * @allow (get, list) Any signed-in member can view the roster.
+     * @deny (create) A non-owner tries to create a profile for someone else.
+     * @principle Enforces self-creation and document ownership for writes while allowing members-only reads.
+     */
+    match /players/{playerId} {
+      allow get, list: if isMember();
+      allow create: if isOwner(playerId) && request.resource.data.id == playerId;
+      allow update: if isExistingOwner(playerId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(playerId);
+    }
+
+    /**
+     * @description Manages a user's collection of characters. Only the owner can read or write their own characters.
+     * @path /users/{userId}/characters/{characterId}
+     * @allow (create) User 'user123' creates a new character document under `/users/user123/characters/charABC`.
+     * @deny (list) User 'user456' attempts to list characters at `/users/user123/characters`.
+     * @principle Restricts access to a user's own data tree, enforcing strict data privacy.
+     */
+    match /users/{userId}/characters/{characterId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    /**
+     * @description Defines a run session. Run documents are readable by members, but can only be managed by officers.
+     * @path /runs/{runId}
+     * @allow (get, list) Any member can read run documents.
+     * @deny (create) A regular, non-officer member attempts to create a new run document.
+     * @principle Enforces members-only read access with privileged writes for administrative control.
+     */
+    match /runs/{runId} {
+      allow get, list: if isMember();
+      allow create, update, delete: if isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description Stores reports for a specific run. Readable by members. Writable only by the user who created it.
+     * @path /runs/{runId}/run_reports/{runReportId}
+     * @allow (get) Any member can read any run report.
+     * @deny (create) A user tries to submit a report for another player.
+     * @principle Members-only read access is granted, with owner-only writes.
+     */
+    match /runs/{runId}/run_reports/{runReportId} {
+      allow get, list: if isMember();
+      allow create: if isOwner(request.resource.data.playerId);
+      allow update: if isOwner(resource.data.playerId);
+      allow delete: if isOwner(resource.data.playerId) || isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description Stores user-submitted reviews of other players in a run. Readable by members, writable by the reviewer.
+     * @path /run_reports/{runReportId}/run_reviews/{runReviewId}
+     * @allow (get) Any member can read any run review.
+     * @deny (create) A user tries to submit a review for another player.
+     * @principle Members-only reads with owner-only writes. Officers/admins can delete for moderation.
+     */
+    match /run_reports/{runReportId}/run_reviews/{runReviewId} {
+      allow get, list: if isMember();
+      allow create: if isOwner(request.resource.data.reviewerPlayerId);
+      allow update: if isOwner(resource.data.reviewerPlayerId);
+      allow delete: if isOwner(resource.data.reviewerPlayerId) || isOfficer() || isAdmin();
+    }
+    
+    /**
+     * @description Stores guild applications. Anyone can create (apply). Users can read their own application. Officers/admins can read/update/delete any.
+     * @path /applications/{applicationId}
+     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
+     * @allow (get) An applicant reads their own application document.
+     * @principle Public write, owner-read for status checking, privileged read/write for review.
+     */
+    match /applications/{applicationId} {
+      allow create: if true;
+      allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      allow list: if (request.query.limit == 1 && request.query.filters[0].field == 'userId' && request.query.filters[0].value == request.auth.uid) || isOfficer() || isAdmin();
+      allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description Global configuration for drastic score rules. Publicly readable, but only manageable by admins.
+     * @path /drastic_score_rules/{drasticScoreRuleId}
+     * @allow (get, list) Any user can read the rules.
+     * @deny (update) A non-admin user attempts to change a rule.
+     * @principle Enforces public read access with privileged writes for administrative control.
+     */
+    match /drastic_score_rules/{drasticScoreRuleId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description The list of available daily and weekly quests. Publicly readable, but only manageable by officers.
+     * @path /bounty_board_quests/{bountyBoardQuestId}
+     * @allow (get, list) Any user can view the bounty board.
+     * @deny (create) A regular, non-officer user attempts to add a new quest.
+     * @principle Enforces public read access with privileged writes for administrative control.
+     */
+    match /bounty_board_quests/{bountyBoardQuestId} {
+      allow read: if true;
+      allow write: if isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description Manages a user's honor point transaction history. A user can read their own logs, but only officers/admins can create/edit entries.
+     * @path /users/{userId}/honor_point_logs/{honorPointLogId}
+     * @allow (get, list) User 'user123' reads their own log. An officer/admin also reads this log for review.
+     * @deny (create) User 'user123' tries to create their own honor log entry.
+     * @principle Segregates read permissions to the owner (and privileged roles) and write permissions exclusively to privileged roles.
+     */
+    match /users/{userId}/honor_point_logs/{honorPointLogId} {
+      allow get, list: if isOwner(userId) || isOfficer() || isAdmin();
+      allow create, update, delete: if isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description The list of items available in the guild bank. Readable by members, manageable by officers/admins.
+     * @path /guild_bank_items/{guildBankItemId}
+     * @allow (get, list) Any member can browse the items available in the guild bank.
+     * @deny (update) A regular member attempts to change the price or quantity of an item.
+     * @principle Enforces member-only read access with privileged writes for administrative control.
+     */
+    match /guild_bank_items/{guildBankItemId} {
+      allow get, list: if isMember();
+      allow create, update, delete: if isOfficer() || isAdmin();
+    }
+
+    /**
+     * @description Defines which users have officer privileges. This collection is not accessible by any client.
+     * @path /roles_officer/{userId}
+     * @deny (read, write) All client requests to this collection are rejected.
+     * @principle Role-granting collections must be protected from all client access and managed by a trusted backend service only.
+     */
+    match /roles_officer/{userId} {
+      allow read, write: if false;
+    }
+    
+    /**
+     * @description Defines which users have admin privileges.
+     * @path /roles_admin/{userId}
+     * @allow (create) TEMPORARY RULE: Allows user Huzzinda@gmail.com to create their own admin document.
+     * @deny (read, write) All other client requests are rejected.
+     * @principle This is a temporary, one-time setup rule. It should be removed after the first admin is created.
+     */
+    match /roles_admin/{userId} {
+        allow create: if request.auth != null && request.auth.token.email == 'Huzzinda@gmail.com' && request.auth.uid == userId;
+        allow read, update, delete: if false;
+    }
+
+  }
+}
+
+    
