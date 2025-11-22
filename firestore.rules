@@ -15,7 +15,7 @@
  * - Public Data: Global collections like `/bounty_board_quests` and `/guild_bank_items` are publicly readable by any client but can only be modified by users with the "officer" or "admin" role.
  * - Player Profiles & Roster: The top-level `/players` collection is readable by any authenticated member to facilitate the guild roster. Each user can only create and manage their own profile document.
  * - Role-Based Access: A user's role is primarily checked using helper functions (`isOfficer`, `isAdmin`) that verify document existence in the respective role collections. This is more secure than relying solely on a field in a user-modifiable document.
- * - Application Process: The `/applications` collection is writable by anyone (even unauthenticated users) to allow new players to apply, but only readable by officers and admins for review.
+ * - Application Process: The `/applications` collection is writable by anyone to allow new players to apply. An applicant can read their own application to check its status. Only officers/admins can read all applications for review.
  * - Default Deny: The default security posture is to deny all access. Permissions are granted explicitly on a per-collection basis.
  */
 rules_version = '2';
@@ -144,15 +144,17 @@ service cloud.firestore {
     }
     
     /**
-     * @description Stores guild applications. Anyone can create (apply), but only officers/admins can read/update/delete.
+     * @description Stores guild applications. Anyone can create (apply). Users can read their own application. Officers/admins can read/update/delete any.
      * @path /applications/{applicationId}
-     * @allow (create) Any user, including unauthenticated, can submit an application.
-     * @deny (read) A non-officer tries to read applications.
-     * @principle Public write for submissions, restricted read/write for review.
+     * @allow (list) An applicant queries for their own application document. Officers/admins can list all.
+     * @allow (get) An applicant reads their own application document.
+     * @principle Public write, owner-read for status checking, privileged read/write for review.
      */
     match /applications/{applicationId} {
-        allow create: if true;
-        allow read, update, delete: if isOfficer() || isAdmin();
+        allow create: if isSignedIn();
+        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow list: if (request.auth.uid == request.query.where.userId) || isOfficer() || isAdmin();
+        allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
     /**
@@ -227,3 +229,5 @@ service cloud.firestore {
 
   }
 }
+
+    
