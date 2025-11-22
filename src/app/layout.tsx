@@ -1,3 +1,4 @@
+
 'use client';
 import '@/app/globals.css';
 import { usePathname, useRouter } from 'next/navigation';
@@ -37,23 +38,25 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const isMember = playerProfile?.role === 'member' || playerProfile?.role === 'officer' || playerProfile?.role === 'admin';
     const finishedLoading = !isUserLoading && !isProfileLoading;
+    const isPublicPage = pathname === '/' || pathname.startsWith('/apply');
 
     if (finishedLoading) {
       if (user) {
+        // User is logged in
         if (isMember) {
-          // If they are a member but somehow on the apply/landing page, send to dashboard
-          if (pathname === '/' || pathname.startsWith('/apply')) {
+          // User is a member
+          if (isPublicPage) {
             router.push('/dashboard');
           }
         } else {
-          // If they are not a member, they should only be on the apply page or landing page (to log out)
-          if (pathname !== '/apply' && pathname !== '/') {
-            router.push('/apply');
+          // User is not a member (applicant)
+          if (!isPublicPage) {
+             router.push('/apply');
           }
         }
       } else {
-        // If no user, they should only be on public pages
-        if (pathname !== '/' && !pathname.startsWith('/apply')) {
+        // User is not logged in
+        if (!isPublicPage) {
           router.push('/');
         }
       }
@@ -83,44 +86,59 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (isPublicPage) {
+  if (isPublicPage && !user) {
     return <>{children}</>;
   }
 
+  // If user is logged in but not a member, they can only see the apply page
+  if (user && !playerProfile && pathname.startsWith('/apply')) {
+    return <>{children}</>;
+  }
+  
+  // If user is logged in and a member, show the full layout
+  if(user && playerProfile) {
+    return (
+      <div className={cn({ 'officer-theme': isOfficerPage })}>
+        <SidebarProvider>
+          <Sidebar>
+            <SidebarNav />
+          </Sidebar>
+          <SidebarInset>
+            <div className="flex h-full flex-col">
+              <header className="sticky top-0 z-10 flex h-[60px] items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+                <div className="flex-1 flex items-center gap-6 text-sm">
+                    <div className="flex items-center gap-2" title={`${onlineMembers} members online`}>
+                        <Users className="h-4 w-4 text-muted-foreground"/>
+                        <span className="font-bold">{onlineMembers}</span>
+                        <span className="hidden sm:inline text-muted-foreground">Online</span>
+                    </div>
+                      <div className="flex items-center gap-2" title={`${totalGuildKills} total guild kills`}>
+                        <Swords className="h-4 w-4 text-muted-foreground"/>
+                        <span className="font-bold">{totalGuildKills}</span>
+                          <span className="hidden sm:inline text-muted-foreground">Kills</span>
+                    </div>
+                      <div className="flex items-center gap-2" title={`${totalBossKills} total boss kills`}>
+                        <Skull className="h-4 w-4 text-muted-foreground"/>
+                        <span className="font-bold">{totalBossKills}</span>
+                          <span className="hidden sm:inline text-muted-foreground">Bosses</span>
+                    </div>
+                </div>
+                <UserNav />
+              </header>
+              <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+                {children}
+              </main>
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
+      </div>
+    );
+  }
+
+  // Fallback for loading state or redirection
   return (
-    <div className={cn({ 'officer-theme': isOfficerPage })}>
-      <SidebarProvider>
-        <Sidebar>
-          <SidebarNav />
-        </Sidebar>
-        <SidebarInset>
-          <div className="flex h-full flex-col">
-            <header className="sticky top-0 z-10 flex h-[60px] items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-              <div className="flex-1 flex items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2" title={`${onlineMembers} members online`}>
-                      <Users className="h-4 w-4 text-muted-foreground"/>
-                      <span className="font-bold">{onlineMembers}</span>
-                      <span className="hidden sm:inline text-muted-foreground">Online</span>
-                  </div>
-                    <div className="flex items-center gap-2" title={`${totalGuildKills} total guild kills`}>
-                      <Swords className="h-4 w-4 text-muted-foreground"/>
-                      <span className="font-bold">{totalGuildKills}</span>
-                        <span className="hidden sm:inline text-muted-foreground">Kills</span>
-                  </div>
-                    <div className="flex items-center gap-2" title={`${totalBossKills} total boss kills`}>
-                      <Skull className="h-4 w-4 text-muted-foreground"/>
-                      <span className="font-bold">{totalBossKills}</span>
-                        <span className="hidden sm:inline text-muted-foreground">Bosses</span>
-                  </div>
-              </div>
-              <UserNav />
-            </header>
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-              {children}
-            </main>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+    <div className="flex items-center justify-center h-screen bg-background">
+        <p>Loading Guild Hall...</p>
     </div>
   );
 }
