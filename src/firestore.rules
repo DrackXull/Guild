@@ -44,12 +44,16 @@ service cloud.firestore {
     // Applications can be created by any signed-in user.
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      // Allow a user to LIST applications ONLY if they are querying for their own userId.
-      allow list: if (isOfficer() || isAdmin()) || (request.auth.uid == request.query.where.userId);
-      allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        
+        // A user can LIST applications IF their query is filtering for their own userId.
+        // This is secure because it prevents listing all applications.
+        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
+        
+        allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
+
 
     // Global data like bounties and market items are readable by members, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
