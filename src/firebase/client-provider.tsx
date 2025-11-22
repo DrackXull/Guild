@@ -26,8 +26,9 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
   }, []); // Empty dependency array ensures this runs only once on mount
 
   if (!firebaseServices) {
-    // Render a loading state or null while Firebase is initializing
-    return <div className="flex items-center justify-center h-screen bg-background"><p>Initializing Firebase...</p></div>;
+    // Render a consistent loading state while Firebase is initializing.
+    // This now matches the loading state in AppLayout to prevent hydration errors.
+    return <div className="flex items-center justify-center h-screen bg-background"><p>Loading Guild Hall...</p></div>;
   }
 
   return (
