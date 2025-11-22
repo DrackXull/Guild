@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Swords, Loader2, Info } from 'lucide-react';
+import { Swords, Loader2, Info, Save } from 'lucide-react';
 import { useUser, useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -77,15 +77,6 @@ export default function ApplyPage() {
   
   const [savedDraft, setSavedDraft] = useLocalStorage<Partial<ApplicationFormValues>>(LOCAL_STORAGE_KEY, {});
 
-  // CRITICAL: Only run the query if the user is loaded and exists.
-  const applicationsQuery = useMemoFirebase(() => {
-    if (isUserLoading || !user || !firestore) return null;
-    return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
-  }, [firestore, user, isUserLoading]);
-
-  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
-  const existingApplication = applications?.[0];
-
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
@@ -112,18 +103,38 @@ export default function ApplyPage() {
       availabilityEnd: '22:00',
       guildExpectations: '',
       references: '',
-      ...savedDraft,
     }
   });
 
-  const { handleSubmit, control, watch, formState: { isSubmitting } } = form;
+  const { handleSubmit, control, watch, formState: { isSubmitting }, getValues, reset } = form;
 
-  const watchedValues = watch();
-  
   useEffect(() => {
-      setSavedDraft(watchedValues);
-  }, [watchedValues, setSavedDraft]);
+    // Load draft from local storage when the component mounts
+    if (Object.keys(savedDraft).length > 0) {
+      reset(savedDraft);
+      toast({
+        title: "Draft Loaded",
+        description: "Your previous application draft has been loaded.",
+      });
+    }
+  }, []); // Empty dependency array ensures this runs only once on mount
 
+  const applicationsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
+  }, [firestore, user]);
+
+  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
+  const existingApplication = applications?.[0];
+
+  const handleSaveDraft = () => {
+    const currentValues = getValues();
+    setSavedDraft(currentValues);
+    toast({
+      title: "Draft Saved",
+      description: "Your application progress has been saved locally.",
+    });
+  };
 
   const onSubmit = async (data: ApplicationFormValues) => {
     if (!firestore || !user) {
@@ -141,7 +152,7 @@ export default function ApplyPage() {
       userId: user.uid,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      attemptCount: 1, 
+      attemptCount: (existingApplication?.attemptCount || 0) + 1, 
     };
 
     try {
@@ -150,18 +161,19 @@ export default function ApplyPage() {
         title: 'Application Submitted',
         description: 'Thank you for your summons. The council will review your application.',
       });
-      setSavedDraft({});
-      form.reset();
-      // No need to router.refresh() as useCollection will update
+      setSavedDraft({}); // Clear the draft
+      reset(); // Reset form
     } catch (error) {
-      toast({
+       console.error("Error submitting application:", error);
+       toast({
         title: 'Submission Failed',
-        description: 'There was an error submitting your application. Please try again.',
+        description: error instanceof Error ? error.message : 'An unknown error occurred. Please try again.',
         variant: 'destructive',
       });
     }
   };
   
+  const watchedValues = watch();
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
@@ -611,7 +623,11 @@ export default function ApplyPage() {
                     )} />
               </fieldset>
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-between items-center pt-4">
+                <Button type="button" variant="outline" onClick={handleSaveDraft}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Draft
+                </Button>
                 <Button type="submit" size="lg" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Submit Petition
@@ -625,5 +641,3 @@ export default function ApplyPage() {
     </div>
   );
 }
-
-    

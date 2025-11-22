@@ -23,7 +23,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isOfficerPage = pathname.startsWith('/officer');
   
-  // Only create a doc ref if the user is loaded and exists
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, `players/${user.uid}`);
@@ -32,27 +31,27 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
 
   useEffect(() => {
-    // Wait until both user and profile loading states are settled.
     if (isUserLoading || (user && isProfileLoading)) {
-      return;
+      return; // Wait until loading is complete
     }
-    
-    const isPublicPage = pathname === '/';
-    const isApplyPage = pathname === '/apply';
 
     if (user) {
-      // USER IS LOGGED IN
+      // User is logged in
       if (playerProfile) {
-        // This is a guild member.
-        // Redirect them away from public/applicant pages.
-        if (isPublicPage || isApplyPage) {
+        // User is a guild member, redirect from public/apply pages
+        if (pathname === '/' || pathname === '/apply') {
           router.push('/dashboard');
         }
-      } 
+      } else {
+        // User is logged in but not a member (applicant)
+        // If they aren't on the apply page, send them there.
+        if (pathname !== '/apply') {
+          router.push('/apply');
+        }
+      }
     } else {
-      // USER IS LOGGED OUT
-      // If they are on any page other than the public landing page or apply page, redirect them.
-      if (!isPublicPage && !isApplyPage) {
+      // User is logged out, restrict to public page
+      if (pathname !== '/') {
         router.push('/');
       }
     }
@@ -70,10 +69,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }, [isOfficerPage]);
 
 
-  // --- RENDER LOGIC ---
-
-  // 1. Show a loading screen while we determine the user's status.
-  if (isUserLoading) {
+  if (isUserLoading || (user && isProfileLoading)) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <p>Loading Guild Hall...</p>
@@ -81,27 +77,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 2. If the user is logged out, render children (e.g. public page, apply page)
-  if (!user) {
+  // If logged out or not a member yet, show the page content without the full layout
+  if (!user || !playerProfile) {
      return <>{children}</>;
   }
   
-  // 3. If user is logged in, but we are still fetching their guild member profile, show loading.
-  if (isProfileLoading) {
-      return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p>Loading Guild Hall...</p>
-      </div>
-    );
-  }
-
-  // 4. If logged in user is an applicant (no profile), render children (apply page).
-  if (!playerProfile) {
-      return <>{children}</>;
-  }
-
-  // 5. If we reach here, the user is a logged-in member with a profile.
-  // Render the full application layout.
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
   const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
@@ -161,5 +141,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-    
