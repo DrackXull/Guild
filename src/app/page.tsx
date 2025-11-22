@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -61,9 +62,11 @@ export default function LandingPage() {
   });
 
    useEffect(() => {
-    // This effect runs only on the client, after the initial render.
+    // If the user is logged in, send them to the most relevant page.
     if (!isUserLoading && user) {
-      router.push('/dashboard');
+        // A full implementation would check if the user is a member vs applicant.
+        // For now, we'll just send them to the dashboard.
+        router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
 
@@ -190,5 +193,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    

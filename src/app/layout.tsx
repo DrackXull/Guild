@@ -17,7 +17,6 @@ import { Player } from '@/lib/types';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
@@ -30,32 +29,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const { data: playerProfile, isLoading: isProfileLoading } = useDoc<Player>(playerDocRef);
 
-  useEffect(() => {
-    if (isUserLoading || (user && isProfileLoading)) {
-      return; // Wait until loading is complete
-    }
-
-    if (user) {
-      // User is logged in
-      if (playerProfile) {
-        // User is a guild member, redirect from public pages
-        if (pathname === '/' || pathname === '/apply') {
-          router.push('/dashboard');
-        }
-      } else {
-        // User is logged in but not a member (applicant)
-        if (pathname !== '/apply') {
-          router.push('/apply');
-        }
-      }
-    } else {
-      // User is logged out, restrict to public page
-      if (pathname !== '/') {
-        router.push('/');
-      }
-    }
-  }, [user, playerProfile, isUserLoading, isProfileLoading, pathname, router]);
-  
   useEffect(() => {
     if (isOfficerPage) {
       document.body.classList.add('view-officer');
@@ -77,8 +50,20 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   // If logged out or not a member yet, show the page content without the full layout
-  if (!user || !playerProfile) {
+  if (!user || pathname === '/') {
      return <>{children}</>;
+  }
+
+  // If user is logged in, but has no profile, they are an applicant.
+  // The /apply page handles displaying their application status.
+  if (user && !playerProfile) {
+    if (pathname === '/apply') {
+      return <>{children}</>;
+    }
+    // For any other page, you might want to redirect them to apply,
+    // but we'll let the apply page handle its own logic for now.
+    // This prevents redirect loops.
+    return <>{children}</>
   }
   
   const onlineMembers = players.filter(p => p.isOnline).length;
@@ -140,5 +125,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-    
