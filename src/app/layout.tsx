@@ -45,7 +45,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isUserLoading) return; // Wait until auth check is complete
 
-    const publicRoutes = ['/', '/apply'];
+    const publicRoutes = ['/', '/apply', '/application-status'];
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!user && !isPublicRoute) {
@@ -56,7 +56,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       if (!isProfileLoading) {
         if (playerProfile) {
            // User is a full member, should not be on public or applicant-only pages
-           if (isPublicRoute || pathname === '/application-status') {
+           if (isPublicRoute) {
              router.push('/dashboard');
            }
         } else {
