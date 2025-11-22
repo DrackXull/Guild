@@ -155,7 +155,7 @@ service cloud.firestore {
     match /applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-      allow list: if (request.auth.uid == request.query.filters[0][2]) || isOfficer() || isAdmin();
+      allow list: if (request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
@@ -218,15 +218,14 @@ service cloud.firestore {
     }
     
     /**
-     * @description Defines which users have admin privileges.
+     * @description Defines which users have admin privileges. This collection is not accessible by any client.
      * @path /roles_admin/{userId}
-     * @allow (create) TEMPORARY RULE: Allows user Huzzinda@gmail.com to create their own admin document.
-     * @deny (read, write) All other client requests are rejected.
+     * @deny (read, write) All client requests to this collection are rejected.
      * @principle This is a temporary, one-time setup rule. It should be removed after the first admin is created.
      */
     match /roles_admin/{userId} {
-        allow create: if request.auth != null && request.auth.token.email == 'Huzzinda@gmail.com' && request.auth.uid == userId;
-        allow read, update, delete: if false;
+        allow write: if isAdmin();
+        allow read: if false;
     }
 
   }
