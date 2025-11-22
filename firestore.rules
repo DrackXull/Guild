@@ -155,6 +155,8 @@ service cloud.firestore {
     match /applications/{applicationId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+      // CORRECT RULE: Users can query the collection, but ONLY if they limit it to their own userId.
+      // This is the secure way to allow a "get my application" query.
       allow list: if (request.query.limit == 1 && request.query.where.userId == request.auth.uid) || isOfficer() || isAdmin();
       allow update, delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
