@@ -103,21 +103,21 @@ export default function ApplyPage() {
       availabilityEnd: '22:00',
       guildExpectations: '',
       references: '',
+      ...savedDraft
     }
   });
 
   const { handleSubmit, control, watch, formState: { isSubmitting }, getValues, reset } = form;
 
   useEffect(() => {
-    // Load draft from local storage when the component mounts
     if (Object.keys(savedDraft).length > 0) {
       reset(savedDraft);
-      toast({
+       toast({
         title: "Draft Loaded",
         description: "Your previous application draft has been loaded.",
       });
     }
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   const applicationsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -641,3 +641,5 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+    

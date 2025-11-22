@@ -38,13 +38,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     if (user) {
       // User is logged in
       if (playerProfile) {
-        // User is a guild member, redirect from public/apply pages
+        // User is a guild member, redirect from public pages
         if (pathname === '/' || pathname === '/apply') {
           router.push('/dashboard');
         }
       } else {
         // User is logged in but not a member (applicant)
-        // If they aren't on the apply page, send them there.
         if (pathname !== '/apply') {
           router.push('/apply');
         }
@@ -141,3 +140,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+    
