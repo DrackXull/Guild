@@ -12,14 +12,11 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc } from 'firebase/firestore';
-import { Player } from '@/lib/types';
+import type { Player } from '@/lib/types';
 import { allCharacters, players } from '@/lib/data';
 
-function AppLayout({ children }: { children: React.ReactNode }) {
+function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, isUserLoading } = useUser();
-  
   const isOfficerPage = pathname.startsWith('/officer');
 
   useEffect(() => {
@@ -32,39 +29,6 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       document.body.classList.remove('view-officer');
     };
   }, [isOfficerPage]);
-
-  // If user state is still loading, show a loading screen.
-  if (isUserLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p>Loading Guild Hall...</p>
-      </div>
-    );
-  }
-
-  // If there is no user, and the current page is not the public landing page, redirect to landing page.
-  if (!user && pathname !== '/') {
-      // Allow access to apply and application-status if needed for logged-out users,
-      // but for now, we simplify to just redirecting to home.
-      const publicRoutes = ['/', '/apply', '/application-status'];
-      if (!publicRoutes.includes(pathname)) {
-        router.push('/');
-        return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
-      }
-  }
-  
-  // If the user is logged in, but on the landing page, redirect to the dashboard.
-  if (user && pathname === '/') {
-      router.push('/dashboard');
-      return <div className="flex items-center justify-center h-screen bg-background"><p>Redirecting...</p></div>;
-  }
-
-  // If the user is logged out, only show the children (which should be the public page)
-  if (!user) {
-      return <>{children}</>;
-  }
-
-  // --- If we reach here, the user is logged in. Show the full app layout. ---
 
   const onlineMembers = players.filter(p => p.isOnline).length;
   const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
@@ -108,6 +72,77 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+
+function AppManager({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  // Determine if the user is a member by checking if a player document exists.
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+
+  const isLoading = isUserLoading || isPlayerLoading;
+  const isMember = !!player;
+
+  const publicRoutes = ['/', '/apply'];
+  const applicantRoutes = ['/application-status'];
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isApplicantRoute = applicantRoutes.includes(pathname);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (user) {
+      if (isMember) {
+        // User is a full member.
+        // If they are on a public or applicant page, redirect to the main dashboard.
+        if (isPublicRoute || isApplicantRoute) {
+          router.replace('/dashboard');
+        }
+      } else {
+        // User is logged in but not a member (i.e., an applicant).
+        // They should only be on the application status page.
+        if (!isApplicantRoute) {
+          router.replace('/application-status');
+        }
+      }
+    } else {
+      // User is not logged in.
+      // They should only be on public routes.
+      if (!isPublicRoute) {
+        router.replace('/');
+      }
+    }
+  }, [isLoading, user, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <p>Loading Guild Hall...</p>
+      </div>
+    );
+  }
+
+  // Determine which layout to render
+  if (!user) {
+    // Not logged in: Show public pages without any layout.
+    return <>{children}</>;
+  }
+
+  if (isMember) {
+    // Logged-in Guild Member: Show the full member layout.
+    return <MemberLayout>{children}</MemberLayout>;
+  } else {
+    // Logged-in Applicant: Show the applicant pages without the member layout.
+    return <>{children}</>;
+  }
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
@@ -118,7 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </head>
         <body className="font-body antialiased">
             <FirebaseClientProvider>
-                <AppLayout>{children}</AppLayout>
+                <AppManager>{children}</AppManager>
             </FirebaseClientProvider>
             <Toaster />
         </body>
