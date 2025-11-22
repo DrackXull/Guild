@@ -1,15 +1,38 @@
 
 'use client';
 
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { ApplicationStatus } from '@/components/apply/application-status';
 import type { Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilePlus } from 'lucide-react';
+import { FilePlus, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+
+
+function ApplicantHeader() {
+    const { user } = useUser();
+    const auth = useAuth();
+    
+    if (!user) return null;
+
+    const handleLogout = () => {
+        signOut(auth);
+    };
+
+    return (
+        <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log Out
+            </Button>
+        </header>
+    )
+}
 
 
 export default function ApplicationStatusPage() {
@@ -26,51 +49,55 @@ export default function ApplicationStatusPage() {
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
   const existingApplication = applications?.[0];
 
-  // Show a loading state while checking for user or fetching application.
-  if (isUserLoading || (user && isLoadingApplications)) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p>Loading application status...</p>
-      </div>
-    );
-  }
+  const isLoading = isUserLoading || (user && isLoadingApplications);
+
 
   // If there's no logged-in user, redirect them to the home page to log in.
-  if (!user) {
+  if (!isUserLoading && !user) {
     router.push('/');
     return null;
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-12">
-      <div className="flex flex-col items-center text-center mb-8">
-        <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to The Black Lantern Company</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          {existingApplication 
-            ? "Below is the current status of your petition."
-            : "We seek stalwart adventurers to delve into the depths. You may submit a petition for membership."
-          }
-        </p>
-      </div>
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <ApplicantHeader />
+        
+        {isLoading ? (
+             <div className="flex items-center justify-center">
+                <p>Loading application status...</p>
+            </div>
+        ) : (
+            <div className="container mx-auto max-w-4xl py-12">
+              <div className="flex flex-col items-center text-center mb-8">
+                <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to The Black Lantern Company</h1>
+                <p className="text-muted-foreground mt-2 max-w-2xl">
+                  {existingApplication 
+                    ? "Below is the current status of your petition."
+                    : "We seek stalwart adventurers to delve into the depths. You may submit a petition for membership."
+                  }
+                </p>
+              </div>
 
-      {existingApplication ? (
-        <ApplicationStatus application={existingApplication} />
-      ) : (
-        <Card className="max-w-2xl mx-auto">
-            <CardHeader className="text-center">
-                <div className="flex justify-center mb-4">
-                    <FilePlus className="h-10 w-10 text-primary" />
-                </div>
-                <CardTitle className="font-headline text-3xl">No Petition Found</CardTitle>
-                <CardDescription className="pt-2">You have not yet submitted an application to join our ranks. If you wish to join us, click the button below.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button asChild className="w-full" size="lg">
-                    <Link href="/apply">Submit Your Petition</Link>
-                </Button>
-            </CardContent>
-        </Card>
-      )}
+              {existingApplication ? (
+                <ApplicationStatus application={existingApplication} />
+              ) : (
+                <Card className="max-w-2xl mx-auto">
+                    <CardHeader className="text-center">
+                        <div className="flex justify-center mb-4">
+                            <FilePlus className="h-10 w-10 text-primary" />
+                        </div>
+                        <CardTitle className="font-headline text-3xl">No Petition Found</CardTitle>
+                        <CardDescription className="pt-2">You have not yet submitted an application to join our ranks. If you wish to join us, click the button below.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild className="w-full" size="lg">
+                            <Link href="/apply">Submit Your Petition</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+              )}
+            </div>
+        )}
     </div>
   );
 }
