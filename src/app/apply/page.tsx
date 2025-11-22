@@ -70,17 +70,18 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
 
 
 export default function ApplyPage() {
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   
   const [savedDraft, setSavedDraft] = useLocalStorage<Partial<ApplicationFormValues>>(LOCAL_STORAGE_KEY, {});
 
+  // CRITICAL: Only run the query if the user is loaded and exists.
   const applicationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (isUserLoading || !user || !firestore) return null;
     return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
-  }, [firestore, user]);
+  }, [firestore, user, isUserLoading]);
 
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
   const existingApplication = applications?.[0];
@@ -164,7 +165,7 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
-  if (isLoadingApplications) {
+  if (isUserLoading || isLoadingApplications) {
       return (
         <div className="flex items-center justify-center h-screen bg-background">
             <p>Loading application status...</p>
@@ -604,5 +605,3 @@ export default function ApplyPage() {
     </div>
   );
 }
-
-    
