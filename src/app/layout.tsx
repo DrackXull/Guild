@@ -83,17 +83,18 @@ function AppManager({ children }: { children: React.ReactNode }) {
     if (!user || !firestore) return null;
     return doc(firestore, 'players', user.uid);
   }, [user, firestore]);
+
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
-  const isLoading = isUserLoading || (user && isPlayerLoading);
-  
   // This is the important bit. If it's the admin user, force isMember to true.
   const isGuildLeader = user?.email === 'Huzzinda@gmail.com';
+  
+  // This state is now derived correctly and reliably.
+  const isLoading = isUserLoading || (user && isPlayerLoading);
   const isMember = !!player || isGuildLeader;
 
 
   const publicRoutes = ['/'];
-  // Applicants should be able to see their profile to claim their role.
   const applicantRoutes = ['/application-status', '/apply', '/profile'];
   const isPublicRoute = publicRoutes.includes(pathname);
   const isApplicantRoute = applicantRoutes.includes(pathname);
@@ -111,7 +112,6 @@ function AppManager({ children }: { children: React.ReactNode }) {
       } else {
         // User is an applicant (logged in but not a member).
         // They should only be on applicant-safe routes.
-        // Allow access to /profile so they can claim their admin role.
         if (!isApplicantRoute) {
           router.replace('/application-status');
         }
@@ -122,6 +122,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
         router.replace('/');
       }
     }
+    // This dependency array ensures the effect runs only when the final state is known.
   }, [isLoading, user, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
 
 
@@ -139,13 +140,11 @@ function AppManager({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // The distinction between MemberLayout and a simpler layout is now critical.
   if (isMember) {
     // Logged-in Guild Member: Show the full member layout.
     return <MemberLayout>{children}</MemberLayout>;
   } else {
-    // Logged-in Applicant: Show pages without the member layout, which would try to load member data.
-    // This allows them to see the application status or their limited profile page.
+    // Logged-in Applicant: Show pages without the member layout.
     return <>{children}</>;
   }
 }
@@ -167,3 +166,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
