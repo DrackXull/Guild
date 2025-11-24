@@ -12,15 +12,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth, useUser, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, useUser, setDocumentNonBlocking, useFirestore } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { doc, getFirestore } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -104,77 +103,6 @@ export default function LandingPage() {
         // The useEffect will now handle the redirect
     });
   };
-  
-  const handleBecomeAdmin = async () => {
-      const email = 'Huzzinda@gmail.com';
-      const password = 'Password123!';
-
-      const setupAdminRoles = (user: any) => {
-          const firestore = getFirestore();
-          const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-          const playerDocRef = doc(firestore, `players/${user.uid}`);
-
-          const newPlayerData: Omit<Player, 'id' | 'characters'> = {
-              displayName: user.email?.split('@')[0] || 'Guild Leader',
-              discordTag: 'Admin#0001',
-              friends: [],
-              isOnline: true,
-              lifetimeHonor: 100000,
-              currentHonor: 100000,
-              maxHonor: 100000,
-              avatarUrl: '',
-              role: 'admin',
-          };
-          
-          setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-          setDocumentNonBlocking(playerDocRef, newPlayerData);
-
-          toast({
-              title: "Welcome, Guild Leader!",
-              description: "You have been logged in with full privileges.",
-          });
-      };
-
-      try {
-        // First, try to sign in. If it works, setup roles and we're done.
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        setupAdminRoles(userCredential.user);
-      } catch (error: any) {
-        // If sign-in fails, check if it's because the user doesn't exist or credentials are bad
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-          // Attempt to create the user account.
-          try {
-            const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
-            // If creation is successful, setup roles.
-            setupAdminRoles(newUserCredential.user);
-          } catch (createError: any) {
-             // This catch block handles errors from createUserWithEmailAndPassword
-            if (createError.code === 'auth/email-already-in-use') {
-                 toast({
-                    variant: "destructive",
-                    title: "Admin Login Failed",
-                    description: "The account exists, but the password was incorrect.",
-                });
-            } else {
-                 console.error("Admin account creation failed:", createError);
-                toast({
-                    variant: "destructive",
-                    title: "Admin Setup Failed",
-                    description: `Could not create the admin account: ${createError.message}`,
-                });
-            }
-          }
-        } else {
-           // Handle other sign-in errors (e.g., network issues)
-           console.error("Admin Login Error:", error);
-           toast({
-              variant: "destructive",
-              title: "Login Failed",
-              description: `An unexpected error occurred: ${error.message}`,
-          });
-        }
-      }
-  };
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');
 
@@ -225,13 +153,6 @@ export default function LandingPage() {
                   <Button type="submit" className="w-full">Sign In</Button>
                 </form>
               </CardContent>
-                <div className="relative px-6 pb-4">
-                    <Separator />
-                    <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-card px-2 text-xs text-muted-foreground">Or</span>
-                </div>
-                <CardFooter>
-                    <Button variant="secondary" className="w-full" onClick={handleBecomeAdmin}>Log in as Guild Leader (Huzzinda@gmail.com)</Button>
-                </CardFooter>
             </Card>
           </TabsContent>
           <TabsContent value="sign-up">

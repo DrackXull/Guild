@@ -1,3 +1,4 @@
+
 'use client';
 import { mockPlayer, characterClasses } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { Player } from "@/lib/types";
@@ -20,8 +21,16 @@ function FirstAdminSetup() {
     const firestore = useFirestore();
     const { toast } = useToast();
 
-    // This component will only be visible for the specified user email.
-    if (!user || user.email !== 'Huzzinda@gmail.com') {
+    // Check for the player document to see if the role has already been assigned.
+    const playerDocRef = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return doc(firestore, 'players', user.uid);
+    }, [user, firestore]);
+    const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+
+    // This component will only be visible for the specified user email
+    // AND if they don't have a player document yet.
+    if (isPlayerLoading || !user || user.email !== 'Huzzinda@gmail.com' || player) {
         return null;
     }
 
@@ -49,8 +58,11 @@ function FirstAdminSetup() {
 
         toast({
             title: "Guild Leader Role Assigned",
-            description: "You have been granted Guild Leader privileges and your player profile has been created.",
+            description: "You have been granted Guild Leader privileges and your player profile has been created. The page will now reload to grant you access.",
         });
+        
+        // Optionally, force a reload to ensure all states are updated.
+        setTimeout(() => window.location.reload(), 2000);
     };
 
     return (
@@ -61,8 +73,7 @@ function FirstAdminSetup() {
                     <CardTitle className="font-headline text-2xl text-destructive">One-Time Guild Leader Setup</CardTitle>
                 </div>
                 <CardDescription>
-                    This is a temporary panel to grant the first Guild Leader role and create your player profile. Click the button below to claim your title.
-                    After succeeding, you should request to have this functionality removed for security.
+                    You have successfully logged in. As the designated Guild Leader, click the button below to claim your role and create your player profile. This will grant you full access to the member hub.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -73,6 +84,7 @@ function FirstAdminSetup() {
         </Card>
     );
 }
+
 
 export default function ProfilePage() {
   const player = mockPlayer;

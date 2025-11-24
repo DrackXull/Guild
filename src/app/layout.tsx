@@ -79,7 +79,6 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
 
-  // Determine if the user is a member by checking if a player document exists.
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return doc(firestore, 'players', user.uid);
@@ -89,36 +88,38 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const isLoading = isUserLoading || (user && isPlayerLoading);
   const isMember = !!player;
 
-  const publicRoutes = ['/', '/apply'];
-  const applicantRoutes = ['/application-status'];
+  const publicRoutes = ['/'];
+  // Applicants should be able to see their profile to claim their role.
+  const applicantRoutes = ['/application-status', '/apply', '/profile'];
   const isPublicRoute = publicRoutes.includes(pathname);
   const isApplicantRoute = applicantRoutes.includes(pathname);
 
   useEffect(() => {
+    // Wait until all loading is finished before making routing decisions.
     if (isLoading) return;
 
     if (user) {
       if (isMember) {
-        // User is a full member.
-        // If they are on a public or applicant page, redirect to the main dashboard.
-        if (isPublicRoute || isApplicantRoute) {
+        // User is a full member. Redirect to dashboard if they land on a public/applicant page.
+        if (isPublicRoute || pathname === '/application-status' || pathname === '/apply') {
           router.replace('/dashboard');
         }
       } else {
-        // User is logged in but not a member (i.e., an applicant).
-        // They should only be on the application status page.
+        // User is an applicant (logged in but not a member).
+        // They should only be on applicant-safe routes.
+        // Allow access to /profile so they can claim their admin role.
         if (!isApplicantRoute) {
           router.replace('/application-status');
         }
       }
     } else {
-      // User is not logged in.
-      // They should only be on public routes.
+      // User is not logged in. They should only be on the public landing page.
       if (!isPublicRoute) {
         router.replace('/');
       }
     }
   }, [isLoading, user, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
+
 
   if (isLoading) {
     return (
@@ -134,11 +135,13 @@ function AppManager({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // The distinction between MemberLayout and a simpler layout is now critical.
   if (isMember) {
     // Logged-in Guild Member: Show the full member layout.
     return <MemberLayout>{children}</MemberLayout>;
   } else {
-    // Logged-in Applicant: Show the applicant pages without the member layout.
+    // Logged-in Applicant: Show pages without the member layout, which would try to load member data.
+    // This allows them to see the application status or their limited profile page.
     return <>{children}</>;
   }
 }

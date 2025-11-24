@@ -9,7 +9,7 @@ import type { Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilePlus, LogOut } from 'lucide-react';
+import { FilePlus, LogOut, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 
@@ -21,16 +21,26 @@ function ApplicantHeader() {
     if (!user) return null;
 
     const handleLogout = () => {
-        signOut(auth);
+        if (auth) {
+            signOut(auth);
+        }
     };
 
     return (
         <header className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{user.email}</p>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-            </Button>
+            <div>
+                 <Button variant="ghost" size="sm" asChild>
+                    <Link href="/profile">
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        Profile
+                    </Link>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out
+                </Button>
+            </div>
         </header>
     )
 }
