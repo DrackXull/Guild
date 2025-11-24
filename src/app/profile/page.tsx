@@ -33,48 +33,40 @@ function FirstAdminSetup() {
 
     const isLoading = isUserAuthLoading || (user && isPlayerDocLoading);
 
-    useEffect(() => {
-        // Do not proceed if still loading, already processing, or if firebase services aren't ready
-        if (isLoading || isProcessing || !firestore || !user) {
-            return;
-        }
+    const handleGrantAdmin = () => {
+        if (isProcessing || !firestore || !user) return;
 
-        // Check if the conditions are met to perform the automatic setup
-        if (user.email === 'Huzzinda@gmail.com' && !player) {
-            setIsProcessing(true); // Prevent re-running
+        setIsProcessing(true);
+        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+        const playerDocRef = doc(firestore, `players/${user.uid}`);
 
-            const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-            const playerDocRef = doc(firestore, `players/${user.uid}`);
+        const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+            displayName: user.email?.split('@')[0] || 'Guild Leader',
+            discordTag: 'Admin#0001',
+            friends: [],
+            isOnline: true,
+            lifetimeHonor: 100000,
+            currentHonor: 100000,
+            maxHonor: 100000,
+            avatarUrl: '',
+            role: 'admin',
+        };
+        
+        // Non-blocking writes
+        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+        setDocumentNonBlocking(playerDocRef, newPlayerData);
 
-            const newPlayerData: Omit<Player, 'id' | 'characters'> = {
-                displayName: user.email?.split('@')[0] || 'Guild Leader',
-                discordTag: 'Admin#0001',
-                friends: [],
-                isOnline: true,
-                lifetimeHonor: 100000,
-                currentHonor: 100000,
-                maxHonor: 100000,
-                avatarUrl: '',
-                role: 'admin',
-            };
-            
-            // Non-blocking writes
-            setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-            setDocumentNonBlocking(playerDocRef, newPlayerData);
+        toast({
+            title: "Guild Leader Role Assigned",
+            description: "Your player profile has been created. The page will now reload to grant you full access.",
+            duration: 5000,
+        });
+        
+        // Reload the page to apply the new role and data
+        setTimeout(() => window.location.reload(), 2000);
+    };
 
-            toast({
-                title: "Guild Leader Role Assigned",
-                description: "Your player profile has been created. The page will now reload to grant you full access.",
-                duration: 5000,
-            });
-            
-            // Reload the page to apply the new role and data
-            setTimeout(() => window.location.reload(), 2000);
-        }
-    }, [isLoading, user, player, firestore, toast, isProcessing]);
-
-    // This component now only shows a loading indicator if necessary but renders no button.
-    if (isLoading || isProcessing) {
+    if (isLoading) {
         return (
             <Card className="border-primary/50 mb-8">
                 <CardContent className="pt-6">
@@ -87,7 +79,26 @@ function FirstAdminSetup() {
         );
     }
     
-    // Once done, it renders nothing.
+    // Only show this button for the specific user IF they don't have a player profile yet.
+    if (user?.email === 'Huzzinda@gmail.com' && !player) {
+         return (
+            <Card className="border-primary/50 mb-8">
+                <CardHeader>
+                    <CardTitle className="font-headline text-2xl">First-Time Admin Setup</CardTitle>
+                    <CardDescription>
+                        As the Guild Leader, you need to initialize your player profile and grant yourself admin privileges.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={handleGrantAdmin} disabled={isProcessing} className="w-full" size="lg">
+                        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Shield className="mr-2 h-5 w-5"/>}
+                        Grant Admin Access
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return null;
 }
 
@@ -254,7 +265,7 @@ export default function ProfilePage() {
                     <div>
                         <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
                         <p className="text-muted-foreground mt-1">
-                            Your player profile has not been created yet. If you are the Guild Leader, your role is being assigned.
+                            Your player profile has not been created yet. If you are the Guild Leader, use the setup panel to create your admin profile.
                         </p>
                     </div>
                 </div>

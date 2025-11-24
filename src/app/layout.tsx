@@ -92,6 +92,16 @@ function AppManager({ children }: { children: React.ReactNode }) {
   // This state is now derived correctly and reliably.
   const isLoading = isUserLoading || (user && isPlayerLoading);
   const isMember = !!player || isGuildLeader;
+  
+  console.log('--- AppManager State ---');
+  console.log(`Timestamp: ${new Date().toISOString()}`);
+  console.log(`Pathname: ${pathname}`);
+  console.log(`User Loading: ${isUserLoading}, User: ${user?.email || 'null'}`);
+  console.log(`Player Loading: ${isPlayerLoading}, Player Exists: ${!!player}`);
+  console.log(`Derived isGuildLeader: ${isGuildLeader}`);
+  console.log(`Derived isMember: ${isMember}`);
+  console.log(`FINAL isLoading Flag: ${isLoading}`);
+  console.log('------------------------');
 
 
   const publicRoutes = ['/'];
@@ -167,3 +177,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   );
 }
 
+    
