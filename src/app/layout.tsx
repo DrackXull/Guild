@@ -86,7 +86,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
   }, [user, firestore]);
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
-  const isLoading = isUserLoading || isPlayerLoading;
+  const isLoading = isUserLoading || (user && isPlayerLoading);
   const isMember = !!player;
 
   const publicRoutes = ['/', '/apply'];
