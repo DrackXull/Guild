@@ -201,7 +201,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                       <SelectContent>
                          <SelectItem value="none">None</SelectItem>
                         {gameMaps.map((map) => (
-                            <SelectItem key={map.name} value={map.name}>{map.name} ({map.collection})</SelectItem>
+                            <SelectItem key={map.name} value={map.name}>{map.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
