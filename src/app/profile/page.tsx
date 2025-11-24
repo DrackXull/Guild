@@ -1,23 +1,135 @@
 
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2 } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
+import { doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { Player, WithId, Character, CharacterClass } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
-import { collection, query, where } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { query } from "firebase/firestore";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+
+const createCharacterSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters.").max(20, "Name cannot exceed 20 characters."),
+  characterClass: z.string().min(1, "Please select a class."),
+});
+
+type CreateCharacterFormValues = z.infer<typeof createCharacterSchema>;
+
+function CreateCharacterDialog() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const form = useForm<CreateCharacterFormValues>({
+    resolver: zodResolver(createCharacterSchema),
+    defaultValues: {
+      name: "",
+      characterClass: "",
+    },
+  });
+
+  const onSubmit = (data: CreateCharacterFormValues) => {
+    if (!firestore || !user) {
+      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
+
+    const charactersCollectionRef = collection(firestore, `users/${user.uid}/characters`);
+    const newCharacter: Omit<Character, 'id'> = {
+      playerId: user.uid,
+      name: data.name,
+      characterClass: data.characterClass as CharacterClass,
+      totalKills: 0,
+      totalDeaths: 0,
+      totalBossKills: 0,
+      isConfirmed: false,
+      confirmedKills: 0,
+      unconfirmedKills: 0,
+    };
+
+    addDocumentNonBlocking(charactersCollectionRef, newCharacter);
+    toast({
+      title: "Character Created",
+      description: `${data.name} the ${data.characterClass} is ready for adventure!`,
+    });
+    form.reset();
+    setIsOpen(false);
+  };
+
+  return (
+     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button>Create Character</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="font-headline text-2xl">Create New Character</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Character Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="characterClass"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Class</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a class" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {characterClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <CardFooter className="p-0 pt-4">
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                Create
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function FirstAdminSetup() {
     const { user, isUserLoading: isUserAuthLoading } = useUser();
@@ -191,34 +303,7 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-headline text-3xl font-bold">My Characters</h2>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button>Create Character</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle className="font-headline text-2xl">Create New Character</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="name" className="text-right">Name</Label>
-                                    <Input id="name" placeholder="Character Name" className="col-span-3" />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="class" className="text-right">Class</Label>
-                                    <Select>
-                                        <SelectTrigger className="col-span-3">
-                                            <SelectValue placeholder="Select a class" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {characterClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <Button type="submit">Create</Button>
-                        </DialogContent>
-                    </Dialog>
+                    <CreateCharacterDialog />
                 </div>
                 {isLoadingCharacters ? (
                      <div className="flex items-center justify-center col-span-full">
@@ -277,6 +362,3 @@ export default function ProfilePage() {
       </div>
   );
 }
-    
-
-    

@@ -32,9 +32,11 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Trash2, MapPin } from "lucide-react";
-import type { Character } from "@/lib/types";
+import type { Character, WithId } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { mockPlayer, gameModes, gameMaps } from "@/lib/data";
+import { gameModes, gameMaps } from "@/lib/data";
+import { useUser, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
+import { query, collection } from "firebase/firestore";
 
 const availableTraits = ["great comms", "team player", "loot hog", "toxic"];
 const RATING_LOW_THRESHOLD = 3;
@@ -84,10 +86,18 @@ const runReportSchema = z.object({
 
 type RunReportFormValues = z.infer<typeof runReportSchema>;
 
-export function RunReportForm({ allCharacters }: { allCharacters: Character[] }) {
+export function RunReportForm({ allCharacters }: { allCharacters: WithId<Character>[] }) {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const playerCharacters = mockPlayer.characters;
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const userCharactersQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, `users/${user.uid}/characters`));
+  }, [firestore, user]);
+
+  const { data: playerCharacters, isLoading: isLoadingPlayerCharacters } = useCollection<Character>(userCharactersQuery);
 
   const form = useForm<RunReportFormValues>({
     resolver: zodResolver(runReportSchema),
@@ -164,6 +174,10 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
       }
     });
   };
+  
+  if (isLoadingPlayerCharacters) {
+    return <div className="flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div>
+  }
 
   return (
     <Form {...form}>
@@ -355,7 +369,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a character" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {(index === 0 ? playerCharacters : allCharacters).map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
+                            {(index === 0 ? (playerCharacters || []) : (allCharacters || [])).map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />

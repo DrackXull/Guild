@@ -1,6 +1,6 @@
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockPlayer } from "@/lib/data";
 import { QuestCard } from "@/components/bounty-board/quest-card";
 import {
   Gem,
@@ -9,26 +9,38 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Quest, WithId } from "@/lib/types";
+import { Quest, WithId, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, query, orderBy, limit, doc } from "firebase/firestore";
 
 export default function DashboardPage() {
-  const player = mockPlayer;
+  const { user } = useUser();
   const firestore = useFirestore();
   
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+
   const bountiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'bounty_board_quests'), orderBy('questName'), limit(2));
   }, [firestore]);
   
-  const { data: dailyBounties, isLoading } = useCollection<Quest>(bountiesQuery);
+  const { data: dailyBounties, isLoading: areBountiesLoading } = useCollection<Quest>(bountiesQuery);
+
+  const isLoading = isPlayerLoading || areBountiesLoading;
 
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="font-headline text-4xl font-bold tracking-wide">Welcome, {player.displayName}</h1>
+        {isPlayerLoading ? (
+            <Skeleton className="h-10 w-1/2" />
+        ) : (
+            <h1 className="font-headline text-4xl font-bold tracking-wide">Welcome, {player?.displayName || 'Adventurer'}</h1>
+        )}
         <p className="text-muted-foreground mt-1">Here's your status in the dungeons today.</p>
       </div>
 
@@ -39,8 +51,12 @@ export default function DashboardPage() {
             <Gem className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{player.currentHonor.toLocaleString()} HP</div>
-            <p className="text-xs text-muted-foreground">Ready to spend</p>
+             {isPlayerLoading ? <Skeleton className="h-7 w-24" /> : (
+              <>
+                <div className="text-2xl font-bold">{(player?.currentHonor || 0).toLocaleString()} HP</div>
+                <p className="text-xs text-muted-foreground">Ready to spend</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -49,8 +65,12 @@ export default function DashboardPage() {
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{player.maxHonor.toLocaleString()} HP</div>
-             <p className="text-xs text-muted-foreground">Highest ever held</p>
+             {isPlayerLoading ? <Skeleton className="h-7 w-24" /> : (
+              <>
+                <div className="text-2xl font-bold">{(player?.maxHonor || 0).toLocaleString()} HP</div>
+                <p className="text-xs text-muted-foreground">Highest ever held</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -59,8 +79,12 @@ export default function DashboardPage() {
             <Gem className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{player.lifetimeHonor.toLocaleString()} HP</div>
-            <p className="text-xs text-muted-foreground">Total earned</p>
+            {isPlayerLoading ? <Skeleton className="h-7 w-24" /> : (
+              <>
+                <div className="text-2xl font-bold">{(player?.lifetimeHonor || 0).toLocaleString()} HP</div>
+                <p className="text-xs text-muted-foreground">Total earned</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -74,7 +98,7 @@ export default function DashboardPage() {
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {isLoading ? (
+            {areBountiesLoading ? (
               <>
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -84,7 +108,7 @@ export default function DashboardPage() {
                 <QuestCard key={quest.id} quest={quest} />
               ))
             )}
-            {!isLoading && (!dailyBounties || dailyBounties.length === 0) && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
+            {!areBountiesLoading && (!dailyBounties || dailyBounties.length === 0) && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
           </div>
         </div>
         <div className="lg:col-span-1">
