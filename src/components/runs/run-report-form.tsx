@@ -94,7 +94,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
     defaultValues: {
       gameMode: "Normal",
       gameType: "PvP",
-      map: "",
+      map: "none",
       rating: 5,
       bossesKilled: [],
       teammates: [{
@@ -199,7 +199,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                     <Select onValueChange={(value) => { field.onChange(value); form.setValue('bossesKilled', []); }} value={field.value}>
                       <FormControl><SelectTrigger><MapPin className="mr-2 h-4 w-4" /><SelectValue placeholder="Select a map" /></SelectTrigger></FormControl>
                       <SelectContent>
-                         <SelectItem value="">None</SelectItem>
+                         <SelectItem value="none">None</SelectItem>
                         {gameMaps.map((map) => (
                             <SelectItem key={map.name} value={map.name}>{map.name}</SelectItem>
                         ))}
