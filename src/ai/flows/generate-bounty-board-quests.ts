@@ -23,7 +23,7 @@ const BountyQuestSchema = z.object({
   questName: z.string().describe('The name of the quest.'),
   questDescription: z.string().describe('A description of the quest.'),
   questType: z.enum(['daily', 'weekly']).describe('The type of quest.'),
-  reward: z.string().describe('The reward for completing the quest.'),
+  reward: z.string().describe('The Honor Point reward for completing the quest (e.g., "500 Honor"). The only currency available is Honor.'),
 });
 
 const GenerateBountyBoardQuestsOutputSchema = z.array(BountyQuestSchema).describe('An array of bounty board quests.');
@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateBountyBoardQuestsOutputSchema},
   prompt: `You are the quest master for the Dark and Darker Guild Hub.
 
-You will generate a list of daily and weekly quests for players to complete.
+You will generate a list of daily and weekly quests for players to complete. The only currency you can award is "Honor".
 
 The quests should be engaging and tailored to the player's recent activity. The quests must be based on actions that can be verified within the app's ecosystem, such as:
 - Number of player kills (verified by screenshot)
@@ -53,6 +53,7 @@ The quests should be engaging and tailored to the player's recent activity. The 
 - Extracting from a run
 
 Do NOT generate quests for actions that cannot be tracked, such as killing a specific number of AI monsters (e.g., "Kill 50 Goblins").
+Do NOT award items, only "Honor".
 
 Player Activity: {{{playerActivity}}}
 
@@ -60,7 +61,7 @@ Generate a list of quests with the following properties:
 - questName: The name of the quest.
 - questDescription: A description of the quest.
 - questType: The type of quest (daily or weekly).
-- reward: The reward for completing the quest.
+- reward: The reward for completing the quest (e.g. "100 Honor", "500 Honor").
 
 Return the quests as a JSON array.
 `,
@@ -77,3 +78,5 @@ const generateBountyBoardQuestsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
