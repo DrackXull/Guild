@@ -12,11 +12,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, setDocumentNonBlocking } from '@/firebase';
 import { initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { doc, getFirestore } from 'firebase/firestore';
+import type { Player } from '@/lib/types';
+import { Separator } from '@/components/ui/separator';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -101,6 +105,49 @@ export default function LandingPage() {
     });
   };
   
+  const handleBecomeAdmin = async () => {
+      const email = 'Huzzinda@gmail.com';
+      const password = 'Password123!'; // A temporary, known password
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const firestore = getFirestore();
+        
+        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+        const playerDocRef = doc(firestore, `players/${user.uid}`);
+
+        const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+            displayName: user.email?.split('@')[0] || 'Guild Leader',
+            discordTag: 'Admin#0001',
+            friends: [],
+            isOnline: true,
+            lifetimeHonor: 100000,
+            currentHonor: 100000,
+            maxHonor: 100000,
+            avatarUrl: '',
+            role: 'admin',
+        };
+        
+        // These are non-blocking writes.
+        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+        setDocumentNonBlocking(playerDocRef, newPlayerData);
+
+        toast({
+            title: "Welcome, Guild Leader!",
+            description: "You have been logged in with full privileges.",
+        });
+
+      } catch (error) {
+        console.error("Admin Login Error:", error);
+         toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: "Could not log in as admin. Your account might not be created yet. Try signing up first.",
+        });
+      }
+  };
+
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');
 
   return (
@@ -150,6 +197,13 @@ export default function LandingPage() {
                   <Button type="submit" className="w-full">Sign In</Button>
                 </form>
               </CardContent>
+                <div className="relative px-6 pb-4">
+                    <Separator />
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-card px-2 text-xs text-muted-foreground">Or</span>
+                </div>
+                <CardFooter>
+                    <Button variant="secondary" className="w-full" onClick={handleBecomeAdmin}>Log in as Guild Leader (Huzzinda@gmail.com)</Button>
+                </CardFooter>
             </Card>
           </TabsContent>
           <TabsContent value="sign-up">
