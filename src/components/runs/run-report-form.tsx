@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -24,15 +25,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, MapPin } from "lucide-react";
 import type { Character } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { mockPlayer, gameModes } from "@/lib/data";
+import { mockPlayer, gameModes, gameMaps } from "@/lib/data";
 
 const availableTraits = ["great comms", "team player", "loot hog", "toxic"];
 const RATING_LOW_THRESHOLD = 3;
@@ -42,7 +44,10 @@ const HIGH_RATING_COMMENT_LENGTH = 80;
 
 const runReportSchema = z.object({
   gameMode: z.string().min(1, "Please select a game mode."),
+  map: z.string().optional(),
+  gameType: z.enum(["PvE", "PvP"]),
   rating: z.number().min(1).max(10),
+  bossesKilled: z.array(z.string()).optional(),
   runNotes: z.string().optional(),
   screenshot: z.any().optional(),
   teammates: z.array(
@@ -51,7 +56,7 @@ const runReportSchema = z.object({
       kills: z.coerce.number().min(0),
       deaths: z.coerce.number().min(0),
       extracted: z.boolean(),
-      bossKills: z.coerce.number().min(0),
+      // bossKills is now derived from the main `bossesKilled` array
       traits: z.array(z.string()),
       notes: z.string().optional(),
     })
@@ -88,13 +93,15 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
     resolver: zodResolver(runReportSchema),
     defaultValues: {
       gameMode: "Normal",
+      gameType: "PvP",
+      map: "",
       rating: 5,
+      bossesKilled: [],
       teammates: [{
         characterId: "",
         kills: 0,
         deaths: 0,
         extracted: false,
-        bossKills: 0,
         traits: [],
         notes: "",
       }, {
@@ -102,7 +109,6 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
         kills: 0,
         deaths: 0,
         extracted: false,
-        bossKills: 0,
         traits: [],
         notes: "",
       }],
@@ -117,9 +123,23 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
     control: form.control,
     name: "teammates",
   });
-
+  
+  const watchedGameMode = form.watch("gameMode");
+  const watchedMap = form.watch("map");
   const rating = form.watch("rating");
   const runNotes = form.watch("runNotes");
+  
+  const selectedMapData = gameMaps.find(m => m.name === watchedMap);
+  const isGameTypeDisabled = watchedGameMode === 'Arena' || watchedGameMode === 'Adventure Mode';
+
+  useEffect(() => {
+    if (watchedGameMode === 'Arena') {
+        form.setValue('gameType', 'PvP');
+    } else if (watchedGameMode === 'Adventure Mode') {
+        form.setValue('gameType', 'PvE');
+    }
+  }, [watchedGameMode, form]);
+
 
   const onSubmit = (data: RunReportFormValues) => {
     startTransition(async () => {
@@ -172,24 +192,124 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
               />
               <FormField
                 control={form.control}
-                name="rating"
+                name="map"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Overall Run Rating: {field.value}</FormLabel>
-                    <FormControl>
-                      <Slider
-                        min={1}
-                        max={10}
-                        step={1}
-                        defaultValue={[field.value]}
-                        onValueChange={(value) => field.onChange(value[0])}
-                      />
-                    </FormControl>
+                    <FormLabel>Map (Optional)</FormLabel>
+                    <Select onValueChange={(value) => { field.onChange(value); form.setValue('bossesKilled', []); }} value={field.value}>
+                      <FormControl><SelectTrigger><MapPin className="mr-2 h-4 w-4" /><SelectValue placeholder="Select a map" /></SelectTrigger></FormControl>
+                      <SelectContent>
+                         <SelectItem value="">None</SelectItem>
+                        {gameMaps.map((map) => (
+                            <SelectItem key={map.name} value={map.name}>{map.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="gameType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Game Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                      disabled={isGameTypeDisabled}
+                    >
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="PvP" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          PvP <span className="text-muted-foreground text-xs">(Player vs. Player focus)</span>
+                        </FormLabel>
+                      </FormItem>
+                      <FormItem className="flex items-center space-x-3 space-y-0">
+                        <FormControl>
+                          <RadioGroupItem value="PvE" />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          PvE <span className="text-muted-foreground text-xs">(Player vs. Environment focus)</span>
+                        </FormLabel>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {selectedMapData && selectedMapData.bosses.length > 0 && (
+                <FormField
+                  control={form.control}
+                  name="bossesKilled"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="mb-4">
+                        <FormLabel className="text-base">Bosses Defeated</FormLabel>
+                        <FormDescription>Select any bosses you and your team defeated on this run.</FormDescription>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {selectedMapData.bosses.map((boss) => (
+                           <FormField
+                            key={boss}
+                            control={form.control}
+                            name="bossesKilled"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(boss)}
+                                      onCheckedChange={(checked) => {
+                                        const currentValues = Array.isArray(field.value) ? field.value : [];
+                                        return checked
+                                          ? field.onChange([...currentValues, boss])
+                                          : field.onChange(
+                                              currentValues.filter((value) => value !== boss)
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">{boss}</FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            )}
+
+            <FormField
+              control={form.control}
+              name="rating"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Overall Run Rating: {field.value}</FormLabel>
+                  <FormControl>
+                    <Slider
+                      min={1}
+                      max={10}
+                      step={1}
+                      defaultValue={[field.value]}
+                      onValueChange={(value) => field.onChange(value[0])}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="runNotes"
@@ -242,10 +362,9 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <FormField control={form.control} name={`teammates.${index}.kills`} render={({ field }) => (<FormItem><FormLabel>Kills</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <FormField control={form.control} name={`teammates.${index}.kills`} render={({ field }) => (<FormItem><FormLabel>Player Kills</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name={`teammates.${index}.deaths`} render={({ field }) => (<FormItem><FormLabel>Deaths</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
-                    <FormField control={form.control} name={`teammates.${index}.bossKills`} render={({ field }) => (<FormItem><FormLabel>Boss Kills</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)} />
                     <FormField control={form.control} name={`teammates.${index}.extracted`} render={({ field }) => (<FormItem className="pt-8"><FormControl><div className="flex items-center space-x-2"><Checkbox checked={field.value} onCheckedChange={field.onChange} id={`extracted-${index}`} /><label htmlFor={`extracted-${index}`} className="text-sm font-medium leading-none">Extracted</label></div></FormControl></FormItem>)} />
                   </div>
 
@@ -310,7 +429,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
               variant="outline"
               size="sm"
               className="mt-2"
-              onClick={() => append({ characterId: "", kills: 0, deaths: 0, extracted: false, bossKills: 0, traits: [], notes: "" })}
+              onClick={() => append({ characterId: "", kills: 0, deaths: 0, extracted: false, traits: [], notes: "" })}
               disabled={fields.length >= 3}
             >
               Add Teammate

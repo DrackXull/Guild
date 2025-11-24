@@ -153,9 +153,12 @@
           "type": "boolean",
           "description": "Indicates whether the player extracted successfully."
         },
-        "bossKills": {
-          "type": "number",
-          "description": "Number of boss kills during the run."
+        "bossesKilled": {
+          "type": "array",
+          "description": "Array of boss names killed during the run.",
+          "items": {
+            "type": "string"
+          }
         },
         "traits": {
           "type": "array",
@@ -192,6 +195,15 @@
                 "type": "string",
                 "format": "uri"
             }
+        },
+        "map": {
+          "type": "string",
+          "description": "The map the run took place on."
+        },
+        "gameType": {
+          "type": "string",
+          "enum": ["PvE", "PvP"],
+          "description": "The focus of the game run."
         }
       },
       "required": [
@@ -202,8 +214,9 @@
         "kills",
         "deaths",
         "extracted",
-        "bossKills",
-        "isConfirmed"
+        "isConfirmed",
+        "map",
+        "gameType"
       ]
     },
     "Run": {
@@ -778,5 +791,3 @@
     "reasoning": "This Firestore structure is designed to support the Dark and Darker Guild Hub application, focusing on secure, scalable, and debuggable data management. The structure incorporates denormalization to ensure Authorization Independence, simplifies security rules, and enables efficient data retrieval. The core of this design is separation of concerns through Structural Segregation, Access Modeling, and Data Clarity.  \n\n**Authorization Independence (Denormalization):**  Authorization Independence is achieved by denormalizing authorization data directly into child documents.  For example, the `Player` ID is included in the `Character` documents, removing the need for `get()` calls in security rules.  This ensures atomic operations are possible and security rules remain simple and efficient. For Collaborative Data, we use Membership Maps. For example, officer status is checked by the existence of a document in `/roles_officer/{userId}`.\n\n**Structural Segregation (Homogeneous Security Posture):**  Collections are segregated based on their security requirements.  User-specific data (e.g., `/users/{userId}/characters/{characterId}`) is separated from global data (e.g., `/bounty_board_quests/{questId}`). This segregation makes security rules easier to write and maintain as each collection has a clear and consistent security posture. Sensitive data, like officer notes in honor point logs, can be stored in a separate collection accessible only to officers.\n\n**Access Modeling (Standardization and Consistency):**  Access is modeled consistently throughout the application. User-owned data is stored under `/users/{userId}`, while collaborative data uses membership maps where appropriate. Global roles are managed using the existence of documents in dedicated role collections.\n\n**QAPs (Rules are not Filters):**  The data structure is designed to support secure `list` operations. Segregation prevents the need to filter based on access control within the rules themselves. For example, listing characters under `/users/{userId}/characters` is secure because only the user has access to their characters. Officers can access all Run Reviews for moderation via `/run_reviews`, while players can only access their own, as each review is related to a report which belongs to a character which belongs to a player.\n\n**Invariants:**  The data structure supports data integrity. Ownership is enforced through path-based ownership. Timestamp fields are consistently named and used for ordering and filtering. Denormalized data maintains consistency by avoiding updates to parent documents that would require cascading updates to child documents.\n\nThe design ensures all collections maintain a homogeneous security posture, allowing for simple and robust security rules."
   }
 }
-
-    

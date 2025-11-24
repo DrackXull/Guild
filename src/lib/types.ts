@@ -1,6 +1,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -40,6 +41,8 @@ export type Character = {
   totalDeaths: number;
   totalBossKills: number;
   isConfirmed: boolean;
+  confirmedKills: number;
+  unconfirmedKills: number;
 };
 
 export type RunParticipantStats = {
@@ -66,6 +69,8 @@ export type RunReport = {
   playerId: string;
   characterId: string;
   gameMode: 'Normal' | 'High-Roller';
+  map: string;
+  gameType: 'PvE' | 'PvP';
   participantStats: RunParticipantStats[];
   feedback: RunFeedback[];
   screenshotUrl?: string;
@@ -84,6 +89,8 @@ export type RunReport = {
   officerNotes?: string;
   requestMeeting?: boolean;
   evidenceLinks?: string[];
+  isConfirmed: boolean;
+  bossesKilled: string[];
 };
 
 export type Run = {
