@@ -20,7 +20,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { doc, getFirestore } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -107,44 +107,60 @@ export default function LandingPage() {
   
   const handleBecomeAdmin = async () => {
       const email = 'Huzzinda@gmail.com';
-      const password = 'Password123!'; // A temporary, known password
+      const password = 'Password123!';
+
+      const setupAdminRoles = (user: any) => {
+          const firestore = getFirestore();
+          const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+          const playerDocRef = doc(firestore, `players/${user.uid}`);
+
+          const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+              displayName: user.email?.split('@')[0] || 'Guild Leader',
+              discordTag: 'Admin#0001',
+              friends: [],
+              isOnline: true,
+              lifetimeHonor: 100000,
+              currentHonor: 100000,
+              maxHonor: 100000,
+              avatarUrl: '',
+              role: 'admin',
+          };
+          
+          setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+          setDocumentNonBlocking(playerDocRef, newPlayerData);
+
+          toast({
+              title: "Welcome, Guild Leader!",
+              description: "You have been logged in with full privileges.",
+          });
+      };
 
       try {
+        // First, try to sign in.
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        const firestore = getFirestore();
-        
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        const playerDocRef = doc(firestore, `players/${user.uid}`);
-
-        const newPlayerData: Omit<Player, 'id' | 'characters'> = {
-            displayName: user.email?.split('@')[0] || 'Guild Leader',
-            discordTag: 'Admin#0001',
-            friends: [],
-            isOnline: true,
-            lifetimeHonor: 100000,
-            currentHonor: 100000,
-            maxHonor: 100000,
-            avatarUrl: '',
-            role: 'admin',
-        };
-        
-        // These are non-blocking writes.
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(playerDocRef, newPlayerData);
-
-        toast({
-            title: "Welcome, Guild Leader!",
-            description: "You have been logged in with full privileges.",
-        });
-
-      } catch (error) {
-        console.error("Admin Login Error:", error);
-         toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "Could not log in as admin. Your account might not be created yet. Try signing up first.",
-        });
+        setupAdminRoles(userCredential.user);
+      } catch (error: any) {
+        // If sign-in fails because the user doesn't exist, create the account.
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          try {
+            const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+            setupAdminRoles(newUserCredential.user);
+          } catch (createError: any) {
+            console.error("Admin account creation failed:", createError);
+            toast({
+              variant: "destructive",
+              title: "Admin Setup Failed",
+              description: `Could not create the admin account: ${createError.message}`,
+            });
+          }
+        } else {
+           console.error("Admin Login Error:", error);
+           toast({
+              variant: "destructive",
+              title: "Login Failed",
+              description: `An unexpected error occurred: ${error.message}`,
+          });
+        }
       }
   };
 
@@ -247,3 +263,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    
