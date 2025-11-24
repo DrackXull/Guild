@@ -87,7 +87,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
   // This is the important bit. If it's the admin user, force isMember to true.
-  const isGuildLeader = user?.email === 'Huzzinda@gmail.com';
+  const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
   
   // This state is now derived correctly and reliably.
   const isLoading = isUserLoading || (user && isPlayerLoading);
@@ -176,5 +176,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-    
