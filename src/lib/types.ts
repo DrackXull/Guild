@@ -3,6 +3,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -247,6 +248,11 @@ export type GuildSettings = {
     ttlMinutes: number;
   };
   traitOptions: string[];
+  bountyAI?: {
+    enableAutoBoosting: boolean;
+    boostPercentage: number;
+    maxAttempts: number;
+  };
 };
 
 // This is not a complete type, but it's what we need for the setup button

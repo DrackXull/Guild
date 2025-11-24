@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
 
 
 function BountyAdmin() {
@@ -265,6 +266,10 @@ export default function OfficerPage() {
 
       <Separator />
 
+      <AiSettingsAdmin />
+
+      <Separator />
+
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -283,5 +288,3 @@ export default function OfficerPage() {
     </div>
   );
 }
-
-    
