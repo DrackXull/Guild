@@ -64,8 +64,8 @@ export default function LandingPage() {
    useEffect(() => {
     // If the user is logged in, send them to the most relevant page.
     if (!isUserLoading && user) {
-        // A full implementation would check if the user is a member vs applicant.
-        // For now, we'll just send them to the dashboard.
+        // AppManager in layout.tsx will handle redirection to /dashboard or /application-status
+        // but we can push to a default here to be safe.
         router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
@@ -92,13 +92,13 @@ export default function LandingPage() {
   };
 
   const handleSignUp = (data: SignUpFormValues) => {
-    initiateEmailSignUp(auth, data.email, data.password);
-    toast({
-      title: 'Account Created',
-      description: 'Please sign in with your new credentials.',
+    initiateEmailSignUp(auth, data.email, data.password, () => {
+        toast({
+            title: 'Account Created & Signed In',
+            description: 'Welcome! You are now logged in.',
+        });
+        // The useEffect will now handle the redirect
     });
-    setActiveTab('sign-in');
-    signInForm.reset({ email: data.email, password: '' });
   };
   
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');

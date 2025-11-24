@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Auth, // Import Auth type for type hinting
@@ -20,13 +21,21 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): void {
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, onSuccess?: () => void): void {
   createUserWithEmailAndPassword(authInstance, email, password)
+    .then((userCredential) => {
+        // Sign-up successful, user is automatically signed in.
+        if (onSuccess) {
+            onSuccess();
+        }
+    })
     .catch((error) => {
         console.error("Sign-up error:", error);
         let description = "An unknown error occurred during sign-up.";
         if (error.code === 'auth/email-already-in-use') {
             description = "This email is already in use. Please sign in or use a different email.";
+        } else if (error.code === 'auth/weak-password') {
+            description = "The password is too weak. Please choose a stronger password."
         }
         toast({
             variant: "destructive",
@@ -42,7 +51,7 @@ export function initiateEmailSignIn(authInstance: Auth, email: string, password:
     .catch((error) => {
         console.error("Sign-in error:", error);
         let description = "An unknown error occurred during sign-in.";
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
             description = "Invalid credentials. Please check your email and password.";
         }
         toast({
