@@ -20,7 +20,6 @@ import {
   Store,
   Scroll,
 } from 'lucide-react';
-import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
 import { useRef } from 'react';
@@ -48,8 +47,7 @@ export function SidebarNav() {
   return (
     <>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="flex items-center gap-2 font-headline text-2xl font-bold text-primary">
-          <Icons.logo className="h-8 w-8" />
+        <Link href="/dashboard" className="font-headline text-2xl font-bold text-primary">
           <span>{GUILD_NAME}</span>
         </Link>
       </SidebarHeader>
