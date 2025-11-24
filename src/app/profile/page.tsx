@@ -17,11 +17,13 @@ import type { Player, WithId, Character, CharacterClass } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { collection, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 
 function FirstAdminSetup() {
     const { user, isUserLoading: isUserAuthLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const playerDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -31,36 +33,48 @@ function FirstAdminSetup() {
 
     const isLoading = isUserAuthLoading || (user && isPlayerDocLoading);
 
-    const handleBecomeAdmin = () => {
-        if (!firestore || !user) return;
+    useEffect(() => {
+        // Do not proceed if still loading, already processing, or if firebase services aren't ready
+        if (isLoading || isProcessing || !firestore || !user) {
+            return;
+        }
 
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        const playerDocRef = doc(firestore, `players/${user.uid}`);
+        // Check if the conditions are met to perform the automatic setup
+        if (user.email === 'Huzzinda@gmail.com' && !player) {
+            setIsProcessing(true); // Prevent re-running
 
-        const newPlayerData: Omit<Player, 'id'> = {
-            displayName: user.email?.split('@')[0] || 'Guild Leader',
-            discordTag: 'Admin#0001',
-            friends: [],
-            isOnline: true,
-            lifetimeHonor: 100000,
-            currentHonor: 100000,
-            maxHonor: 100000,
-            avatarUrl: '',
-            role: 'admin',
-        };
-        
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(playerDocRef, newPlayerData);
+            const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+            const playerDocRef = doc(firestore, `players/${user.uid}`);
 
-        toast({
-            title: "Guild Leader Role Assigned",
-            description: "Your player profile has been created. The page will now reload to grant you full access.",
-        });
-        
-        setTimeout(() => window.location.reload(), 2000);
-    };
+            const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+                displayName: user.email?.split('@')[0] || 'Guild Leader',
+                discordTag: 'Admin#0001',
+                friends: [],
+                isOnline: true,
+                lifetimeHonor: 100000,
+                currentHonor: 100000,
+                maxHonor: 100000,
+                avatarUrl: '',
+                role: 'admin',
+            };
+            
+            // Non-blocking writes
+            setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+            setDocumentNonBlocking(playerDocRef, newPlayerData);
 
-    if (isLoading) {
+            toast({
+                title: "Guild Leader Role Assigned",
+                description: "Your player profile has been created. The page will now reload to grant you full access.",
+                duration: 5000,
+            });
+            
+            // Reload the page to apply the new role and data
+            setTimeout(() => window.location.reload(), 2000);
+        }
+    }, [isLoading, user, player, firestore, toast, isProcessing]);
+
+    // This component now only shows a loading indicator if necessary but renders no button.
+    if (isLoading || isProcessing) {
         return (
             <Card className="border-primary/50 mb-8">
                 <CardContent className="pt-6">
@@ -73,29 +87,7 @@ function FirstAdminSetup() {
         );
     }
     
-    // This logic now runs only after loading is complete.
-    if (!player && user && user.email === 'Huzzinda@gmail.com') {
-      return (
-          <Card className="border-destructive mb-8">
-              <CardHeader>
-                  <div className="flex items-center gap-3">
-                      <UserPlus className="h-6 w-6 text-destructive" />
-                      <CardTitle className="font-headline text-2xl text-destructive">One-Time Guild Leader Setup</CardTitle>
-                  </div>
-                  <CardDescription>
-                      You are logged in as the designated Guild Leader. Click the button below to claim your role and create your player profile. This will grant you full access to the member hub.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <Button variant="destructive" className="w-full" onClick={handleBecomeAdmin}>
-                      Become Guild Leader
-                  </Button>
-              </CardContent>
-          </Card>
-      );
-    }
-
-    // If not loading and the conditions are not met, render nothing.
+    // Once done, it renders nothing.
     return null;
 }
 
@@ -251,7 +243,7 @@ export default function ProfilePage() {
           
           {isLoading ? (
               <div className="flex justify-center items-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                {/* Don't show a loader here if FirstAdminSetup is already showing one */}
               </div>
           ) : player ? (
               <ProfileContent player={player} />
@@ -262,7 +254,7 @@ export default function ProfilePage() {
                     <div>
                         <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
                         <p className="text-muted-foreground mt-1">
-                            Your player profile has not been created yet. If you are the Guild Leader, you may see an option above to create it.
+                            Your player profile has not been created yet. If you are the Guild Leader, your role is being assigned.
                         </p>
                     </div>
                 </div>
