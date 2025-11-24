@@ -1,19 +1,70 @@
+'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Store, Gem } from "lucide-react";
-import { mockPlayer } from "@/lib/data";
+import { Store, Gem, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, doc, query, orderBy } from "firebase/firestore";
+import type { MarketItem, Player, WithId } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const marketItems = [
-    { name: "Minor Rune of Holding", description: "Increases your inventory space by one row.", price: 500, category: "Utility" },
-    { name: "Flask of Fortune", description: "Slightly increases your luck for one dungeon run.", price: 250, category: "Consumable" },
-    { name: "Scroll of Identification", description: "Reveals the properties of a single magic item.", price: 100, category: "Utility" },
-    { name: "Guild Tabard", description: "A cosmetic tabard displaying the guild's crest.", price: 2000, category: "Cosmetic" },
-    { name: "Officer's Commendation", description: "A note that can be exchanged for a rare crafting material from a guild officer.", price: 5000, category: "Special" },
-    { name: "Elixir of the Iron Will", description: "Grants resistance to slows and stuns for 30 seconds.", price: 750, category: "Consumable" },
-];
+function MarketItemsGrid({ items, isLoading }: { items: WithId<MarketItem>[] | null, isLoading: boolean }) {
+    if (isLoading) {
+        return (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
+            </div>
+        );
+    }
+
+    if (!items || items.length === 0) {
+        return <p className="text-muted-foreground">The market is currently empty. Check back later!</p>;
+    }
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {items.map((item) => (
+                <Card key={item.id} className="flex flex-col">
+                    <CardHeader>
+                        <div className="flex justify-between items-start">
+                            <CardTitle className="font-headline text-xl">{item.name}</CardTitle>
+                            <div className="flex items-center gap-1.5 font-bold text-primary">
+                                <Gem className="h-4 w-4" />
+                                <span>{item.price.toLocaleString()}</span>
+                            </div>
+                        </div>
+                       <CardDescription>{item.category}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                    </CardContent>
+                    <CardFooter>
+                        <Button className="w-full">Purchase</Button>
+                    </CardFooter>
+                </Card>
+            ))}
+        </div>
+    );
+}
 
 export default function MarketPage() {
-    const player = mockPlayer;
+    const { user } = useUser();
+    const firestore = useFirestore();
+
+    const playerDocRef = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return doc(firestore, 'players', user.uid);
+    }, [user, firestore]);
+    const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+
+    const marketItemsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'guild_bank_items'), orderBy('name'));
+    }, [firestore]);
+
+    const { data: marketItems, isLoading: areItemsLoading } = useCollection<MarketItem>(marketItemsQuery);
+
+    const isLoading = isPlayerLoading || areItemsLoading;
+
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8">
             <div className="flex items-center justify-between gap-4 mb-8">
@@ -25,36 +76,17 @@ export default function MarketPage() {
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                        <Gem className="h-5 w-5 text-primary"/>
-                        <span className="text-2xl font-bold">{player.currentHonor.toLocaleString()}</span>
-                    </div>
+                    {isLoading ? <Skeleton className="h-8 w-24" /> : (
+                        <div className="flex items-center gap-2 justify-end">
+                            <Gem className="h-5 w-5 text-primary"/>
+                            <span className="text-2xl font-bold">{(player?.currentHonor || 0).toLocaleString()}</span>
+                        </div>
+                    )}
                     <p className="text-sm text-muted-foreground">Your Honor Points</p>
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {marketItems.map((item) => (
-                    <Card key={item.name} className="flex flex-col">
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <CardTitle className="font-headline text-xl">{item.name}</CardTitle>
-                                <div className="flex items-center gap-1.5 font-bold text-primary">
-                                    <Gem className="h-4 w-4" />
-                                    <span>{item.price.toLocaleString()}</span>
-                                </div>
-                            </div>
-                           <CardDescription>{item.category}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Button className="w-full">Purchase</Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-            </div>
+            <MarketItemsGrid items={marketItems} isLoading={areItemsLoading} />
         </div>
     );
 }

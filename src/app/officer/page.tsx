@@ -7,7 +7,7 @@ import { getBountySuggestions } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { marketItems as initialMarketItems, mockApplications, mockReviews } from "@/lib/data";
+import { mockApplications, mockReviews } from "@/lib/data";
 import { useEffect, useState, useTransition, useMemo } from "react";
 import type { Quest, MarketItem, WithId } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -169,7 +169,6 @@ function BountyAdmin() {
 }
 
 export default function OfficerPage() {
-  const [marketItems, setMarketItems] = useState<MarketItem[]>(initialMarketItems);
   const applications = mockApplications;
   const reviews = mockReviews;
 
@@ -232,7 +231,7 @@ export default function OfficerPage() {
       
       <Separator />
 
-      <MarketAdmin items={marketItems} setItems={setMarketItems} />
+      <MarketAdmin />
 
       <Separator />
 

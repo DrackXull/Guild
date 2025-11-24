@@ -361,6 +361,10 @@
         "quantity": {
           "type": "number",
           "description": "Quantity of this item that is available."
+        },
+         "category": {
+          "type": "string",
+          "description": "Category of the item (e.g., Utility, Consumable, Cosmetic)."
         }
       },
       "required": [
@@ -368,7 +372,8 @@
         "name",
         "description",
         "cost",
-        "quantity"
+        "quantity",
+        "category"
       ]
     },
     "RunReview": {

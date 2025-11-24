@@ -24,6 +24,7 @@ function FirstAdminSetup() {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
+    const isGuildLeaderEmail = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
 
     const playerDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -38,6 +39,7 @@ function FirstAdminSetup() {
 
         setIsProcessing(true);
         const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
+        const officerRoleRef = doc(firestore, `roles_officer/${user.uid}`);
         const playerDocRef = doc(firestore, `players/${user.uid}`);
 
         const newPlayerData: Omit<Player, 'id' | 'characters'> = {
@@ -54,6 +56,7 @@ function FirstAdminSetup() {
         
         // Non-blocking writes
         setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
+        setDocumentNonBlocking(officerRoleRef, { assignedAt: new Date().toISOString() });
         setDocumentNonBlocking(playerDocRef, newPlayerData);
 
         toast({
@@ -80,7 +83,7 @@ function FirstAdminSetup() {
     }
     
     // Only show this button for the specific user IF they don't have a player profile yet.
-    if (user?.email === 'Huzzinda@gmail.com' && !player) {
+    if (isGuildLeaderEmail && !player) {
          return (
             <Card className="border-primary/50 mb-8">
                 <CardHeader>
@@ -259,13 +262,13 @@ export default function ProfilePage() {
           ) : player ? (
               <ProfileContent player={player} />
           ) : (
-             user && !player && (
+             user && !player && user.email?.toLowerCase() !== 'huzzinda@gmail.com' && (
                 <div className="flex items-center gap-4">
                     <UserCircle className="h-10 w-10 text-primary" />
                     <div>
                         <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
                         <p className="text-muted-foreground mt-1">
-                            Your player profile has not been created yet. If you are the Guild Leader, use the setup panel to create your admin profile.
+                            Your player profile is not yet active. It will be created once your application is approved.
                         </p>
                     </div>
                 </div>
