@@ -25,27 +25,3 @@ admin.initializeApp();
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
-
-export const tempDeleteUser = onCall(async (request) => {
-  // This is a temporary and secure function for one-time admin use.
-  // It checks that the caller is the intended user before proceeding.
-  const callerUid = request.auth?.uid;
-  const targetUid = request.data.uid;
-
-  // IMPORTANT: Only allow this action if the person calling the function
-  // is the same person they are trying to delete. This is a safeguard.
-  // In a real scenario, you'd want even tighter security, but for this
-  // specific recovery operation, this is sufficient.
-  if (callerUid !== targetUid) {
-    throw new HttpsError('permission-denied', 'You can only delete your own account.');
-  }
-
-  try {
-    await admin.auth().deleteUser(targetUid);
-    logger.info(`Successfully deleted user: ${targetUid}`);
-    return { success: true, message: `User ${targetUid} deleted.` };
-  } catch (error) {
-    logger.error(`Error deleting user ${targetUid}:`, error);
-    throw new HttpsError('internal', 'Failed to delete user.');
-  }
-});
