@@ -21,7 +21,6 @@ function FirstAdminSetup() {
     const firestore = useFirestore();
     const { toast } = useToast();
 
-    // Check for the player document to see if the role has already been assigned.
     const playerDocRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
         return doc(firestore, 'players', user.uid);
@@ -29,12 +28,6 @@ function FirstAdminSetup() {
     const { data: player, isLoading: isPlayerDocLoading } = useDoc<Player>(playerDocRef);
 
     const isLoading = isUserAuthLoading || (user && isPlayerDocLoading);
-
-    // This component will only be visible for the specified user email
-    // AND if they don't have a player document yet.
-    if (!user || user.email !== 'Huzzinda@gmail.com' || player) {
-        return null;
-    }
 
     if (isLoading) {
         return (
@@ -46,7 +39,13 @@ function FirstAdminSetup() {
                     </div>
                 </CardContent>
             </Card>
-        )
+        );
+    }
+
+    // Only after loading is complete, check if we should show the button.
+    // This will only be visible for the specified user email AND if they don't have a player document yet.
+    if (!user || user.email !== 'Huzzinda@gmail.com' || player) {
+        return null;
     }
 
     const handleBecomeAdmin = () => {
@@ -100,7 +99,8 @@ function FirstAdminSetup() {
     );
 }
 
-function ProfileContent({ player }: { player: Player }) {
+
+function ProfileContent({ player }: { player: WithId<Player> }) {
     const friendCount = player.friends?.length || 0;
   
     const charImages = Object.fromEntries(
@@ -229,29 +229,36 @@ export default function ProfilePage() {
   }, [user, firestore]);
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
-  const isLoading = isUserLoading || isPlayerLoading;
-
+  // Combine all loading states
+  const isLoading = isUserLoading || (user && isPlayerLoading);
+  
   return (
       <div className="space-y-8 container mx-auto p-4 md:p-6 lg:p-8">
           <FirstAdminSetup />
-          {isLoading ? (
-              <div className="flex justify-center items-center py-16">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <p className="ml-4">Loading Profile...</p>
-              </div>
-          ) : player ? (
+          
+          {/* This part of the component doesn't depend on `isLoading` from the profile fetch,
+              it only needs to avoid showing content if there's no user at all.
+              `FirstAdminSetup` handles its own loading state. */}
+
+          {player ? (
               <ProfileContent player={player} />
           ) : (
-             <div className="flex items-center gap-4">
-                <UserCircle className="h-10 w-10 text-primary" />
-                <div>
-                <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
-                <p className="text-muted-foreground mt-1">Manage your identity in the guild.</p>
+             // Render this part only when we are NOT loading and we have confirmed there is no player profile.
+             !isLoading && user && !player && (
+                <div className="flex items-center gap-4">
+                    <UserCircle className="h-10 w-10 text-primary" />
+                    <div>
+                        <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
+                        <p className="text-muted-foreground mt-1">
+                            Your player profile has not been created yet.
+                        </p>
+                    </div>
                 </div>
-            </div>
+             )
           )}
       </div>
   );
 }
+    
 
     
