@@ -68,11 +68,13 @@ export const characterClasses: CharacterClass[] = ['Fighter', 'Ranger', 'Wizard'
 export const gameModes: string[] = ["Normal", "High Roller", "Squires to Riches", "Adventure Mode", "Arena"];
 
 export const gameMaps = [
-    { name: 'The Forgotten Castle', bosses: ['Lich', 'Ghost King', 'Warlord'] },
-    { name: 'Goblin Caves', bosses: ['Cave Troll', 'Cyclops'] },
-    { name: 'The Ruins', bosses: ['Banshee', 'Spectral Knight'] },
-    { name: 'The Inferno', bosses: ['Lich', 'Ghost King'] },
-    { name: 'Ice Abyss', bosses: ['Wyvern'] },
+    { name: 'The Ruins', collection: 'The Forgotten Castle', bosses: ['Banshee', 'Spectral Knight'] },
+    { name: 'The Crypt', collection: 'The Forgotten Castle', bosses: ['Lich', 'Ghost King', 'Warlord'] },
+    { name: 'The Inferno', collection: 'The Forgotten Castle', bosses: ['Lich', 'Ghost King'] },
+    { name: 'The Goblin Caves', collection: 'The Goblin Caves', bosses: ['Cave Troll', 'Cyclops'] },
+    { name: 'The Ice Cavern', collection: 'The Frost Mountain', bosses: ['Wyvern'] },
+    { name: 'The Ice Abyss', collection: 'The Frost Mountain', bosses: ['Wyvern'] },
+    { name: 'The Ship Graveyard', collection: 'The Blue Maelstrom', bosses: [] },
 ];
 
 export const bossList: string[] = ["Cave Troll", "Cyclops", "Lich", "Ghost King", "Warlord", "Banshee", "Spectral Knight", "Wyvern"];

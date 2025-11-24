@@ -196,12 +196,12 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Map (Optional)</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); form.setValue('bossesKilled', []); }} value={field.value}>
+                    <Select onValueChange={(value) => { field.onChange(value === 'none' ? undefined : value); form.setValue('bossesKilled', []); }} value={field.value || 'none'}>
                       <FormControl><SelectTrigger><MapPin className="mr-2 h-4 w-4" /><SelectValue placeholder="Select a map" /></SelectTrigger></FormControl>
                       <SelectContent>
                          <SelectItem value="none">None</SelectItem>
                         {gameMaps.map((map) => (
-                            <SelectItem key={map.name} value={map.name}>{map.name}</SelectItem>
+                            <SelectItem key={map.name} value={map.name}>{map.name} ({map.collection})</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -339,7 +339,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
               <Card key={field.id}>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="font-headline text-xl">{index === 0 ? "Your Character" : `Teammate ${index + 1}`}</CardTitle>
-                  {fields.length > 2 && (
+                  {fields.length > 2 && index > 1 && ( // Allow removing only teammates beyond the first two
                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -380,47 +380,47 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                     )}
                   />
 
-                  {index > 0 && (
-                    <FormField
-                      control={form.control}
-                      name={`teammates.${index}.traits`}
-                      render={() => (
-                        <FormItem>
-                          <div className="mb-4">
-                            <FormLabel className="text-base">Feedback Traits</FormLabel>
-                            <FormDescription>Select traits that apply to this teammate's performance.</FormDescription>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            {availableTraits.map((trait) => (
-                              <FormField
-                                key={trait}
-                                control={form.control}
-                                name={`teammates.${index}.traits`}
-                                render={({ field }) => {
-                                  return (
-                                    <FormItem key={trait} className="flex flex-row items-start space-x-3 space-y-0">
-                                      <FormControl>
-                                        <Checkbox
-                                          checked={field.value?.includes(trait)}
-                                          onCheckedChange={(checked) => {
-                                            return checked
-                                              ? field.onChange([...field.value, trait])
-                                              : field.onChange(field.value?.filter((value) => value !== trait));
-                                          }}
-                                        />
-                                      </FormControl>
-                                      <FormLabel className="font-normal capitalize">{trait}</FormLabel>
-                                    </FormItem>
-                                  );
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  <FormField
+                    control={form.control}
+                    name={`teammates.${index}.traits`}
+                    render={() => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel className="text-base">{index === 0 ? "Self-Assessment" : "Feedback Traits"}</FormLabel>
+                          <FormDescription>
+                            {index === 0 ? "How do you think you performed?" : "Select traits that apply to this teammate's performance."}
+                          </FormDescription>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          {availableTraits.map((trait) => (
+                            <FormField
+                              key={trait}
+                              control={form.control}
+                              name={`teammates.${index}.traits`}
+                              render={({ field }) => {
+                                return (
+                                  <FormItem key={trait} className="flex flex-row items-start space-x-3 space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(trait)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, trait])
+                                            : field.onChange(field.value?.filter((value) => value !== trait));
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal capitalize">{trait}</FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
             ))}
