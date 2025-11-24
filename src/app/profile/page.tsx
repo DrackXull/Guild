@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Gem, Shield, Users, UserCircle, Crown, UserPlus } from "lucide-react";
+import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2 } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Player } from "@/lib/types";
 
 function FirstAdminSetup() {
-    const { user } = useUser();
+    const { user, isUserLoading: isUserAuthLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
 
@@ -26,12 +26,27 @@ function FirstAdminSetup() {
         if (!user || !firestore) return null;
         return doc(firestore, 'players', user.uid);
     }, [user, firestore]);
-    const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+    const { data: player, isLoading: isPlayerDocLoading } = useDoc<Player>(playerDocRef);
+
+    const isLoading = isUserAuthLoading || (user && isPlayerDocLoading);
 
     // This component will only be visible for the specified user email
     // AND if they don't have a player document yet.
-    if (isPlayerLoading || !user || user.email !== 'Huzzinda@gmail.com' || player) {
+    if (!user || user.email !== 'Huzzinda@gmail.com' || player) {
         return null;
+    }
+
+    if (isLoading) {
+        return (
+            <Card className="border-primary/50 mb-8">
+                <CardContent className="pt-6">
+                    <div className="flex items-center justify-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin"/>
+                        <p>Checking for Guild Leader status...</p>
+                    </div>
+                </CardContent>
+            </Card>
+        )
     }
 
     const handleBecomeAdmin = () => {
@@ -58,10 +73,10 @@ function FirstAdminSetup() {
 
         toast({
             title: "Guild Leader Role Assigned",
-            description: "You have been granted Guild Leader privileges and your player profile has been created. The page will now reload to grant you access.",
+            description: "Your player profile has been created. The page will now reload to grant you full access.",
         });
         
-        // Optionally, force a reload to ensure all states are updated.
+        // Force a reload to ensure all states are updated and layout changes.
         setTimeout(() => window.location.reload(), 2000);
     };
 
@@ -73,7 +88,7 @@ function FirstAdminSetup() {
                     <CardTitle className="font-headline text-2xl text-destructive">One-Time Guild Leader Setup</CardTitle>
                 </div>
                 <CardDescription>
-                    You have successfully logged in. As the designated Guild Leader, click the button below to claim your role and create your player profile. This will grant you full access to the member hub.
+                    You are logged in as the designated Guild Leader. Click the button below to claim your role and create your player profile. This will grant you full access to the member hub.
                 </CardDescription>
             </CardHeader>
             <CardContent>
