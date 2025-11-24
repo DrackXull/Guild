@@ -136,24 +136,36 @@ export default function LandingPage() {
       };
 
       try {
-        // First, try to sign in.
+        // First, try to sign in. If it works, setup roles and we're done.
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         setupAdminRoles(userCredential.user);
       } catch (error: any) {
-        // If sign-in fails because the user doesn't exist, create the account.
+        // If sign-in fails, check if it's because the user doesn't exist or credentials are bad
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+          // Attempt to create the user account.
           try {
             const newUserCredential = await createUserWithEmailAndPassword(auth, email, password);
+            // If creation is successful, setup roles.
             setupAdminRoles(newUserCredential.user);
           } catch (createError: any) {
-            console.error("Admin account creation failed:", createError);
-            toast({
-              variant: "destructive",
-              title: "Admin Setup Failed",
-              description: `Could not create the admin account: ${createError.message}`,
-            });
+             // This catch block handles errors from createUserWithEmailAndPassword
+            if (createError.code === 'auth/email-already-in-use') {
+                 toast({
+                    variant: "destructive",
+                    title: "Admin Login Failed",
+                    description: "The account exists, but the password was incorrect.",
+                });
+            } else {
+                 console.error("Admin account creation failed:", createError);
+                toast({
+                    variant: "destructive",
+                    title: "Admin Setup Failed",
+                    description: `Could not create the admin account: ${createError.message}`,
+                });
+            }
           }
         } else {
+           // Handle other sign-in errors (e.g., network issues)
            console.error("Admin Login Error:", error);
            toast({
               variant: "destructive",
@@ -263,5 +275,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
