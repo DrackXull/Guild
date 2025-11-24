@@ -86,7 +86,11 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
   const isLoading = isUserLoading || (user && isPlayerLoading);
-  const isMember = !!player;
+  
+  // This is the important bit. If it's the admin user, force isMember to true.
+  const isGuildLeader = user?.email === 'Huzzinda@gmail.com';
+  const isMember = !!player || isGuildLeader;
+
 
   const publicRoutes = ['/'];
   // Applicants should be able to see their profile to claim their role.
