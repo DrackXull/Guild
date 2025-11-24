@@ -8,6 +8,7 @@ import type { Application, WithId } from '@/lib/types';
 import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { GUILD_NAME } from '@/lib/config';
 
 interface ApplicationStatusProps {
   application: WithId<Application>;
@@ -30,7 +31,7 @@ const statusInfo = {
   },
   approved: {
     title: 'Petition Approved!',
-    description: 'Welcome to The Black Lantern Company! You have been granted member access.',
+    description: `Welcome to ${GUILD_NAME}! You have been granted member access.`,
     icon: <CheckCircle className="h-10 w-10 text-success" />,
     badgeVariant: 'default',
     badgeClass: 'bg-success/20 text-success hover:bg-success/30 border-success/30',

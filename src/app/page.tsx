@@ -20,6 +20,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
+import { GUILD_NAME } from '@/lib/config';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),

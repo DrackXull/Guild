@@ -15,7 +15,6 @@ import {
   Swords,
   ScrollText,
   UserCircle,
-  Shield,
   LifeBuoy,
   Settings,
   Store,
@@ -25,6 +24,7 @@ import { Icons } from '@/components/icons';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
 import { useRef } from 'react';
+import { GUILD_NAME } from '@/lib/config';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -33,7 +33,6 @@ const navItems = [
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
-  { href: '/officer', label: 'Council Chambers', icon: <Shield />, officerOnly: true },
 ];
 
 export function SidebarNav() {
@@ -51,13 +50,12 @@ export function SidebarNav() {
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-headline text-2xl font-bold text-primary">
           <Icons.logo className="h-8 w-8" />
-          <span>Guild Hub</span>
+          <span>{GUILD_NAME}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => {
-            if (item.officerOnly && !isOfficer) return null;
             return (
               <SidebarMenuItem key={item.label} onMouseEnter={playHoverSound}>
                 <SidebarMenuButton

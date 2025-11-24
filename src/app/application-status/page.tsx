@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FilePlus, LogOut, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
+import { GUILD_NAME } from '@/lib/config';
 
 
 function ApplicantHeader() {
@@ -92,7 +93,7 @@ export default function ApplicationStatusPage() {
         ) : (
             <div className="container mx-auto max-w-4xl py-12">
               <div className="flex flex-col items-center text-center mb-8">
-                <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to The Black Lantern Company</h1>
+                <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to {GUILD_NAME}</h1>
                 <p className="text-muted-foreground mt-2 max-w-2xl">
                   {existingApplication 
                     ? "Below is the current status of your petition."
