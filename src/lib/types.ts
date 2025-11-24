@@ -1,5 +1,6 @@
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -80,6 +81,9 @@ export type RunReport = {
   extracted: boolean;
   traits: string[];
   createdAt: Date;
+  officerNotes?: string;
+  requestMeeting?: boolean;
+  evidenceLinks?: string[];
 };
 
 export type Run = {

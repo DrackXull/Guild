@@ -176,6 +176,22 @@
         "isConfirmed": {
           "type": "boolean",
           "description": "Indicates if the stats in the run report have been confirmed by a screenshot or officer."
+        },
+        "officerNotes": {
+            "type": "string",
+            "description": "Private notes about the run, visible only to officers."
+        },
+        "requestMeeting": {
+            "type": "boolean",
+            "description": "Indicates if the player wants to discuss this report with an officer."
+        },
+        "evidenceLinks": {
+            "type": "array",
+            "description": "An array of URLs to videos or other evidence related to the run.",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
         }
       },
       "required": [
