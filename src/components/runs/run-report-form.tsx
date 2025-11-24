@@ -32,7 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, Trash2 } from "lucide-react";
 import type { Character } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { mockPlayer } from "@/lib/data";
+import { mockPlayer, gameModes } from "@/lib/data";
 
 const availableTraits = ["great comms", "team player", "loot hog", "toxic"];
 const RATING_LOW_THRESHOLD = 3;
@@ -41,7 +41,7 @@ const LOW_RATING_COMMENT_LENGTH = 140;
 const HIGH_RATING_COMMENT_LENGTH = 80;
 
 const runReportSchema = z.object({
-  gameMode: z.enum(["Normal", "High-Roller"]),
+  gameMode: z.string().min(1, "Please select a game mode."),
   rating: z.number().min(1).max(10),
   runNotes: z.string().optional(),
   screenshot: z.any().optional(),
@@ -161,8 +161,9 @@ export function RunReportForm({ allCharacters }: { allCharacters: Character[] })
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue placeholder="Select a game mode" /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="Normal">Normal</SelectItem>
-                        <SelectItem value="High-Roller">High-Roller</SelectItem>
+                        {gameModes.map((mode) => (
+                            <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
