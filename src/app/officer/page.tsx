@@ -16,6 +16,7 @@ import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BountyAdmin } from "@/components/officer/bounty-admin";
+import { Badge } from "@/components/ui/badge";
 
 const guildRanks: { rank: string; description: string; honorRequirement: number }[] = [
     { rank: 'Neophyte', description: 'A new recruit, learning the ropes and proving their worth in the dungeons.', honorRequirement: 0 },
@@ -319,5 +320,7 @@ export default function OfficerPage() {
     </div>
   );
 }
+
+    
 
     
