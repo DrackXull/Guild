@@ -1,7 +1,8 @@
+
 'use server';
 
 import { generateBountyBoardQuests } from '@/ai/flows/generate-bounty-board-quests';
-import { MarketItem, Quest, WithId } from './types';
+import { ApiCharacter, MarketItem, Quest, WithId } from './types';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { getAdminFirestore } from '@/lib/firebase-admin';
 import { ai } from '@/ai/genkit';

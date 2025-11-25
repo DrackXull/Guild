@@ -6,6 +6,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -43,8 +44,6 @@ export type Character = {
   characterClass: CharacterClass;
   level?: number;
   rank?: string;
-  totalKills: number;
-  totalDeaths: number;
   totalBossKills: number;
   isConfirmed: boolean;
   confirmedKills: number;

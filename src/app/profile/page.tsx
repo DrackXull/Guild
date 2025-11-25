@@ -57,8 +57,6 @@ function CreateCharacterDialog() {
       playerId: user.uid,
       name: data.name,
       characterClass: data.characterClass as CharacterClass,
-      totalKills: 0,
-      totalDeaths: 0,
       totalBossKills: 0,
       isConfirmed: false,
       confirmedKills: 0,
@@ -219,8 +217,11 @@ function FirstAdminSetup() {
 }
 
 function FindCharacterSection() {
+    const { user } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const [isSearching, startSearchTransition] = useTransition();
+    const [isImporting, setIsImporting] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<ApiCharacter[]>([]);
 
@@ -241,11 +242,36 @@ function FindCharacterSection() {
     }
     
     const handleImport = (character: ApiCharacter) => {
-      // TODO: Implement import logic
-       toast({
-        title: `Importing ${character.name}...`,
-        description: `This feature is not yet implemented.`
+      if (!firestore || !user) {
+          toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+          return;
+      }
+      setIsImporting(character.id);
+
+      const charactersCollectionRef = collection(firestore, `users/${user.uid}/characters`);
+      
+      const newCharacterData: Omit<Character, 'id'> = {
+          playerId: user.uid,
+          name: character.name,
+          characterClass: character.class,
+          level: character.level,
+          rank: character.rank,
+          totalBossKills: 0, // This data is not from the API
+          isConfirmed: true, // Data from API is considered confirmed
+          confirmedKills: 0, // This data is not from the API
+          unconfirmedKills: 0, // This data is not from the API
+      };
+      
+      addDocumentNonBlocking(charactersCollectionRef, newCharacterData);
+
+      toast({
+        title: `Character Imported`,
+        description: `${character.name} the ${character.class} has been added to your roster.`
       });
+
+      // Optimistically remove from results
+      setResults(prev => prev.filter(r => r.id !== character.id));
+      setIsImporting(null);
     }
 
     return (
@@ -276,8 +302,17 @@ function FindCharacterSection() {
                             <p className="font-semibold">{char.name}</p>
                             <p className="text-xs text-muted-foreground">Lvl {char.level} {char.class} ({char.rank})</p>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => handleImport(char)}>
-                            <PlusCircle className="mr-2 h-4 w-4"/>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleImport(char)}
+                            disabled={isImporting === char.id}
+                          >
+                             {isImporting === char.id ? (
+                               <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                             ) : (
+                               <PlusCircle className="mr-2 h-4 w-4"/>
+                             )}
                             Import
                           </Button>
                         </div>
@@ -286,7 +321,7 @@ function FindCharacterSection() {
                  )}
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-                Character data is provided by the DarkerDB API.
+                Character data is provided by the DarkerDB API. Kill stats are not included and must be accrued via Run Reports.
             </CardFooter>
         </Card>
     );
