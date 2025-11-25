@@ -4,7 +4,7 @@ import { QuestCard } from "@/components/bounty-board/quest-card";
 import { ScrollText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, orderBy } from "firebase/firestore";
 import { Quest, WithId } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,19 +35,21 @@ function BountiesList({ quests, isLoading }: { quests: WithId<Quest>[] | null, i
 
 
 export default function BountyBoardPage() {
+  const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   
-  // This query will only run once the firestore instance is available,
-  // which happens after user authentication is resolved.
+  // This query will only run once the firestore instance and user are available.
   const bountiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, 'bounty_board_quests'), orderBy('rarity'), orderBy('questName'));
-  }, [firestore]);
+  }, [firestore, user]);
   
-  const { data: quests, isLoading } = useCollection<Quest>(bountiesQuery);
+  const { data: quests, isLoading: isLoadingBounties } = useCollection<Quest>(bountiesQuery);
 
   const shortDurationQuests = quests?.filter((q) => q.durationDays <= 4) || [];
   const longDurationQuests = quests?.filter((q) => q.durationDays > 4) || [];
+
+  const isLoading = isUserLoading || (user && isLoadingBounties);
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
