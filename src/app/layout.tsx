@@ -12,26 +12,12 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc, collection, collectionGroup, query, where } from 'firebase/firestore';
-import type { Player, Character } from '@/lib/types';
+import type { Player, Character, Quest } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
-function MemberLayout({ children }: { children: React.ReactNode }) {
+function MemberLayout({ children, allCharacters, onlinePlayers }: { children: React.ReactNode, allCharacters: Character[], onlinePlayers: Player[] }) {
   const pathname = usePathname();
   const isOfficerPage = pathname.startsWith('/officer');
-  const firestore = useFirestore();
-
-  const playersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'players'), where('isOnline', '==', true));
-  }, [firestore]);
-  const { data: onlinePlayers } = useCollection<Player>(playersQuery);
-
-  const charactersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collectionGroup(firestore, 'characters'));
-  }, [firestore]);
-  const { data: allCharacters } = useCollection<Character>(charactersQuery);
-
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -122,12 +108,24 @@ function AppManager({ children }: { children: React.ReactNode }) {
     if (!user || !firestore) return null;
     return doc(firestore, 'players', user.uid);
   }, [user, firestore]);
-
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
+  // Guild-wide data, fetched only when the user is a logged-in member
+  const charactersQuery = useMemoFirebase(() => {
+    if (!firestore || !player) return null; // Only fetch if user is a member
+    return query(collectionGroup(firestore, 'characters'));
+  }, [firestore, player]);
+  const { data: allCharacters, isLoading: isLoadingCharacters } = useCollection<Character>(charactersQuery);
+
+  const onlinePlayersQuery = useMemoFirebase(() => {
+    if (!firestore || !player) return null;
+    return query(collection(firestore, 'players'), where('isOnline', '==', true));
+  }, [firestore, player]);
+  const { data: onlinePlayers, isLoading: isLoadingOnlinePlayers } = useCollection<Player>(onlinePlayersQuery);
+  
   const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
   
-  const isLoading = isUserLoading || (user && isPlayerLoading);
+  const isLoading = isUserLoading || (user && (isPlayerLoading || isLoadingCharacters || isLoadingOnlinePlayers));
   const isMember = !!player || isGuildLeader;
 
   const publicRoutes = ['/'];
@@ -176,7 +174,14 @@ function AppManager({ children }: { children: React.ReactNode }) {
 
   if (isMember) {
     // Logged-in Guild Member: Show the full member layout.
-    return <MemberLayout>{children}</MemberLayout>;
+    // Clone children to pass down the loaded data
+    const childrenWithProps = React.Children.map(children, child => {
+        if (React.isValidElement(child)) {
+            return React.cloneElement(child, { allCharacters, onlinePlayers } as any);
+        }
+        return child;
+    });
+    return <MemberLayout allCharacters={allCharacters || []} onlinePlayers={onlinePlayers || []}>{childrenWithProps}</MemberLayout>;
   } else {
     // Logged-in Applicant: Show pages without the member layout.
     return <>{children}</>;
@@ -200,4 +205,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
- 

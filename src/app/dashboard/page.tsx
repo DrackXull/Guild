@@ -25,13 +25,13 @@ export default function DashboardPage() {
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
   const bountiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !player) return null; // Wait for player to be loaded
     return query(collection(firestore, 'bounty_board_quests'), orderBy('questName'), limit(2));
-  }, [firestore]);
+  }, [firestore, player]);
   
   const { data: dailyBounties, isLoading: areBountiesLoading } = useCollection<Quest>(bountiesQuery);
 
-  const isLoading = isPlayerLoading || areBountiesLoading;
+  const isLoading = isPlayerLoading || (player && areBountiesLoading);
 
   return (
     <div className="flex flex-col gap-8">
@@ -98,7 +98,7 @@ export default function DashboardPage() {
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            {areBountiesLoading ? (
+            {isLoading ? (
               <>
                 <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -108,7 +108,7 @@ export default function DashboardPage() {
                 <QuestCard key={quest.id} quest={quest} />
               ))
             )}
-            {!areBountiesLoading && (!dailyBounties || dailyBounties.length === 0) && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
+            {!isLoading && (!dailyBounties || dailyBounties.length === 0) && <p className="text-muted-foreground col-span-2">No daily bounties available.</p>}
           </div>
         </div>
         <div className="lg:col-span-1">

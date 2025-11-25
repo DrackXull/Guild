@@ -37,6 +37,8 @@ function BountiesList({ quests, isLoading }: { quests: WithId<Quest>[] | null, i
 export default function BountyBoardPage() {
   const firestore = useFirestore();
   
+  // This query will only run once the firestore instance is available,
+  // which happens after user authentication is resolved.
   const bountiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'bounty_board_quests'), orderBy('rarity'), orderBy('questName'));
