@@ -4,24 +4,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2 } from "lucide-react";
+import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2, Search, PlusCircle } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { Player, WithId, Character, CharacterClass } from "@/lib/types";
+import type { Player, WithId, Character, CharacterClass, ApiCharacter } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { query } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { findCharacterFromApi } from "@/lib/actions";
+import { Separator } from "@/components/ui/separator";
 
 
 const createCharacterSchema = z.object({
@@ -76,7 +77,7 @@ function CreateCharacterDialog() {
   return (
      <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Create Character</Button>
+        <Button variant="outline">Create Manually</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -217,17 +218,84 @@ function FirstAdminSetup() {
     return null;
 }
 
+function FindCharacterSection() {
+    const { toast } = useToast();
+    const [isSearching, startSearchTransition] = useTransition();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState<ApiCharacter[]>([]);
+
+    const handleSearch = () => {
+        if (!searchTerm) return;
+        setResults([]);
+        startSearchTransition(async () => {
+            const result = await findCharacterFromApi(searchTerm);
+            if (result.success) {
+                setResults(result.data);
+                if (!result.data || result.data.length === 0) {
+                  toast({ title: 'No results found', description: 'Try a different character name.' });
+                }
+            } else {
+                toast({ title: 'Search Failed', description: result.message, variant: 'destructive' });
+            }
+        });
+    }
+    
+    const handleImport = (character: ApiCharacter) => {
+      // TODO: Implement import logic
+       toast({
+        title: `Importing ${character.name}...`,
+        description: `This feature is not yet implemented.`
+      });
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-xl">Find & Import Character from API</CardTitle>
+                <CardDescription>Search for your character on DarkerDB to quickly import their stats.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                    <Input 
+                        placeholder="Enter exact character name..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <Button onClick={handleSearch} disabled={isSearching}>
+                        {isSearching ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search />}
+                        Search
+                    </Button>
+                </div>
+                 {results.length > 0 && (
+                  <div className="border rounded-md p-2 space-y-2 max-h-60 overflow-y-auto">
+                    <h4 className="font-semibold text-sm px-2">Search Results ({results.length})</h4>
+                      {results.map(char => (
+                        <div key={char.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                          <div>
+                            <p className="font-semibold">{char.name}</p>
+                            <p className="text-xs text-muted-foreground">Lvl {char.level} {char.class} ({char.rank})</p>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => handleImport(char)}>
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Import
+                          </Button>
+                        </div>
+                      ))}
+                  </div>
+                 )}
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+                Character data is provided by the DarkerDB API.
+            </CardFooter>
+        </Card>
+    );
+}
+
 
 function ProfileContent({ player }: { player: WithId<Player> }) {
     const firestore = useFirestore();
     const friendCount = player.friends?.length || 0;
-  
-    const charImages = Object.fromEntries(
-      PlaceHolderImages.filter(p => p.id.startsWith('character-')).map(p => {
-          const className = p.id.replace('character-', '');
-          return [className.charAt(0).toUpperCase() + className.slice(1), p.imageUrl];
-      })
-    );
     
     const charactersQuery = useMemoFirebase(() => {
         if (!firestore || !player.id) return null;
@@ -303,8 +371,19 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
             <div>
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-headline text-3xl font-bold">My Characters</h2>
-                    <CreateCharacterDialog />
+                    <div className="flex gap-2">
+                      <CreateCharacterDialog />
+                    </div>
                 </div>
+
+                <Separator className="my-6"/>
+
+                <FindCharacterSection />
+
+                <Separator className="my-6"/>
+
+                <h3 className="font-headline text-xl font-bold mb-4">Active Roster</h3>
+
                 {isLoadingCharacters ? (
                      <div className="flex items-center justify-center col-span-full">
                         <Loader2 className="h-8 w-8 animate-spin" />
@@ -312,10 +391,10 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
                 ) : (
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {characters?.map(char => (
-                            <CharacterCard key={char.id} character={char} imageUrl={charImages[char.characterClass as keyof typeof charImages]}/>
+                            <CharacterCard key={char.id} character={char} />
                         ))}
                          {(!characters || characters.length === 0) && (
-                            <p className="text-muted-foreground col-span-full">You have not created any characters yet.</p>
+                            <p className="text-muted-foreground col-span-full">You have not created or imported any characters yet.</p>
                          )}
                     </div>
                 )}

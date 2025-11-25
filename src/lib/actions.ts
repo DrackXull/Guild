@@ -76,3 +76,26 @@ export const getGuildBankItems = ai.defineTool(
         return items;
     }
 );
+
+export async function findCharacterFromApi(characterName: string) {
+    const apiKey = process.env.DARKERDB_API_KEY;
+    if (!apiKey) {
+        console.error("DarkerDB API key is not set in environment variables.");
+        return { success: false, message: "Server is not configured for API access." };
+    }
+
+    const url = `https://api.darkerdb.com/v1/characters?name=${encodeURIComponent(characterName)}&key=${apiKey}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error("DarkerDB API request failed:", response.status, response.statusText);
+            return { success: false, message: `API error: ${response.statusText}` };
+        }
+        const data = await response.json();
+        return { success: true, data: data.body };
+    } catch (error) {
+        console.error("Failed to fetch from DarkerDB API:", error);
+        return { success: false, message: "Failed to connect to the character database." };
+    }
+}

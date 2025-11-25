@@ -5,6 +5,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -40,12 +41,27 @@ export type Character = {
   playerId: string;
   name: string;
   characterClass: CharacterClass;
+  level?: number;
+  rank?: string;
   totalKills: number;
   totalDeaths: number;
   totalBossKills: number;
   isConfirmed: boolean;
   confirmedKills: number;
   unconfirmedKills: number;
+};
+
+// Character data as returned from the DarkerDB API
+export type ApiCharacter = {
+  id: number;
+  account_id: number;
+  name: string;
+  class: CharacterClass;
+  level: number;
+  rank: string;
+  rating: number | null;
+  adventure_points: number | null;
+  updated_at: string;
 };
 
 export type RunParticipantStats = {

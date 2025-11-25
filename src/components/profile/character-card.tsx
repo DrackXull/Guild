@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,10 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 
 type CharacterCardProps = {
   character: Character;
-  imageUrl?: string;
 };
 
-export function CharacterCard({ character, imageUrl }: CharacterCardProps) {
+export function CharacterCard({ character }: CharacterCardProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader>
