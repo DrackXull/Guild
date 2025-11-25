@@ -45,7 +45,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
   }, [isOfficerPage]);
 
   const onlineMembers = onlinePlayers?.length || 0;
-  const totalGuildKills = allCharacters?.reduce((acc, char) => acc + (char.totalKills || 0), 0) || 0;
+  const totalGuildKills = allCharacters?.reduce((acc, char) => acc + (char.confirmedKills || 0), 0) || 0;
   const totalBossKills = allCharacters?.reduce((acc, char) => acc + (char.totalBossKills || 0), 0) || 0;
 
 
@@ -201,3 +201,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+ 
