@@ -1,7 +1,7 @@
 
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Trash2, Gem, Repeat, Loader2, UserCheck } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2, Gem, Repeat, Loader2, UserCheck, Store, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getBountySuggestions } from "@/lib/actions";
@@ -22,6 +22,7 @@ import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { guildRanks } from "@/lib/data";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const rarities: QuestRarity[] = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
 const ranks = ["Neophyte", "Voyager", "Champion", "Demigod"];
@@ -320,12 +321,8 @@ function BountyAdmin() {
   )
 }
 
-export default function OfficerPage() {
-  const { user } = useUser();
-  const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
+function ApplicantsAdmin() {
   const firestore = useFirestore();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
 
   const applicationsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -333,6 +330,96 @@ export default function OfficerPage() {
   }, [firestore]);
 
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <Users className="h-6 w-6" />
+          <CardTitle className="font-headline text-2xl">Applicant Trials</CardTitle>
+        </div>
+        <CardDescription>Review, rate, and decide on new guild applicants.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Applicant</TableHead>
+              <TableHead className="hidden md:table-cell">Date</TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="text-center">Reviews</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoadingApplications && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoadingApplications && applications?.map(app => {
+              const reviewCount = app.reviewHistory?.length || 0;
+              return (
+                <TableRow key={app.id}>
+                  <TableCell>
+                    <div className="font-medium">{app.applicantName}</div>
+                    <div className="text-sm text-muted-foreground">{app.discordTag}</div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">{new Date(app.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-center capitalize">
+                    <Badge variant={app.status === 'approved' ? 'default' : app.status === 'denied' ? 'destructive' : 'secondary'}>
+                        {app.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">{reviewCount}</TableCell>
+                  <TableCell className="text-right">
+                    <ApplicationReview application={app} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+              {!isLoadingApplications && (!applications || applications.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      No applications found.
+                  </TableCell>
+              </TableRow>
+              )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+}
+
+function LogsAdmin() {
+  return (
+     <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <FileText className="h-6 w-6" />
+            <CardTitle className="font-headline text-2xl">Council Activity Log</CardTitle>
+          </div>
+          <CardDescription>
+            A transparent record of all council and automated guild actions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground text-sm">Activity log coming soon...</p>
+        </CardContent>
+      </Card>
+  )
+}
+
+
+export default function OfficerPage() {
+  const { user } = useUser();
+  const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
+  const firestore = useFirestore();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
   const handleGrantAdmin = () => {
       if (isProcessing || !firestore || !user) return;
@@ -394,99 +481,41 @@ export default function OfficerPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-              <Users className="h-6 w-6" />
-              <CardTitle className="font-headline text-2xl">Applicant Trials</CardTitle>
-          </div>
-          <CardDescription>Review, rate, and decide on new guild applicants.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Applicant</TableHead>
-                <TableHead className="hidden md:table-cell">Date</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Reviews</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingApplications && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoadingApplications && applications?.map(app => {
-                const reviewCount = app.reviewHistory?.length || 0;
-                return (
-                  <TableRow key={app.id}>
-                    <TableCell>
-                      <div className="font-medium">{app.applicantName}</div>
-                      <div className="text-sm text-muted-foreground">{app.discordTag}</div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{new Date(app.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-center capitalize">
-                       <Badge variant={app.status === 'approved' ? 'default' : app.status === 'denied' ? 'destructive' : 'secondary'}>
-                          {app.status}
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">{reviewCount}</TableCell>
-                    <TableCell className="text-right">
-                      <ApplicationReview application={app} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-               {!isLoadingApplications && (!applications || applications.length === 0) && (
-                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                       No applications found.
-                    </TableCell>
-                </TableRow>
-               )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-      <Separator />
+      <Tabs defaultValue="applicants" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="applicants"><Users className="mr-2 h-4 w-4" />Applicants</TabsTrigger>
+          <TabsTrigger value="roster"><UserCheck className="mr-2 h-4 w-4" />Roster</TabsTrigger>
+          <TabsTrigger value="bounties"><ScrollText className="mr-2 h-4 w-4" />Bounties</TabsTrigger>
+          <TabsTrigger value="market"><Store className="mr-2 h-4 w-4" />Market</TabsTrigger>
+          <TabsTrigger value="ai-settings"><Wand2 className="mr-2 h-4 w-4" />AI Settings</TabsTrigger>
+          <TabsTrigger value="logs"><FileText className="mr-2 h-4 w-4" />Logs</TabsTrigger>
+        </TabsList>
 
-      <MemberRosterAdmin />
+        <TabsContent value="applicants" className="mt-6">
+          <ApplicantsAdmin />
+        </TabsContent>
 
-      <Separator />
+        <TabsContent value="roster" className="mt-6">
+          <MemberRosterAdmin />
+        </TabsContent>
+        
+        <TabsContent value="bounties" className="mt-6">
+          <BountyAdmin />
+        </TabsContent>
+        
+        <TabsContent value="market" className="mt-6">
+          <MarketAdmin />
+        </TabsContent>
 
-      <BountyAdmin />
-      
-      <Separator />
+        <TabsContent value="ai-settings" className="mt-6">
+          <AiSettingsAdmin />
+        </TabsContent>
+        
+        <TabsContent value="logs" className="mt-6">
+          <LogsAdmin />
+        </TabsContent>
 
-      <MarketAdmin />
-
-      <Separator />
-
-      <AiSettingsAdmin />
-
-      <Separator />
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <FileText className="h-6 w-6" />
-            <CardTitle className="font-headline text-2xl">Council Activity Log</CardTitle>
-          </div>
-          <CardDescription>
-            A transparent record of all council and automated guild actions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-           <p className="text-muted-foreground text-sm">Activity log coming soon...</p>
-        </CardContent>
-      </Card>
-
+      </Tabs>
     </div>
   );
 }
