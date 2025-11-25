@@ -30,9 +30,12 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member, but only created/updated by the owner.
+    // Players can be read by any member.
+    // The owner can update their own profile.
+    // An Admin can create a player profile (for initial setup).
     match /players/{playerId} {
       allow read: if isMember();
+      allow create: if isAdmin();
       allow write: if isOwner(playerId);
     }
     
@@ -55,7 +58,7 @@ service cloud.firestore {
     }
 
 
-    // Global data like bounties and market items are readable by members, but only writable by officers/admins.
+    // Global data is readable by members/officers, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
       allow read: if isMember() || isOfficer() || isAdmin();
       allow write: if isOfficer() || isAdmin();
@@ -66,12 +69,17 @@ service cloud.firestore {
       allow write: if isOfficer() || isAdmin();
     }
 
-    // Role documents are not client-accessible.
+    // Role documents are protected.
+    // An admin can create new officer roles.
     match /roles_officer/{userId} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
+
+    // An admin can create other admin roles.
+    // CRITICAL: To initialize the FIRST admin, we allow any signed-in user to create a role *only if the collection is empty*.
     match /roles_admin/{userId} {
-        allow read, write: if false;
+        allow read: if isAdmin();
+        allow write: if isAdmin() || (isSignedIn() && !exists(/databases/$(database)/documents/roles_admin));
     }
 
     // Fallback rule: deny all other access.
