@@ -229,62 +229,6 @@ function BountyAdmin() {
   )
 }
 
-function AdminInit() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    // Only show this tool for the designated guild leader.
-    if (user?.email?.toLowerCase() !== 'huzzinda@gmail.com') {
-        return null;
-    }
-
-    const handleGrantAdmin = () => {
-        if (isProcessing || !firestore || !user) return;
-
-        setIsProcessing(true);
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        const officerRoleRef = doc(firestore, `roles_officer/${user.uid}`);
-        const playerDocRef = doc(firestore, `players/${user.uid}`);
-
-        const newPlayerData: PartialPlayer = {
-            displayName: user.email?.split('@')[0] || 'Guild Leader',
-            discordTag: 'Admin#0001',
-            friends: [],
-            isOnline: true,
-            lifetimeHonor: 100000,
-            currentHonor: 100000,
-            maxHonor: 100000,
-            avatarUrl: '',
-            role: 'admin',
-        };
-        
-        // Non-blocking writes
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(officerRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(playerDocRef, newPlayerData);
-
-        toast({
-            title: "Guild Leader Role Assigned",
-            description: "Your player profile has been created. The page will now reload to grant you full access.",
-            duration: 5000,
-        });
-        
-        // Reload the page to apply the new role and data
-        setTimeout(() => window.location.reload(), 2000);
-    };
-    
-    return (
-        <div className="mt-4">
-            <Button onClick={handleGrantAdmin} disabled={isProcessing} variant="destructive">
-                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shield className="mr-2 h-4 w-4"/>}
-                Force Admin Init
-            </Button>
-        </div>
-    )
-}
-
 export default function OfficerPage() {
   const applications = mockApplications;
   const reviews = mockReviews;
@@ -369,9 +313,6 @@ export default function OfficerPage() {
         <CardContent>
            <p className="text-muted-foreground text-sm">Activity log coming soon...</p>
         </CardContent>
-         <CardFooter>
-            <AdminInit />
-        </CardFooter>
       </Card>
 
     </div>
