@@ -4,9 +4,9 @@ import { QuestCard } from "@/components/bounty-board/quest-card";
 import { ScrollText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
-import { Quest, WithId } from "@/lib/types";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from "@/firebase";
+import { collection, query, orderBy, doc } from "firebase/firestore";
+import { Quest, WithId, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function BountiesList({ quests, isLoading }: { quests: WithId<Quest>[] | null, isLoading: boolean }) {
@@ -37,19 +37,25 @@ function BountiesList({ quests, isLoading }: { quests: WithId<Quest>[] | null, i
 export default function BountyBoardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
   
-  // This query will only run once the firestore instance and user are available.
+  // This query will only run once the firestore instance and player are available.
   const bountiesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !player) return null;
     return query(collection(firestore, 'bounty_board_quests'), orderBy('rarity'), orderBy('questName'));
-  }, [firestore, user]);
+  }, [firestore, player]);
   
   const { data: quests, isLoading: isLoadingBounties } = useCollection<Quest>(bountiesQuery);
 
   const shortDurationQuests = quests?.filter((q) => q.durationDays <= 4) || [];
   const longDurationQuests = quests?.filter((q) => q.durationDays > 4) || [];
 
-  const isLoading = isUserLoading || (user && isLoadingBounties);
+  const isLoading = isUserLoading || isPlayerLoading || (player && isLoadingBounties);
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
