@@ -33,16 +33,3 @@ export async function submitRunReport(formData: unknown) {
 
   return { success: true, message: 'Run report submitted successfully!' };
 }
-
-export async function getBounties(): Promise<WithId<Quest>[]> {
-    const firestore = getAdminFirestore();
-    const bountiesCollectionRef = firestore.collection('bounty_board_quests');
-    const q = bountiesCollectionRef.orderBy('questName');
-    const querySnapshot = await q.get();
-    const bounties: WithId<Quest>[] = [];
-    querySnapshot.forEach(doc => {
-        bounties.push({ id: doc.id, ...(doc.data() as Quest) });
-    });
-    return bounties;
-}
-

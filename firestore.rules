@@ -67,17 +67,17 @@ service cloud.firestore {
 
     // Global data is readable by members/officers, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
-      allow read: if isMember() || isOfficer() || isAdmin();
+      allow get, list: if true;
       allow write: if isOfficer() || isAdmin();
     }
     
     match /guild_bank_items/{itemId} {
-      allow read: if isMember();
+      allow read: if isSignedIn();
       allow write: if isOfficer() || isAdmin();
     }
     
     match /member_bounties/{bountyId} {
-      allow read: if isMember();
+      allow read: if isSignedIn();
       allow create, update, delete: if isSignedIn();
     }
 

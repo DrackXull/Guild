@@ -11,16 +11,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Quest, WithId, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { getBounties } from "@/lib/actions";
+import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
+import { doc, collection, query, orderBy, limit } from "firebase/firestore";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const [dailyBounties, setDailyBounties] = useState<WithId<Quest>[] | null>(null);
-  const [areBountiesLoading, setAreBountiesLoading] = useState(true);
   
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -28,21 +24,12 @@ export default function DashboardPage() {
   }, [user, firestore]);
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
 
-  useEffect(() => {
-    async function fetchBounties() {
-      try {
-        setAreBountiesLoading(true);
-        const allBounties = await getBounties();
-        setDailyBounties(allBounties.slice(0, 2));
-      } catch (error) {
-        console.error("Failed to fetch bounties for dashboard", error);
-        setDailyBounties([]);
-      } finally {
-        setAreBountiesLoading(false);
-      }
-    }
-    fetchBounties();
-  }, []);
+  const bountiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    // We only need a few bounties for the dashboard
+    return query(collection(firestore, 'bounty_board_quests'), limit(2));
+  }, [firestore]);
+  const { data: dailyBounties, isLoading: areBountiesLoading } = useCollection<Quest>(bountiesQuery);
 
   const isLoading = isPlayerLoading || areBountiesLoading;
 
