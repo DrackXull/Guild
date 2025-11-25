@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -19,6 +20,7 @@ import {
   Settings,
   Store,
   Scroll,
+  Trophy,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
@@ -31,6 +33,7 @@ const navItems = [
   { href: '/member-bounties', label: 'Member Bounties', icon: <Scroll /> },
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
+  { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
 ];
 

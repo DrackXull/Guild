@@ -122,7 +122,7 @@ export default function DashboardPage() {
                  <CardContent className="flex-grow flex flex-col justify-center gap-4">
                     <Button size="lg" asChild><Link href="/runs/new">Submit New Run</Link></Button>
                     <Button size="lg" variant="secondary" asChild><Link href="/profile">Manage Characters</Link></Button>
-                    <Button size="lg" variant="secondary">View Leaderboard</Button>
+                    <Button size="lg" variant="secondary" asChild><Link href="/leaderboard">View Leaderboard</Link></Button>
                  </CardContent>
             </Card>
         </div>
