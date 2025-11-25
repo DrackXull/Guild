@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Generates daily and weekly bounty board quests using AI, tailored to player activity.
@@ -8,7 +9,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import { getGuildBankItems } from '@/lib/actions';
+import { getGuildBankItems } from '@/lib/tools';
 import {z} from 'genkit';
 
 const GenerateBountyBoardQuestsInputSchema = z.object({

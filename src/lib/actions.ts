@@ -5,8 +5,6 @@ import { generateBountyBoardQuests } from '@/ai/flows/generate-bounty-board-ques
 import { ApiCharacter, MarketItem, Quest, WithId } from './types';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { getAdminFirestore } from '@/lib/firebase-admin';
-import { ai } from '@/ai/genkit';
-import { z } from 'zod';
 
 // This function is now simplified to only be used for AI generation,
 // not for fetching the main list of bounties.
@@ -48,35 +46,6 @@ export async function getBounties(): Promise<WithId<Quest>[]> {
     });
     return bounties;
 }
-
-const guildBankItemSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    description: z.string(),
-    price: z.number(),
-    category: z.string(),
-    quantity: z.number(),
-});
-
-export const getGuildBankItems = ai.defineTool(
-    {
-        name: 'getGuildBankItems',
-        description: 'Get a list of all items currently available in the guild bank.',
-        inputSchema: z.void(),
-        outputSchema: z.array(guildBankItemSchema),
-    },
-    async () => {
-        console.log('Fetching items from guild bank...');
-        const firestore = getAdminFirestore();
-        const itemsCollectionRef = collection(firestore, 'guild_bank_items');
-        const querySnapshot = await getDocs(itemsCollectionRef);
-        const items: WithId<MarketItem>[] = [];
-        querySnapshot.forEach(doc => {
-            items.push({ id: doc.id, ...(doc.data() as MarketItem) });
-        });
-        return items;
-    }
-);
 
 export async function findCharacterFromApi(characterName: string) {
     const apiKey = process.env.DARKERDB_API_KEY;
