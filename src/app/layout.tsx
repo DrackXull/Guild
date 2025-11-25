@@ -1,5 +1,6 @@
 
 'use client';
+import * as React from 'react';
 import '@/app/globals.css';
 import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
