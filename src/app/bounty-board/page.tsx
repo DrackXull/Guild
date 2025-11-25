@@ -1,3 +1,4 @@
+
 'use client';
 import { QuestCard } from "@/components/bounty-board/quest-card";
 import { ScrollText } from "lucide-react";
@@ -38,13 +39,13 @@ export default function BountyBoardPage() {
   
   const bountiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'bounty_board_quests'), orderBy('questName'));
+    return query(collection(firestore, 'bounty_board_quests'), orderBy('rarity'), orderBy('questName'));
   }, [firestore]);
   
   const { data: quests, isLoading } = useCollection<Quest>(bountiesQuery);
 
-  const dailyQuests = quests?.filter((q) => q.questType === "daily") || [];
-  const weeklyQuests = quests?.filter((q) => q.questType === "weekly") || [];
+  const shortDurationQuests = quests?.filter((q) => q.durationDays <= 4) || [];
+  const longDurationQuests = quests?.filter((q) => q.durationDays > 4) || [];
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -58,21 +59,21 @@ export default function BountyBoardPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">Daily Bounties</CardTitle>
-          <p className="text-muted-foreground pt-1">Resets every 24 hours.</p>
+          <CardTitle className="font-headline text-3xl">Short-Term Bounties</CardTitle>
+          <p className="text-muted-foreground pt-1">Quests that are available for a limited time.</p>
         </CardHeader>
         <CardContent>
-          <BountiesList quests={dailyQuests} isLoading={isLoading} />
+          <BountiesList quests={shortDurationQuests} isLoading={isLoading} />
         </CardContent>
 
         <Separator className="my-8" />
         
         <CardHeader>
-          <CardTitle className="font-headline text-3xl">Weekly Bounties</CardTitle>
-           <p className="text-muted-foreground pt-1">Resets every 7 days.</p>
+          <CardTitle className="font-headline text-3xl">Long-Term Bounties</CardTitle>
+           <p className="text-muted-foreground pt-1">Quests that are available for an extended period.</p>
         </CardHeader>
         <CardContent>
-           <BountiesList quests={weeklyQuests} isLoading={isLoading} />
+           <BountiesList quests={longDurationQuests} isLoading={isLoading} />
         </CardContent>
       </Card>
     </div>

@@ -9,6 +9,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -115,11 +116,17 @@ export type Run = {
   screenshots?: string[];
 };
 
+export type QuestRarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary";
+
 export type Quest = {
   questName: string;
   questDescription: string;
-  questType: 'daily' | 'weekly';
   reward: string;
+  rarity: QuestRarity;
+  durationDays: number;
+  isRepeatable: boolean;
+  maxCompletions: number; // 0 for infinite
+  requiredRank?: string;
 };
 
 

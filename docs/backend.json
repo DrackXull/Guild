@@ -286,17 +286,36 @@
           "type": "string",
           "description": "Honor point reward for completing the quest."
         },
-        "questType": {
+        "rarity": {
           "type": "string",
-          "enum": ["daily", "weekly"],
-          "description": "Indicates if the quest is a daily or weekly quest."
+          "enum": ["Common", "Uncommon", "Rare", "Epic", "Legendary"],
+          "description": "The rarity or tier of the quest."
+        },
+        "durationDays": {
+          "type": "number",
+          "description": "How many days the quest is active for."
+        },
+        "isRepeatable": {
+          "type": "boolean",
+          "description": "Whether the same player can complete this quest multiple times."
+        },
+        "maxCompletions": {
+          "type": "number",
+          "description": "The maximum number of times this quest can be completed in total by all players. 0 for infinite."
+        },
+        "requiredRank": {
+          "type": "string",
+          "description": "The minimum player rank required to accept this quest."
         }
       },
       "required": [
         "questName",
         "questDescription",
         "reward",
-        "questType"
+        "rarity",
+        "durationDays",
+        "isRepeatable",
+        "maxCompletions"
       ]
     },
     "HonorPointLog": {
@@ -890,7 +909,3 @@
   }
 }
     
-
-
-    
-

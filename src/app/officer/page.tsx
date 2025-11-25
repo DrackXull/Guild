@@ -1,6 +1,7 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Trash2, Gem } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2, Gem, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getBountySuggestions } from "@/lib/actions";
@@ -9,7 +10,7 @@ import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockApplications, mockReviews } from "@/lib/data";
 import { useEffect, useState, useTransition, useMemo } from "react";
-import type { Quest, MarketItem, WithId } from "@/lib/types";
+import type { Quest, MarketItem, WithId, QuestRarity } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { MarketAdmin } from "@/components/market/market-admin";
@@ -20,6 +21,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
+import { Switch } from "@/components/ui/switch";
+
+const rarities: QuestRarity[] = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
+const ranks = ["Neophyte", "Voyager", "Champion", "Demigod"];
 
 
 function BountyAdmin() {
@@ -28,7 +33,6 @@ function BountyAdmin() {
   const [isSuggestionPending, startSuggestionTransition] = useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State to hold the bounty being edited
   const [editingBounty, setEditingBounty] = useState<Partial<WithId<Quest>> | null>(null);
 
   const bountiesCollectionRef = useMemoFirebase(() => {
@@ -49,28 +53,30 @@ function BountyAdmin() {
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
-    const bountyData: Quest = {
+    const questData: Quest = {
       questName: formData.get('questName') as string,
       questDescription: formData.get('questDescription') as string,
       reward: formData.get('reward') as string,
-      questType: formData.get('questType') as 'daily' | 'weekly',
+      rarity: formData.get('rarity') as QuestRarity,
+      durationDays: parseInt(formData.get('durationDays') as string, 10),
+      isRepeatable: formData.get('isRepeatable') === 'on',
+      maxCompletions: parseInt(formData.get('maxCompletions') as string, 10),
+      requiredRank: formData.get('requiredRank') as string,
     };
-
-    if (!bountyData.questName || !bountyData.questDescription || !bountyData.reward || !bountyData.questType) {
-      toast({ title: "Missing Fields", description: "Please fill out all bounty information.", variant: "destructive" });
+    
+    if (!questData.questName || !questData.questDescription || !questData.reward || !questData.rarity) {
+      toast({ title: "Missing Fields", description: "Please fill out all required bounty information.", variant: "destructive" });
       setIsSubmitting(false);
       return;
     }
 
     if (editingBounty?.id) {
-      // Update existing bounty
       const bountyDocRef = doc(firestore, 'bounty_board_quests', editingBounty.id);
-      setDocumentNonBlocking(bountyDocRef, bountyData);
-      toast({ title: "Bounty Updated", description: `"${bountyData.questName}" has been updated.` });
+      setDocumentNonBlocking(bountyDocRef, questData);
+      toast({ title: "Bounty Updated", description: `"${questData.questName}" has been updated.` });
     } else {
-      // Create new bounty
-      addDocumentNonBlocking(collection(firestore, 'bounty_board_quests'), bountyData);
-      toast({ title: "Bounty Created", description: `"${bountyData.questName}" has been added.` });
+      addDocumentNonBlocking(collection(firestore, 'bounty_board_quests'), questData);
+      toast({ title: "Bounty Created", description: `"${questData.questName}" has been added.` });
     }
 
     (event.target as HTMLFormElement).reset();
@@ -85,7 +91,7 @@ function BountyAdmin() {
   const handleRemoveBounty = (bountyId: string, bountyName: string) => {
     if (!firestore) return;
     if (editingBounty?.id === bountyId) {
-      setEditingBounty(null); // Clear form if deleting the item being edited
+      setEditingBounty(null); 
     }
     const bountyDocRef = doc(firestore, 'bounty_board_quests', bountyId);
     deleteDocumentNonBlocking(bountyDocRef);
@@ -96,10 +102,9 @@ function BountyAdmin() {
     startSuggestionTransition(async () => {
       const suggestions = await getBountySuggestions();
       if (suggestions && suggestions.length > 0) {
-        // Just populate the form with the first suggestion
         const suggestion = suggestions[0];
-        setEditingBounty(suggestion); // This will fill the form
-         toast({ title: "Suggestion Loaded", description: `AI suggestion is ready for review in the form.` });
+        setEditingBounty(suggestion);
+        toast({ title: "Suggestion Loaded", description: `AI suggestion is ready for review in the form.` });
       } else {
         toast({ title: "No suggestions returned", variant: "destructive" });
       }
@@ -120,7 +125,7 @@ function BountyAdmin() {
               </Button>
           </div>
         <CardDescription>
-          Add, edit, and manage the guild's daily and weekly bounties. AI suggestions will populate the form for review.
+          Add, edit, and manage the guild's bounties. AI suggestions will populate the form for review.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid md:grid-cols-2 gap-8 items-start">
@@ -144,7 +149,8 @@ function BountyAdmin() {
                                     <CardDescription className="text-xs pt-1 flex items-center gap-1.5"><Gem className="h-3 w-3" />{bounty.reward}</CardDescription>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Badge variant={bounty.questType === 'daily' ? 'default' : 'secondary'}>{bounty.questType}</Badge>
+                                  <Badge variant={bounty.rarity === 'Legendary' ? 'destructive' : 'secondary'}>{bounty.rarity}</Badge>
+                                  {bounty.isRepeatable && <Repeat className="h-4 w-4 text-muted-foreground" />}
                                   <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); handleRemoveBounty(bounty.id, bounty.questName)}}>
                                       <Trash2 className="h-4 w-4 text-destructive"/>
                                   </Button>
@@ -162,31 +168,56 @@ function BountyAdmin() {
             <h3 className="font-headline text-xl font-semibold">{editingBounty ? "Edit Bounty" : "Create New Bounty"}</h3>
             <div className="space-y-2">
                 <Label htmlFor="questName">Bounty Name</Label>
-                <Input id="questName" name="questName" required defaultValue={editingBounty?.questName || ''} key={editingBounty?.questName}/>
+                <Input id="questName" name="questName" required defaultValue={editingBounty?.questName || ''} key={`name-${editingBounty?.id}`}/>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="questDescription">Description</Label>
-                <Textarea id="questDescription" name="questDescription" rows={3} required defaultValue={editingBounty?.questDescription || ''} key={editingBounty?.questDescription} />
+                <Textarea id="questDescription" name="questDescription" rows={3} required defaultValue={editingBounty?.questDescription || ''} key={`desc-${editingBounty?.id}`} />
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="reward">Reward</Label>
-                    <Input id="reward" name="reward" placeholder="e.g., 100 Honor" required defaultValue={editingBounty?.reward || ''} key={editingBounty?.reward} />
+                    <Input id="reward" name="reward" placeholder="e.g., 100 Honor" required defaultValue={editingBounty?.reward || ''} key={`reward-${editingBounty?.id}`} />
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="questType">Type</Label>
-                     <Select name="questType" required defaultValue={editingBounty?.questType || 'daily'} key={editingBounty?.questType}>
-                      <SelectTrigger id="questType">
-                        <SelectValue placeholder="Select a type" />
+                 <div className="space-y-2">
+                    <Label htmlFor="rarity">Rarity</Label>
+                     <Select name="rarity" required defaultValue={editingBounty?.rarity || 'Common'} key={`rarity-${editingBounty?.id}`}>
+                      <SelectTrigger id="rarity">
+                        <SelectValue placeholder="Select rarity" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
+                        {rarities.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                       </SelectContent>
                     </Select>
                 </div>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                    <Label htmlFor="durationDays">Duration (days)</Label>
+                    <Input id="durationDays" name="durationDays" type="number" placeholder="e.g., 3" required defaultValue={editingBounty?.durationDays || 1} key={`duration-${editingBounty?.id}`} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="maxCompletions">Max Completions</Label>
+                    <Input id="maxCompletions" name="maxCompletions" type="number" placeholder="0 for infinite" required defaultValue={editingBounty?.maxCompletions === undefined ? 0 : editingBounty.maxCompletions} key={`max-${editingBounty?.id}`} />
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="requiredRank">Required Rank (Optional)</Label>
+                 <Select name="requiredRank" defaultValue={editingBounty?.requiredRank || ''} key={`rank-${editingBounty?.id}`}>
+                  <SelectTrigger id="requiredRank">
+                    <SelectValue placeholder="No rank requirement" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {ranks.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+            </div>
+             <div className="flex items-center space-x-2">
+                <Switch id="isRepeatable" name="isRepeatable" defaultChecked={editingBounty?.isRepeatable || false} key={`repeat-${editingBounty?.id}`}/>
+                <Label htmlFor="isRepeatable">Repeatable by same player?</Label>
+            </div>
+            <div className="flex gap-2 pt-4">
               {editingBounty && <Button type="button" variant="secondary" className="w-full" onClick={() => setEditingBounty(null)}>Cancel Edit</Button>}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

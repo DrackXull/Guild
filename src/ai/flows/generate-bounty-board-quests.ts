@@ -24,8 +24,12 @@ export type GenerateBountyBoardQuestsInput = z.infer<
 const BountyQuestSchema = z.object({
   questName: z.string().describe('The name of the quest.'),
   questDescription: z.string().describe('A description of the quest.'),
-  questType: z.enum(['daily', 'weekly']).describe('The type of quest.'),
   reward: z.string().describe('The reward for completing the quest. This can be Honor Points (e.g., "500 Honor") or an item from the guild bank (e.g., "1x Minor Rune of Holding").'),
+  rarity: z.enum(["Common", "Uncommon", "Rare", "Epic", "Legendary"]).describe("The rarity tier of the quest."),
+  durationDays: z.number().describe("How many days the quest should be active. For example, 1-4 for a daily style quest, 7 for a weekly."),
+  isRepeatable: z.boolean().describe("Whether the same player can complete this quest multiple times. Should usually be false for high-rarity quests with item rewards."),
+  maxCompletions: z.number().describe("The total number of times this quest can be completed by all players. Use 0 for infinite completions. This should be tied to item quantity if an item is a reward."),
+  requiredRank: z.string().optional().describe("The minimum player rank required to accept this quest (e.g., 'Neophyte', 'Voyager'). Omit for no requirement."),
 });
 
 const GenerateBountyBoardQuestsOutputSchema = z.array(BountyQuestSchema).describe('An array of bounty board quests.');
@@ -46,7 +50,7 @@ const prompt = ai.definePrompt({
   tools: [getGuildBankItems],
   prompt: `You are the quest master for the Dark and Darker Guild Hub.
 
-Your primary task is to generate a list of daily and weekly quests for players.
+Your primary task is to generate a list of quests for players.
 
 First, you MUST use the 'getGuildBankItems' tool to see which items are available in the guild bank, their quantity, and their estimated Honor value (cost).
 
@@ -55,7 +59,7 @@ You can create quests that reward:
 2. An item from the guild bank (e.g., "1x Flask of Fortune").
 3. A combination of both (e.g., "200 Honor + 1x Scroll of Identification").
 
-When suggesting an item reward, you MUST respect the available quantity. Do not suggest an item if its quantity is 0.
+When suggesting an item reward, you MUST respect the available quantity. Set 'maxCompletions' to the item's quantity if it's a reward.
 
 The quests must be based on actions that can be verified within the app's ecosystem, such as:
 - Number of player kills (verified by screenshot)
