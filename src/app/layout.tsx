@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
-import { doc, collection, collectionGroup, query } from 'firebase/firestore';
+import { doc, collection, collectionGroup, query, where } from 'firebase/firestore';
 import type { Player, Character } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
@@ -201,5 +201,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-    
