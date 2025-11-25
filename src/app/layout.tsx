@@ -26,6 +26,7 @@ function MemberLayout({ children, allCharacters, onlinePlayers }: { children: Re
     } else {
       document.body.classList.remove('view-officer');
     }
+    // Cleanup function to remove the class when the component unmounts
     return () => {
       document.body.classList.remove('view-officer');
     };
@@ -123,10 +124,8 @@ function AppManager({ children }: { children: React.ReactNode }) {
   }, [firestore, player]);
   const { data: onlinePlayers, isLoading: isLoadingOnlinePlayers } = useCollection<Player>(onlinePlayersQuery);
   
-  const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
-  
   const isLoading = isUserLoading || (user && (isPlayerLoading || isLoadingCharacters || isLoadingOnlinePlayers));
-  const isMember = !!player || isGuildLeader;
+  const isMember = !!player;
 
   const publicRoutes = ['/'];
   const applicantRoutes = ['/application-status', '/apply', '/profile'];
@@ -155,7 +154,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
         router.replace('/');
       }
     }
-  }, [isLoading, user, player, isMember, pathname, router, isPublicRoute, isApplicantRoute, isGuildLeader]);
+  }, [isLoading, user, player, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
 
 
   if (isLoading) {
