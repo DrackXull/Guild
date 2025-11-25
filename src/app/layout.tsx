@@ -103,7 +103,6 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [logCounter, setLogCounter] = useState(0);
 
   const playerDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
