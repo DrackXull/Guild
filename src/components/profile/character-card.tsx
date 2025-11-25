@@ -14,11 +14,6 @@ type CharacterCardProps = {
 export function CharacterCard({ character, imageUrl }: CharacterCardProps) {
   return (
     <Card className="overflow-hidden">
-      {imageUrl && (
-        <div className="relative aspect-square w-full">
-          <Image src={imageUrl} alt={character.name} fill className="object-cover" />
-        </div>
-      )}
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
             <div>
