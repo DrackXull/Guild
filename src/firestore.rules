@@ -34,29 +34,21 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member.
-    // The owner can update their own profile.
-    // An Admin can create a player profile (for initial setup).
     match /players/{playerId} {
       allow read: if isMember();
       allow create: if isAdmin();
       allow write: if isOwner(playerId) || isAdmin();
     }
     
-    // User-specific data is only accessible by the owner.
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
 
-    // This rule allows a collection group query on 'characters'.
-    // Any member can read any character for global stats, but only the owner can write.
     match /{path=**}/characters/{characterId} {
       allow read: if isMember();
       allow write: if isOwner(resource.data.playerId);
     }
 
-    // Applications can be created by any signed-in user.
-    // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
@@ -66,28 +58,19 @@ service cloud.firestore {
     }
 
     // --- Global Collections ---
-    match /bounty_board_quests {
-      allow list: if isSignedIn();
-      match /{questId} {
-        allow get: if isSignedIn();
-      }
-      allow write: if isOfficer() || isAdmin();
+    match /bounty_board_quests/{questId} {
+        allow get, list: if isSignedIn();
+        allow write: if isOfficer() || isAdmin();
     }
     
-    match /guild_bank_items {
-      allow list: if isSignedIn();
-      match /{itemId} {
-        allow get: if isSignedIn();
-      }
-      allow write: if isOfficer() || isAdmin();
+    match /guild_bank_items/{itemId} {
+        allow get, list: if isSignedIn();
+        allow write: if isOfficer() || isAdmin();
     }
     
-    match /member_bounties {
-      allow list: if isMember();
-      match /{bountyId} {
-        allow get: if isMember();
+    match /member_bounties/{bountyId} {
+        allow get, list: if isMember();
         allow create, update, delete: if isSignedIn();
-      }
     }
 
     match /settings/guild {
