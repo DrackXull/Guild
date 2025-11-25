@@ -48,6 +48,13 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
 
+    // This rule allows a collection group query on 'characters'.
+    // Any member can read any character for global stats, but only the owner can write.
+    match /{path=**}/characters/{characterId} {
+      allow read: if isMember();
+      allow write: if isOwner(resource.data.playerId);
+    }
+
     // Applications can be created by any signed-in user.
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
