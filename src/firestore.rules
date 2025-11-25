@@ -57,7 +57,7 @@ service cloud.firestore {
 
     // Global data like bounties and market items are readable by members, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
-      allow read: if isMember();
+      allow read: if isMember() || isOfficer() || isAdmin();
       allow write: if isOfficer() || isAdmin();
     }
     
