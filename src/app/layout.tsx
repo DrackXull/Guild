@@ -174,10 +174,9 @@ function AppManager({ children }: { children: React.ReactNode }) {
 
   if (isMember) {
     // Logged-in Guild Member: Show the full member layout.
-    // Clone children to pass down the loaded data
     const childrenWithProps = React.Children.map(children, child => {
         if (React.isValidElement(child)) {
-            return React.cloneElement(child, { allCharacters, onlinePlayers } as any);
+            return React.cloneElement(child as React.ReactElement<any>, { allCharacters, onlinePlayers });
         }
         return child;
     });

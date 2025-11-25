@@ -65,20 +65,29 @@ service cloud.firestore {
         allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
 
-    // Global data is readable by any signed-in user, but only writable by officers/admins.
-    match /bounty_board_quests/{questId} {
-      allow read: if isSignedIn();
+    // --- Global Collections ---
+    match /bounty_board_quests {
+      allow list: if isSignedIn();
+      match /{questId} {
+        allow get: if isSignedIn();
+      }
       allow write: if isOfficer() || isAdmin();
     }
     
-    match /guild_bank_items/{itemId} {
-      allow read: if isSignedIn();
+    match /guild_bank_items {
+      allow list: if isSignedIn();
+      match /{itemId} {
+        allow get: if isSignedIn();
+      }
       allow write: if isOfficer() || isAdmin();
     }
     
-    match /member_bounties/{bountyId} {
-      allow read: if isMember();
-      allow create, update, delete: if isSignedIn();
+    match /member_bounties {
+      allow list: if isMember();
+      match /{bountyId} {
+        allow get: if isMember();
+        allow create, update, delete: if isSignedIn();
+      }
     }
 
     match /settings/guild {
@@ -90,14 +99,11 @@ service cloud.firestore {
       allow read, write: if isMember();
     }
     
-    // Role documents are protected.
-    // An admin can create new officer roles.
+    // --- Role Collections ---
     match /roles_officer/{userId} {
       allow read, write: if isAdmin();
     }
 
-    // An admin can create other admin roles.
-    // CRITICAL: To initialize the FIRST admin, we allow any signed-in user to create a role *only if the collection is empty*.
     match /roles_admin/{userId} {
         allow read: if isAdmin();
         allow write: if isAdmin() || (isSignedIn() && !exists(/databases/$(database)/documents/roles_admin));

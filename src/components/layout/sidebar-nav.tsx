@@ -59,9 +59,6 @@ export function SidebarNav() {
 
   const isOfficer = player?.role === 'officer' || player?.role === 'admin';
   
-  console.log('[SidebarNav] Player:', player);
-  console.log('[SidebarNav] Is Officer or Admin:', isOfficer);
-
 
   const playHoverSound = () => {
     // hoverAudioRef.current?.play().catch(e => console.error("Error playing hover sound:", e));
