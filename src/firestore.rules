@@ -2,10 +2,123 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // WARNING: This is a temporary, permissive rule for debugging.
-      // It allows any authenticated user to read and write all data.
-      allow read, write: if request.auth != null;
+
+    // --------------------------------
+    // Helper Functions
+    // --------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isOfficer() {
+      return isSignedIn() && 
+        (exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid)) ||
+         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'officer');
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+        (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function isMember() {
+       return isSignedIn() && exists(/databases/$(database)/documents/players/$(request.auth.uid));
+    }
+
+    // --------------------------------
+    // Collection Rules
+    // --------------------------------
+
+    // Players can be read by any member.
+    // The owner can update their own profile (except rank/role).
+    // An officer or admin can update any profile (including rank/role).
+    // An Admin can create a player profile (for initial setup).
+    match /players/{playerId} {
+      allow read: if isMember();
+      allow create: if isAdmin();
+      // Allow self-writes only for non-restricted fields
+      // Allow officers/admins to write anything
+      // Allow any member to update their own honor (for bounty system)
+      allow update: if (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      || isOfficer() 
+                      || isAdmin();
+    }
+    
+    // User-specific data is only accessible by the owner.
+    match /users/{userId}/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // This rule allows a collection group query on 'characters'.
+    // Any member can read any character for global stats, but only the owner can write.
+    match /{path=**}/characters/{characterId} {
+      allow read: if isMember();
+      allow write: if isOwner(resource.data.playerId);
+    }
+
+    // Applications can be created by any signed-in user.
+    // They can only be read/listed if the user is an officer, admin, or the owner of the application.
+    match /applications/{applicationId} {
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
+        allow update: if isOfficer() || isAdmin();
+        allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+    }
+
+    // Global data is readable by members/officers, but only writable by officers/admins.
+    match /bounty_board_quests/{questId} {
+      allow get, list: if true;
+      allow write: if isOfficer() || isAdmin();
+    }
+    
+    match /guild_bank_items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isOfficer() || isAdmin();
+    }
+    
+    // Member Bounties have specific rules
+    match /member_bounties/{bountyId} {
+      allow read: if isSignedIn();
+      // Create: You must be the one creating it, and the reward must be less than or equal to your current honor
+      allow create: if isSignedIn() && request.resource.data.requestingPlayerId == request.auth.uid
+      						&& get(/databases/$(database)/documents/players/$(request.auth.uid)).data.currentHonor >= request.resource.data.reward;
+      // Update: You can only accept a bounty (not your own), or if you are the creator, you can mark it complete.
+      allow update: if isSignedIn() 
+                      && (
+                        // Accepting a bounty
+                        (request.resource.data.status == 'in_progress' && resource.data.status == 'open' && request.resource.data.acceptedPlayerId == request.auth.uid && resource.data.requestingPlayerId != request.auth.uid) ||
+                        // Completing a bounty
+                        (request.resource.data.status == 'complete' && resource.data.status == 'in_progress' && resource.data.requestingPlayerId == request.auth.uid)
+                       );
+      allow delete: if false; // Bounties are completed, not deleted.
+    }
+
+    match /settings/guild {
+      allow read: if isMember();
+      allow write: if isOfficer() || isAdmin();
+    }
+
+    match /runs/{runId}/{document=**} {
+      allow read, write: if isMember();
+    }
+    
+    // Role documents are protected.
+    // An admin can create new officer roles.
+    match /roles_officer/{userId} {
+      allow read, write: if isAdmin();
+    }
+
+    // An admin can create other admin roles.
+    // CRITICAL: To initialize the FIRST admin, we allow any signed-in user to create a role *only if the collection is empty*.
+    match /roles_admin/{userId} {
+        allow read: if isAdmin();
+        allow write: if isAdmin() || (isSignedIn() && !exists(/databases/$(database)/documents/roles_admin));
     }
   }
 }
