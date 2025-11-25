@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import type { GuildSettings } from "@/lib/types";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Skeleton } from "../ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const aiSettingsSchema = z.object({
     enableAutoBoosting: z.boolean().default(false),
