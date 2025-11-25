@@ -8,13 +8,12 @@ import { getBountySuggestions } from "@/lib/actions";
 import { Badge } from "@/components/ui/badge";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockApplications, mockReviews } from "@/lib/data";
-import { useEffect, useState, useTransition } from "react";
-import type { Quest, MarketItem, WithId, QuestRarity, PartialPlayer } from "@/lib/types";
+import { useState, useTransition } from "react";
+import type { Quest, MarketItem, WithId, QuestRarity, PartialPlayer, Application, ApplicationReview as TApplicationReview } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { MarketAdmin } from "@/components/market/market-admin";
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser } from "@/firebase";
-import { collection, query, orderBy, doc } from "firebase/firestore";
+import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -203,8 +202,8 @@ function BountyAdmin() {
              <div className="space-y-2">
                 <Label htmlFor="requiredRank">Required Rank (Optional)</Label>
                  <Select name="requiredRank" defaultValue={editingBounty?.requiredRank || undefined} key={`rank-${editingBounty?.id}`}>
-                  <SelectTrigger id="requiredRank">
-                    <SelectValue placeholder="No rank requirement" />
+                  <SelectTrigger id="requiredRank" placeholder="No rank requirement">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ranks.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -229,14 +228,18 @@ function BountyAdmin() {
 }
 
 export default function OfficerPage() {
-  const applications = mockApplications;
-  const reviews = mockReviews;
-
   const { user } = useUser();
   const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
   const firestore = useFirestore();
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+  const applicationsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'applications'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
 
   const handleGrantAdmin = () => {
       if (isProcessing || !firestore || !user) return;
@@ -249,18 +252,16 @@ export default function OfficerPage() {
       const newPlayerData: PartialPlayer = {
           displayName: user.email?.split('@')[0] || 'Guild Leader',
           discordTag: 'Admin#0001',
-          friends: [],
           isOnline: true,
           lifetimeHonor: 100000,
           currentHonor: 100000,
           maxHonor: 100000,
-          avatarUrl: '',
           role: 'admin',
       };
       
       setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
       setDocumentNonBlocking(officerRoleRef, { assignedAt: new Date().toISOString() });
-      setDocumentNonBlocking(playerDocRef, newPlayerData);
+      setDocumentNonBlocking(playerDocRef, newPlayerData, { merge: true });
 
       toast({
           title: "Guild Leader Role Assigned",
@@ -313,15 +314,21 @@ export default function OfficerPage() {
               <TableRow>
                 <TableHead>Applicant</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
+                <TableHead className="text-center">Status</TableHead>
                 <TableHead className="text-center">Reviews</TableHead>
-                <TableHead className="text-center">Score</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {applications.map(app => {
-                const appReviews = reviews.filter(r => r.applicationId === app.id);
-                const avgScore = appReviews.length > 0 ? appReviews.reduce((acc, r) => acc + r.vote, 0) / appReviews.length : 0;
+              {isLoadingApplications && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoadingApplications && applications?.map(app => {
+                const reviewCount = app.reviewHistory?.length || 0;
                 return (
                   <TableRow key={app.id}>
                     <TableCell>
@@ -329,14 +336,25 @@ export default function OfficerPage() {
                       <div className="text-sm text-muted-foreground">{app.discordTag}</div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{new Date(app.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-center">{appReviews.length}</TableCell>
-                    <TableCell className="text-center font-mono">{avgScore.toFixed(1)}</TableCell>
+                    <TableCell className="text-center capitalize">
+                       <Badge variant={app.status === 'approved' ? 'default' : app.status === 'denied' ? 'destructive' : 'secondary'}>
+                          {app.status}
+                        </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">{reviewCount}</TableCell>
                     <TableCell className="text-right">
-                      <ApplicationReview application={app} reviews={appReviews} />
+                      <ApplicationReview application={app} />
                     </TableCell>
                   </TableRow>
                 );
               })}
+               {!isLoadingApplications && (!applications || applications.length === 0) && (
+                 <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                       No applications found.
+                    </TableCell>
+                </TableRow>
+               )}
             </TableBody>
           </Table>
         </CardContent>
@@ -374,3 +392,5 @@ export default function OfficerPage() {
     </div>
   );
 }
+
+    

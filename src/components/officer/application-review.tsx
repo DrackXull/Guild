@@ -24,28 +24,33 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { players } from '@/lib/data';
-import type { Application, ApplicationReview as TApplicationReview, Player, PartialPlayer, WithId } from '@/lib/types';
+import type { Application, ApplicationReview as TApplicationReview, Player, PartialPlayer, WithId, ApplicationReviewLog } from '@/lib/types';
 import { useState }from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
 
 type ApplicationReviewProps = {
   application: WithId<Application>;
-  reviews: TApplicationReview[];
 };
 
-export function ApplicationReview({ application, reviews: initialReviews }: ApplicationReviewProps) {
+export function ApplicationReview({ application }: ApplicationReviewProps) {
   const { toast } = useToast();
   const { user: officer } = useUser();
   const firestore = useFirestore();
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState('');
-  const [reviews, setReviews] = useState(initialReviews);
   const [isOpen, setIsOpen] = useState(false);
-  
-  const getPlayer = (playerId: string) => players.find(p => p.id === playerId);
+
+  const officerIds = useMemo(() => application.reviewHistory?.map(r => r.officerId) || [], [application.reviewHistory]);
+
+  const officersQuery = useMemoFirebase(() => {
+    if (!firestore || officerIds.length === 0) return null;
+    return query(collection(firestore, 'players'), where('id', 'in', officerIds));
+  }, [firestore, officerIds]);
+
+  const { data: officers } = useCollection<Player>(officersQuery);
+  const getOfficer = (officerId: string) => officers?.find(o => o.id === officerId);
 
   const handleReviewSubmit = () => {
     if (!officer || !firestore) {
@@ -62,35 +67,31 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
     }
 
     const appRef = doc(firestore, 'applications', application.id);
-    const newReview: TApplicationReview = {
-        applicationId: application.id,
-        adminPlayerId: officer.uid,
-        status: 'pending', // This review itself is pending until a final decision is made
-        vote: rating,
-        note: notes,
-        createdAt: new Date().toISOString(),
+    
+    const newReviewLog: ApplicationReviewLog = {
+      officerId: officer.uid,
+      decision: 'approved', // Placeholder, the real decision is on the whole app
+      notes: notes,
+      timestamp: new Date().toISOString(),
     };
     
+    // Check if this officer has already reviewed
     const existingReviewIndex = application.reviewHistory?.findIndex(r => r.officerId === officer.uid) ?? -1;
-    const updatedReviewHistory = [...(application.reviewHistory || [])];
+    let updatedReviewHistory = [...(application.reviewHistory || [])];
 
     if (existingReviewIndex !== -1) {
-        // This part needs schema alignment. For now, let's just add to history.
-        // updatedReviewHistory[existingReviewIndex] = newReview;
+        // Update existing review
+        updatedReviewHistory[existingReviewIndex] = newReviewLog;
     } else {
-        updatedReviewHistory.push({
-            officerId: officer.uid,
-            decision: 'approved', // Placeholder, decision is on the whole app
-            notes: notes,
-            timestamp: new Date().toISOString(),
-        });
+        // Add new review
+        updatedReviewHistory.push(newReviewLog);
     }
-
+    
     setDocumentNonBlocking(appRef, { reviewHistory: updatedReviewHistory }, { merge: true });
 
     toast({
         title: "Review Submitted",
-        description: `Your ${rating}/10 review for ${application.applicantName} has been recorded.`,
+        description: `Your review for ${application.applicantName} has been recorded.`,
     });
     setNotes('');
     setRating(5);
@@ -125,7 +126,7 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
     setIsOpen(false);
   }
 
-  const existingReview = reviews.find(r => r.adminPlayerId === officer?.uid);
+  const existingReview = application.reviewHistory?.find(r => r.officerId === officer?.uid);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -174,23 +175,23 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
 
             <Card>
               <CardHeader>
-                 <CardTitle className='font-headline'>Council Reviews ({reviews.length})</CardTitle>
+                 <CardTitle className='font-headline'>Council Reviews ({application.reviewHistory?.length || 0})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {reviews.length > 0 ? reviews.map(review => {
-                  const reviewer = getPlayer(review.adminPlayerId);
+                {application.reviewHistory && application.reviewHistory.length > 0 ? application.reviewHistory.map(review => {
+                  const reviewer = getOfficer(review.officerId);
                   return (
-                    <div key={review.adminPlayerId} className="flex gap-3">
+                    <div key={review.officerId} className="flex gap-3">
                       <Avatar className='mt-1'>
                         <AvatarImage src={reviewer?.avatarUrl} />
-                        <AvatarFallback>{reviewer?.displayName.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{reviewer?.displayName.charAt(0) || '?'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{reviewer?.displayName}</span>
-                          <Badge variant="secondary" className="font-mono">{review.vote}/10</Badge>
+                          <span className="font-semibold">{reviewer?.displayName || 'Unknown Officer'}</span>
+                          {/* <Badge variant="secondary" className="font-mono">{review.vote}/10</Badge> */}
                         </div>
-                        <p className="text-muted-foreground text-sm">{review.note}</p>
+                        <p className="text-muted-foreground text-sm">{review.notes}</p>
                       </div>
                     </div>
                   )
@@ -202,13 +203,9 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
             <Card className="sticky top-0">
               <CardHeader>
                  <CardTitle className='font-headline'>Your Review</CardTitle>
-                 <CardDescription>Rate the applicant and leave a note for other council members.</CardDescription>
+                 <CardDescription>Leave a note for other council members. This will overwrite your previous review if you've made one.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="officer-rating">Applicant Rating: {rating}/10</Label>
-                    <Slider defaultValue={[rating]} max={10} step={1} onValueChange={(v) => setRating(v[0])} />
-                </div>
                 <div className="space-y-2">
                     <Label htmlFor="officer-notes">Notes</Label>
                     <Textarea 
@@ -238,3 +235,5 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
     </Dialog>
   );
 }
+
+    
