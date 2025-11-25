@@ -15,11 +15,15 @@ service cloud.firestore {
     }
 
     function isOfficer() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
+      return isSignedIn() && 
+        (exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid)) ||
+         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'officer');
     }
     
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && 
+        (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
+         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isMember() {
@@ -43,6 +47,12 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if isOwner(userId);
     }
+    
+    // characters can be listed by any member for global stats, but only written by the owner.
+    match /{path=**}/characters/{characterId} {
+      allow read: if isMember();
+      allow write: if isOwner(resource.data.playerId);
+    }
 
     // Applications can be created by any signed-in user.
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
@@ -54,7 +64,7 @@ service cloud.firestore {
         // This is secure because it prevents listing all applications.
         allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
         
-        allow update: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow update: if isOfficer() || isAdmin();
         allow delete: if isOwner(resource.data.userId);
     }
 
