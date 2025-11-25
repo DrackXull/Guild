@@ -22,8 +22,9 @@ import {
   Scroll,
   Trophy,
   Shield,
+  Users,
 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import { useRef } from 'react';
 import { GUILD_NAME } from '@/lib/config';
@@ -38,6 +39,7 @@ const navItems = [
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy /> },
+  { href: '/members', label: 'Members', icon: <Users /> },
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
 ];
 

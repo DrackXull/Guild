@@ -1,7 +1,7 @@
 
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Trash2, Gem, Repeat, Loader2 } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Trash2, Gem, Repeat, Loader2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getBountySuggestions } from "@/lib/actions";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState, useTransition } from "react";
-import type { Quest, MarketItem, WithId, QuestRarity, PartialPlayer, Application, ApplicationReview as TApplicationReview } from "@/lib/types";
+import type { Quest, MarketItem, WithId, QuestRarity, PartialPlayer, Application, ApplicationReview as TApplicationReview, Player, Rank } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { MarketAdmin } from "@/components/market/market-admin";
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking, useUser } from "@/firebase";
@@ -20,9 +20,102 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { guildRanks } from "@/lib/data";
 
 const rarities: QuestRarity[] = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
 const ranks = ["Neophyte", "Voyager", "Champion", "Demigod"];
+
+
+function MemberRosterAdmin() {
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const playersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'players'), orderBy('displayName'));
+  }, [firestore]);
+
+  const { data: players, isLoading } = useCollection<Player>(playersQuery);
+
+  const handleRankChange = (playerId: string, newRank: Rank) => {
+    if (!firestore) return;
+    const playerDocRef = doc(firestore, 'players', playerId);
+    setDocumentNonBlocking(playerDocRef, { rank: newRank }, { merge: true });
+    toast({
+      title: "Rank Updated",
+      description: `The member's rank has been updated to ${newRank}.`,
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <UserCheck className="h-6 w-6" />
+          <CardTitle className="font-headline text-2xl">Member Roster</CardTitle>
+        </div>
+        <CardDescription>View all guild members and manage their ranks.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Member</TableHead>
+              <TableHead>Lifetime Honor</TableHead>
+              <TableHead className="w-48">Rank</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                </TableCell>
+              </TableRow>
+            )}
+            {!isLoading && players?.map(player => (
+              <TableRow key={player.id}>
+                <TableCell>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={player.avatarUrl} />
+                      <AvatarFallback>{player.displayName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">{player.displayName}</div>
+                      <div className="text-sm text-muted-foreground">{player.discordTag}</div>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>{(player.lifetimeHonor || 0).toLocaleString()}</TableCell>
+                <TableCell>
+                  <Select onValueChange={(value) => handleRankChange(player.id, value as Rank)} value={player.rank || 'Neophyte'}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select rank" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {guildRanks.map(r => (
+                        <SelectItem key={r.rank} value={r.rank}>{r.rank}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+              </TableRow>
+            ))}
+             {!isLoading && (!players || players.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                  No members found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
 
 
 function BountyAdmin() {
@@ -257,6 +350,7 @@ export default function OfficerPage() {
           currentHonor: 100000,
           maxHonor: 100000,
           role: 'admin',
+          rank: 'Legend',
       };
       
       setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
@@ -359,6 +453,10 @@ export default function OfficerPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <Separator />
+
+      <MemberRosterAdmin />
 
       <Separator />
 

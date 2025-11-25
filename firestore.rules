@@ -35,12 +35,16 @@ service cloud.firestore {
     // --------------------------------
 
     // Players can be read by any member.
-    // The owner can update their own profile.
+    // The owner can update their own profile (except rank/role).
+    // An officer or admin can update any profile (including rank/role).
     // An Admin can create a player profile (for initial setup).
     match /players/{playerId} {
       allow read: if isMember();
       allow create: if isAdmin();
-      allow write: if isOwner(playerId) || isAdmin();
+      // Allow self-writes only for non-restricted fields
+      allow update: if (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      || isOfficer() 
+                      || isAdmin();
     }
     
     // User-specific data is only accessible by the owner.

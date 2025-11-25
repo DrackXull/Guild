@@ -1,6 +1,20 @@
 
-import { Player, Character, CharacterClass, Application, ApplicationReview, MarketItem, MemberBounty } from './types';
+
+import { Player, Character, CharacterClass, Application, ApplicationReview, MarketItem, MemberBounty, Rank } from './types';
 import { PlaceHolderImages } from './placeholder-images';
+
+export const guildRanks: { rank: Rank; description: string; honorRequirement: number }[] = [
+    { rank: 'Neophyte', description: 'A new recruit, learning the ropes and proving their worth in the dungeons.', honorRequirement: 0 },
+    { rank: 'Initiate', description: 'A member who has shown dedication and completed several successful runs.', honorRequirement: 1000 },
+    { rank: 'Soldier', description: 'A dependable combatant, regularly participating in guild activities and runs.', honorRequirement: 2500 },
+    { rank: 'Sergeant', description: 'A seasoned member who begins to show leadership qualities and helps guide newer recruits.', honorRequirement: 5000 },
+    { rank: 'Knight', description: 'A proven warrior, respected for their skill, honor, and commitment to the guild.', honorRequirement: 10000 },
+    { rank: 'Captain', description: 'An exemplary member trusted with leading parties and upholding the guild\'s values.', honorRequirement: 20000 },
+    { rank: 'Champion', description: 'A celebrated hero of the guild, known for their exceptional prowess and numerous victories.', honorRequirement: 50000 },
+    { rank: 'Elder', description: 'A veteran member whose wisdom and experience are invaluable to the guild council.', honorRequirement: 100000 },
+    { rank: 'Legend', description: 'A living legend whose deeds are sung in taverns and recorded in the guild\'s history.', honorRequirement: 250000 }
+];
+
 
 const avatar1 = PlaceHolderImages.find(img => img.id === 'user-avatar-1')?.imageUrl || 'https://picsum.photos/seed/warrior/100/100';
 const avatar2 = PlaceHolderImages.find(img => img.id === 'user-avatar-2')?.imageUrl || 'https://picsum.photos/seed/rogue/100/100';
@@ -34,6 +48,7 @@ export const players: Player[] = [
     maxHonor: 5000,
     characters: enrichedCharacters.filter(c => c.playerId === 'player1'),
     avatarUrl: avatar1,
+    rank: 'Knight',
   },
   {
     id: 'player2',
@@ -46,6 +61,7 @@ export const players: Player[] = [
     maxHonor: 2200,
     characters: enrichedCharacters.filter(c => c.playerId === 'player2'),
     avatarUrl: avatar2,
+    rank: 'Knight',
   },
   {
     id: 'player3',
@@ -58,6 +74,7 @@ export const players: Player[] = [
     maxHonor: 200,
     characters: [],
     avatarUrl: avatar3,
+    rank: 'Neophyte',
   }
 ];
 

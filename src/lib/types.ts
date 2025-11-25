@@ -12,7 +12,10 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
+
+export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Sergeant' | 'Knight' | 'Captain' | 'Champion' | 'Elder' | 'Legend';
 
 export type Player = {
   id: string;
@@ -25,7 +28,7 @@ export type Player = {
   maxHonor: number;
   characters?: Character[];
   avatarUrl?: string;
-  rank?: string;
+  rank?: Rank;
   role?: 'guest' | 'member' | 'officer' | 'admin';
   isMember?: boolean;
   removalReason?: string;
