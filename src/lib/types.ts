@@ -10,6 +10,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -47,10 +48,10 @@ export type Character = {
   characterClass: CharacterClass;
   level?: number;
   rank?: string;
-  totalBossKills: number;
   isConfirmed: boolean;
   confirmedKills: number;
-unconfirmedKills: number;
+  unconfirmedKills: number;
+  totalBossKills: number;
 };
 
 export type RunParticipantStats = {
@@ -268,3 +269,5 @@ export type GuildSettings = {
 
 // This is not a complete type, but it's what we need for the setup button
 export type PartialPlayer = Omit<Player, 'id' | 'characters'>;
+
+    

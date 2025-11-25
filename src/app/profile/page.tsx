@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { Player, WithId, Character, CharacterClass } from "@/lib/types";
+import type { Player, WithId, Character, CharacterClass, PartialPlayer } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { query } from "firebase/firestore";
@@ -54,6 +54,7 @@ function CreateCharacterDialog() {
       playerId: user.uid,
       name: data.name,
       characterClass: data.characterClass as CharacterClass,
+      level: 1,
       totalBossKills: 0,
       isConfirmed: false,
       confirmedKills: 0,
@@ -150,7 +151,7 @@ function FirstAdminSetup() {
         const officerRoleRef = doc(firestore, `roles_officer/${user.uid}`);
         const playerDocRef = doc(firestore, `players/${user.uid}`);
 
-        const newPlayerData: Omit<Player, 'id' | 'characters'> = {
+        const newPlayerData: PartialPlayer = {
             displayName: user.email?.split('@')[0] || 'Guild Leader',
             discordTag: 'Admin#0001',
             friends: [],
@@ -353,3 +354,5 @@ export default function ProfilePage() {
       </div>
   );
 }
+
+    

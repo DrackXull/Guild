@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Character } from "@/lib/types";
-import { CheckCircle, Shield, Skull, Swords, Users } from "lucide-react";
+import { CheckCircle, Shield, Swords, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 
 type CharacterCardProps = {
@@ -74,3 +74,5 @@ export function CharacterCard({ character }: CharacterCardProps) {
     </Card>
   );
 }
+
+    
