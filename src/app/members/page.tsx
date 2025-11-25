@@ -6,11 +6,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import type { Player, WithId } from "@/lib/types";
 import { collection, query, orderBy } from "firebase/firestore";
-import { Users, Loader2 } from "lucide-react";
+import { Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { guildRanks } from "@/lib/data";
+
+export const guildRanks: { rank: string; description: string; honorRequirement: number }[] = [
+    { rank: 'Neophyte', description: 'A new recruit, learning the ropes and proving their worth in the dungeons.', honorRequirement: 0 },
+    { rank: 'Initiate', description: 'A member who has shown dedication and completed several successful runs.', honorRequirement: 1000 },
+    { rank: 'Soldier', description: 'A dependable combatant, regularly participating in guild activities and runs.', honorRequirement: 2500 },
+    { rank: 'Sergeant', description: 'A seasoned member who begins to show leadership qualities and helps guide newer recruits.', honorRequirement: 5000 },
+    { rank: 'Knight', description: 'A proven warrior, respected for their skill, honor, and commitment to the guild.', honorRequirement: 10000 },
+    { rank: 'Captain', description: 'An exemplary member trusted with leading parties and upholding the guild\'s values.', honorRequirement: 20000 },
+    { rank: 'Champion', description: 'A celebrated hero of the guild, known for their exceptional prowess and numerous victories.', honorRequirement: 50000 },
+    { rank: 'Elder', description: 'A veteran member whose wisdom and experience are invaluable to the guild council.', honorRequirement: 100000 },
+    { rank: 'Legend', description: 'A living legend whose deeds are sung in taverns and recorded in the guild\'s history.', honorRequirement: 250000 }
+];
+
 
 function MemberRowSkeleton() {
     return (
@@ -44,7 +56,7 @@ function MemberList() {
          <Card>
             <CardHeader>
                 <CardTitle>Guild Roster</CardTitle>
-                <CardDescription>All active members of The Black Lantern Company.</CardDescription>
+                <CardDescription>All active members of the guild.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
