@@ -622,6 +622,26 @@
             }
         }
       }
+    },
+    "MemberBounty": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MemberBounty",
+      "type": "object",
+      "description": "A bounty posted by a guild member for other members to complete.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the bounty." },
+        "requestingPlayerId": { "type": "string", "description": "The ID of the player who posted the bounty." },
+        "requestingPlayerName": { "type": "string", "description": "The name of the player who posted the bounty." },
+        "acceptedPlayerId": { "type": "string", "description": "The ID of the player who accepted the bounty." },
+        "acceptedPlayerName": { "type": "string", "description": "The name of the player who accepted the bounty." },
+        "title": { "type": "string", "description": "The title of the bounty." },
+        "description": { "type": "string", "description": "A detailed description of the bounty's requirements." },
+        "reward": { "type": "number", "description": "The Honor Point reward for completing the bounty." },
+        "status": { "type": "string", "enum": ["open", "in_progress", "complete"], "description": "The current status of the bounty." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the bounty was created." },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the bounty was completed." }
+      },
+      "required": ["id", "requestingPlayerId", "requestingPlayerName", "title", "description", "reward", "status", "createdAt"]
     }
   },
   "auth": {
@@ -849,6 +869,22 @@
           },
           "description": "A singleton document containing global settings for the guild, managed by officers.",
            "params": []
+        }
+      },
+      {
+        "path": "/member_bounties/{bountyId}",
+        "definition": {
+          "entityName": "MemberBounty",
+          "schema": {
+            "$ref": "#/backend/entities/MemberBounty"
+          },
+          "description": "A bounty posted by a guild member for other members to complete.",
+          "params": [
+            {
+              "name": "bountyId",
+              "description": "The unique identifier for the member bounty."
+            }
+          ]
         }
       }
     ],

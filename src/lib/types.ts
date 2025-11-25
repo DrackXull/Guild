@@ -4,6 +4,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -138,7 +139,6 @@ export type MemberBounty = {
     requestingPlayerId: string;
     requestingPlayerName: string;
     acceptedPlayerId?: string;
-
     acceptedPlayerName?: string;
     title: string;
     description: string;

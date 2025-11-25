@@ -22,13 +22,13 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
 
   const playersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'players');
+    return query(collection(firestore, 'players'), where('isOnline', '==', true));
   }, [firestore]);
-  const { data: players } = useCollection<Player>(playersQuery);
+  const { data: onlinePlayers } = useCollection<Player>(playersQuery);
 
   const charactersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collectionGroup(firestore, 'characters');
+    return query(collectionGroup(firestore, 'characters'));
   }, [firestore]);
   const { data: allCharacters } = useCollection<Character>(charactersQuery);
 
@@ -44,7 +44,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  const onlineMembers = players?.filter(p => p.isOnline).length || 0;
+  const onlineMembers = onlinePlayers?.length || 0;
   const totalGuildKills = allCharacters?.reduce((acc, char) => acc + (char.totalKills || 0), 0) || 0;
   const totalBossKills = allCharacters?.reduce((acc, char) => acc + (char.totalBossKills || 0), 0) || 0;
 
