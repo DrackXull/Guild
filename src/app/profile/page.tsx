@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { Player, WithId, Character, CharacterClass, PartialPlayer } from "@/lib/types";
+import type { Player, WithId, Character, CharacterClass } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { query } from "firebase/firestore";
@@ -127,93 +127,6 @@ function CreateCharacterDialog() {
   );
 }
 
-
-function FirstAdminSetup() {
-    const { user, isUserLoading: isUserAuthLoading } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isProcessing, setIsProcessing] = useState(false);
-    const isGuildLeaderEmail = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
-
-    const playerDocRef = useMemoFirebase(() => {
-        if (!user || !firestore) return null;
-        return doc(firestore, 'players', user.uid);
-    }, [user, firestore]);
-    const { data: player, isLoading: isPlayerDocLoading } = useDoc<Player>(playerDocRef);
-
-    const isLoading = isUserAuthLoading || (user && isPlayerDocLoading);
-
-    const handleGrantAdmin = () => {
-        if (isProcessing || !firestore || !user) return;
-
-        setIsProcessing(true);
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        const officerRoleRef = doc(firestore, `roles_officer/${user.uid}`);
-        const playerDocRef = doc(firestore, `players/${user.uid}`);
-
-        const newPlayerData: PartialPlayer = {
-            displayName: user.email?.split('@')[0] || 'Guild Leader',
-            discordTag: 'Admin#0001',
-            friends: [],
-            isOnline: true,
-            lifetimeHonor: 100000,
-            currentHonor: 100000,
-            maxHonor: 100000,
-            avatarUrl: '',
-            role: 'admin',
-        };
-        
-        // Non-blocking writes
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(officerRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(playerDocRef, newPlayerData);
-
-        toast({
-            title: "Guild Leader Role Assigned",
-            description: "Your player profile has been created. The page will now reload to grant you full access.",
-            duration: 5000,
-        });
-        
-        // Reload the page to apply the new role and data
-        setTimeout(() => window.location.reload(), 2000);
-    };
-
-    if (isLoading) {
-        return (
-            <Card className="border-primary/50 mb-8">
-                <CardContent className="pt-6">
-                    <div className="flex items-center justify-center gap-3">
-                        <Loader2 className="h-5 w-5 animate-spin"/>
-                        <p>Checking for Guild Leader status...</p>
-                    </div>
-                </CardContent>
-            </Card>
-        );
-    }
-    
-    // Only show this button for the specific user IF they don't have a player profile yet.
-    if (isGuildLeaderEmail && !player) {
-         return (
-            <Card className="border-primary/50 mb-8">
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">First-Time Admin Setup</CardTitle>
-                    <CardDescription>
-                        As the Guild Leader, you need to initialize your player profile and grant yourself admin privileges.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button onClick={handleGrantAdmin} disabled={isProcessing} className="w-full" size="lg">
-                        {isProcessing ? <Loader2 className="h-5 w-5 animate-spin"/> : <Shield className="mr-2 h-5 w-5"/>}
-                        Grant Admin Access
-                    </Button>
-                </CardContent>
-            </Card>
-        );
-    }
-
-    return null;
-}
-
 function ProfileContent({ player }: { player: WithId<Player> }) {
     const firestore = useFirestore();
     const friendCount = player.friends?.length || 0;
@@ -324,22 +237,26 @@ export default function ProfilePage() {
     if (!user || !firestore) return null;
     return doc(firestore, 'players', user.uid);
   }, [user, firestore]);
-  const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+  const { data: player, isLoading: isPlayerLoading, error } = useDoc<Player>(playerDocRef);
 
   const isLoading = isUserLoading || (user && isPlayerLoading);
   
+  // Do not show a loader if we know there's a permission error, let the content handle it.
+  if (isLoading && !error) {
+     return (
+          <div className="flex justify-center items-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="ml-4">Loading Profile...</p>
+          </div>
+      );
+  }
+  
   return (
       <div className="space-y-8 container mx-auto p-4 md:p-6 lg:p-8">
-          <FirstAdminSetup />
-          
-          {isLoading ? (
-              <div className="flex justify-center items-center">
-                {/* Don't show a loader here if FirstAdminSetup is already showing one */}
-              </div>
-          ) : player ? (
+          {player ? (
               <ProfileContent player={player} />
           ) : (
-             user && !player && user.email?.toLowerCase() !== 'huzzinda@gmail.com' && (
+             user && (
                 <div className="flex items-center gap-4">
                     <UserCircle className="h-10 w-10 text-primary" />
                     <div>
@@ -347,6 +264,12 @@ export default function ProfilePage() {
                         <p className="text-muted-foreground mt-1">
                             Your player profile is not yet active. It will be created once your application is approved.
                         </p>
+                        {error && (
+                            <div className="mt-4 text-xs text-destructive bg-destructive/10 p-2 rounded-md">
+                                <p className="font-bold">Developer Note:</p>
+                                <p>{error.message}</p>
+                            </div>
+                        )}
                     </div>
                 </div>
              )
@@ -354,5 +277,3 @@ export default function ProfilePage() {
       </div>
   );
 }
-
-    
