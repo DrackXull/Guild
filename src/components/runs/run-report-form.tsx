@@ -369,7 +369,9 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select a character" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {(index === 0 ? (playerCharacters || []) : (allCharacters || [])).map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
+                            {(index === 0 ? (playerCharacters || []) : (allCharacters || []))
+                              .filter(c => c.id) // Ensure character has a valid ID
+                              .map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.characterClass})</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
