@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Application, ApplicationReview as TApplicationReview, Player, PartialPlayer, WithId, ApplicationReviewLog } from '@/lib/types';
-import { useState }from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
@@ -235,5 +235,3 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
-
-    
