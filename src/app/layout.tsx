@@ -136,6 +136,19 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const isApplicantRoute = applicantRoutes.includes(pathname);
 
   useEffect(() => {
+    console.group(`[AppManager Debug] - Render #${logCounter}`);
+    console.log('Current Pathname:', pathname);
+    console.log('Auth User (from useUser):', user);
+    console.log('Player Profile (from Firestore):', player);
+    console.log('--- Evaluation ---');
+    console.log('isUserLoading:', isUserLoading);
+    console.log('isPlayerLoading:', isPlayerLoading);
+    console.log('Final isLoading state:', isLoading);
+    console.log('Is Guild Leader:', isGuildLeader);
+    console.log('Is Member (has player profile):', isMember);
+    console.groupEnd();
+    setLogCounter(c => c + 1);
+
     // Wait until all loading is finished before making routing decisions.
     if (isLoading) return;
 
@@ -143,22 +156,25 @@ function AppManager({ children }: { children: React.ReactNode }) {
       if (isMember) {
         // User is a full member. Redirect to dashboard if they land on a public/applicant page.
         if (isPublicRoute || pathname === '/application-status' || pathname === '/apply') {
+          console.log('[AppManager] User is member, redirecting from public/applicant route to /dashboard');
           router.replace('/dashboard');
         }
       } else {
         // User is an applicant (logged in but not a member).
         // They should only be on applicant-safe routes.
         if (!isApplicantRoute) {
+          console.log('[AppManager] User is applicant, redirecting from member route to /application-status');
           router.replace('/application-status');
         }
       }
     } else {
       // User is not logged in. They should only be on the public landing page.
       if (!isPublicRoute) {
+        console.log('[AppManager] User is not logged in, redirecting to /');
         router.replace('/');
       }
     }
-  }, [isLoading, user, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
+  }, [isLoading, user, player, isMember, pathname, router, isPublicRoute, isApplicantRoute, isGuildLeader]);
 
 
   if (isLoading) {

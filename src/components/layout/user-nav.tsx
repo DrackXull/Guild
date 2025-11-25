@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -16,30 +17,43 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Gem, LogOut, Shield, User as UserIcon } from 'lucide-react';
 import { getAuth, signOut } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
+import type { Player } from '@/lib/types';
+
 
 export function UserNav() {
   const { user } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player } = useDoc<Player>(playerDocRef);
   
   const handleLogout = () => {
     signOut(auth);
   };
 
+  const isOfficer = player?.role === 'officer' || player?.role === 'admin';
+
+
   if (!user) {
     return null;
   }
   
-  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : '?';
+  const userInitial = player?.displayName ? player.displayName.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : '?';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'} />}
+            {player?.avatarUrl && <AvatarImage src={player.avatarUrl} alt={player.displayName || 'User'} />}
             <AvatarFallback>{userInitial}</AvatarFallback>
           </Avatar>
         </Button>
@@ -47,7 +61,7 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.displayName || 'Member'}</p>
+            <p className="text-sm font-medium leading-none">{player?.displayName || 'Member'}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
@@ -61,17 +75,18 @@ export function UserNav() {
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/officer">
-              <Shield className="mr-2 h-4 w-4" />
-              <span>Council</span>
-            </Link>
-          </DropdownMenuItem>
+          {isOfficer && (
+            <DropdownMenuItem asChild>
+                <Link href="/officer">
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Council</span>
+                </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem>
             <Gem className="mr-2 h-4 w-4" />
             <span>
-              {/* This is mock data, replace later */}
-              2,500 HP
+              {(player?.currentHonor || 0).toLocaleString()} HP
             </span>
           </DropdownMenuItem>
         </DropdownMenuGroup>

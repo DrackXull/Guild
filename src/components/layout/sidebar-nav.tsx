@@ -21,11 +21,15 @@ import {
   Store,
   Scroll,
   Trophy,
+  Shield,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '../ui/button';
 import { useRef } from 'react';
 import { GUILD_NAME } from '@/lib/config';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Player } from '@/lib/types';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -37,11 +41,27 @@ const navItems = [
   { href: '/profile', label: 'My Profile', icon: <UserCircle /> },
 ];
 
+const officerNavItem = { href: '/officer', label: 'Council', icon: <Shield /> };
+
+
 export function SidebarNav() {
   const pathname = usePathname();
-  // Mock officer status
-  const isOfficer = true; 
   const hoverAudioRef = useRef<HTMLAudioElement>(null);
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player } = useDoc<Player>(playerDocRef);
+
+  const isOfficer = player?.role === 'officer' || player?.role === 'admin';
+  
+  console.log('[SidebarNav] Player:', player);
+  console.log('[SidebarNav] Is Officer or Admin:', isOfficer);
+
 
   const playHoverSound = () => {
     // hoverAudioRef.current?.play().catch(e => console.error("Error playing hover sound:", e));
@@ -72,6 +92,20 @@ export function SidebarNav() {
               </SidebarMenuItem>
             );
           })}
+          {isOfficer && (
+             <SidebarMenuItem onMouseEnter={playHoverSound}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname.startsWith(officerNavItem.href)}
+                  tooltip={officerNavItem.label}
+                >
+                  <Link href={officerNavItem.href}>
+                    {officerNavItem.icon}
+                    <span>{officerNavItem.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4">
