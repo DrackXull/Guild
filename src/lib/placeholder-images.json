@@ -3,8 +3,8 @@
     {
       "id": "hero-dungeon",
       "description": "A dark and gritty dungeon corridor lit by a single torch, setting the atmosphere for the guild hub.",
-      "imageUrl": "https://images.unsplash.com/photo-1599469803986-a68153205178?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      "imageHint": "dungeon passage"
+      "imageUrl": "https://images.unsplash.com/photo-1628399589334-b0a79a552341?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "imageHint": "dungeon corridor"
     },
     {
       "id": "user-avatar-1",

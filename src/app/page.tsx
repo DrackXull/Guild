@@ -116,15 +116,14 @@ export default function LandingPage() {
             fill
             className="object-cover z-0"
             data-ai-hint={heroImage.imageHint}
+            priority
          />
       )}
        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className="font-headline text-5xl text-primary leading-none">
-                <div className="text-3xl font-semibold text-foreground/80 tracking-widest">The</div>
-                Black Lantern
-                <div className="text-4xl font-semibold text-foreground/80 -mt-2 tracking-widest">Company</div>
+            <h1 className="font-headline text-5xl text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
+                {GUILD_NAME}
             </h1>
         </div>
 
@@ -197,3 +196,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    

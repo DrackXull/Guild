@@ -8,17 +8,30 @@ import { UserNav } from '@/components/layout/user-nav';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
-import { doc } from 'firebase/firestore';
-import type { Player } from '@/lib/types';
-import { allCharacters, players } from '@/lib/data';
+import { doc, collection, collectionGroup, query } from 'firebase/firestore';
+import type { Player, Character } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isOfficerPage = pathname.startsWith('/officer');
+  const firestore = useFirestore();
+
+  const playersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'players');
+  }, [firestore]);
+  const { data: players } = useCollection<Player>(playersQuery);
+
+  const charactersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collectionGroup(firestore, 'characters');
+  }, [firestore]);
+  const { data: allCharacters } = useCollection<Character>(charactersQuery);
+
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -31,9 +44,10 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  const onlineMembers = players.filter(p => p.isOnline).length;
-  const totalGuildKills = allCharacters.reduce((acc, char) => acc + char.totalKills, 0);
-  const totalBossKills = allCharacters.reduce((acc, char) => acc + char.totalBossKills, 0);
+  const onlineMembers = players?.filter(p => p.isOnline).length || 0;
+  const totalGuildKills = allCharacters?.reduce((acc, char) => acc + (char.totalKills || 0), 0) || 0;
+  const totalBossKills = allCharacters?.reduce((acc, char) => acc + (char.totalBossKills || 0), 0) || 0;
+
 
   return (
     <div className={cn({ 'officer-theme': isOfficerPage })}>
@@ -62,7 +76,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
                     <TooltipTrigger asChild>
                         <div className="flex items-center gap-2 cursor-default">
                         <Swords className="h-4 w-4 text-muted-foreground"/>
-                        <span className="font-bold">{totalGuildKills}</span>
+                        <span className="font-bold">{totalGuildKills.toLocaleString()}</span>
                             <span className="hidden sm:inline text-muted-foreground">Kills</span>
                         </div>
                     </TooltipTrigger>
@@ -74,7 +88,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
                         <TooltipTrigger asChild>
                            <div className="flex items-center gap-2 cursor-default">
                                 <Skull className="h-4 w-4 text-muted-foreground"/>
-                                <span className="font-bold">{totalBossKills}</span>
+                                <span className="font-bold">{totalBossKills.toLocaleString()}</span>
                                 <span className="hidden sm_inline text-muted-foreground">Bosses</span>
                            </div>
                         </TooltipTrigger>
@@ -187,3 +201,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+    
