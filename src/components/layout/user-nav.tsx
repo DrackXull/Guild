@@ -22,6 +22,7 @@ import { Gem, LogOut, Shield, User as UserIcon } from 'lucide-react';
 import { getAuth, signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
+import { Progress } from '../ui/progress';
 
 
 export function UserNav() {
@@ -36,7 +37,9 @@ export function UserNav() {
   const { data: player } = useDoc<Player>(playerDocRef);
   
   const handleLogout = () => {
-    signOut(auth);
+    if (auth) {
+        signOut(auth);
+    }
   };
 
   const isOfficer = player?.role === 'officer' || player?.role === 'admin';
@@ -47,6 +50,7 @@ export function UserNav() {
   }
   
   const userInitial = player?.displayName ? player.displayName.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : '?';
+  const honorPercentage = player && player.maxHonor > 0 ? (player.currentHonor / player.maxHonor) * 100 : 0;
 
   return (
     <DropdownMenu>
@@ -58,13 +62,22 @@ export function UserNav() {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-64" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{player?.displayName || 'Member'}</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
-            </p>
+          <div className="flex flex-col space-y-2">
+            <div>
+              <p className="text-base font-medium leading-none">{player?.displayName || 'Member'}</p>
+              <p className="text-xs leading-none text-muted-foreground pt-1">
+                {player?.rank || 'Neophyte'}
+              </p>
+            </div>
+             <div className="space-y-1">
+                <div className="flex justify-between items-baseline text-xs">
+                    <span className="font-semibold text-primary">{(player?.currentHonor || 0).toLocaleString()} HP</span>
+                    <span className="text-muted-foreground">/ {(player?.maxHonor || 0).toLocaleString()} HP</span>
+                </div>
+                <Progress value={honorPercentage} className="h-1.5" />
+             </div>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -83,12 +96,6 @@ export function UserNav() {
                 </Link>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem>
-            <Gem className="mr-2 h-4 w-4" />
-            <span>
-              {(player?.currentHonor || 0).toLocaleString()} HP
-            </span>
-          </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

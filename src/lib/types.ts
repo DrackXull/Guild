@@ -13,6 +13,8 @@
 
 
 
+
+
 export type WithId<T> = T & { id: string };
 
 export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Sergeant' | 'Knight' | 'Captain' | 'Champion' | 'Elder' | 'Legend';
@@ -62,6 +64,7 @@ export type RunParticipantStats = {
   characterId: string;
   kills: number;
   deaths: number;
+
   extracted: boolean;
   bossKills: number;
 };
@@ -131,7 +134,7 @@ export type Quest = {
   durationDays: number;
   isRepeatable: boolean;
   maxCompletions: number; // 0 for infinite
-  requiredRank?: string;
+  requiredRank?: Rank;
 };
 
 
@@ -148,6 +151,7 @@ export type MarketItem = {
     price: number;
     category: string;
     quantity: number;
+    requiredRank?: Rank;
 };
 
 export type MemberBounty = {
@@ -273,5 +277,3 @@ export type GuildSettings = {
 
 // This is not a complete type, but it's what we need for the setup button
 export type PartialPlayer = Partial<Omit<Player, 'id' | 'characters'>>;
-
-    

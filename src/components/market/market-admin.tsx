@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +7,11 @@ import { Store, Trash2, Gem, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import type { MarketItem, WithId } from "@/lib/types";
+import type { MarketItem, Rank, WithId } from "@/lib/types";
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
 import { collection, doc, orderBy, query } from "firebase/firestore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { guildRanks } from "@/app/members/page";
 
 export function MarketAdmin() {
     const { toast } = useToast();
@@ -35,6 +38,7 @@ export function MarketAdmin() {
         const description = formData.get('description') as string;
         const category = formData.get('category') as string;
         const price = formData.get('price') as string;
+        const requiredRank = formData.get('requiredRank') as Rank | undefined;
 
         if (!name || !description || !category || !price) {
             toast({
@@ -51,6 +55,7 @@ export function MarketAdmin() {
             category,
             price: parseInt(price, 10),
             quantity: 1, // Default quantity
+            requiredRank: requiredRank || undefined,
         };
 
         addDocumentNonBlocking(itemsCollectionRef, newItem);
@@ -110,6 +115,7 @@ export function MarketAdmin() {
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground">{item.description}</p>
+                                    {item.requiredRank && <p className="text-xs text-amber-400/80 mt-2">Requires: {item.requiredRank}</p>}
                                 </CardContent>
                             </Card>
                         ))}
@@ -134,6 +140,18 @@ export function MarketAdmin() {
                             <Label htmlFor="item-price">Honor Price</Label>
                             <Input id="item-price" name="price" type="number" placeholder="e.g., 500" required />
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="requiredRank">Required Rank (Optional)</Label>
+                        <Select name="requiredRank">
+                            <SelectTrigger id="requiredRank">
+                                <SelectValue placeholder="No rank requirement" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {guildRanks.map(r => <SelectItem key={r.rank} value={r.rank}>{r.rank}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <Button type="submit" className="w-full">Add Item to Market</Button>
                 </form>
