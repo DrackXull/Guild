@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Dialog,
@@ -7,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,25 +25,33 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { players } from '@/lib/data';
-import type { Application, ApplicationReview as TApplicationReview } from '@/lib/types';
-import { useState } from 'react';
+import type { Application, ApplicationReview as TApplicationReview, Player, PartialPlayer, WithId } from '@/lib/types';
+import { useState }from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 type ApplicationReviewProps = {
-  application: Application;
+  application: WithId<Application>;
   reviews: TApplicationReview[];
 };
 
 export function ApplicationReview({ application, reviews: initialReviews }: ApplicationReviewProps) {
   const { toast } = useToast();
+  const { user: officer } = useUser();
+  const firestore = useFirestore();
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState('');
   const [reviews, setReviews] = useState(initialReviews);
+  const [isOpen, setIsOpen] = useState(false);
   
   const getPlayer = (playerId: string) => players.find(p => p.id === playerId);
-  const loggedInOfficerId = 'player1'; // Mock logged in officer
 
   const handleReviewSubmit = () => {
+    if (!officer || !firestore) {
+        toast({ title: "Authentication Error", description: "You must be logged in as an officer.", variant: "destructive"});
+        return;
+    }
     if (!notes.trim()) {
         toast({
             title: "Review Note Required",
@@ -51,24 +61,32 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
         return;
     }
 
+    const appRef = doc(firestore, 'applications', application.id);
     const newReview: TApplicationReview = {
         applicationId: application.id,
-        adminPlayerId: loggedInOfficerId,
-        status: 'pending',
+        adminPlayerId: officer.uid,
+        status: 'pending', // This review itself is pending until a final decision is made
         vote: rating,
         note: notes,
         createdAt: new Date().toISOString(),
     };
+    
+    const existingReviewIndex = application.reviewHistory?.findIndex(r => r.officerId === officer.uid) ?? -1;
+    const updatedReviewHistory = [...(application.reviewHistory || [])];
 
-    // Replace existing review if officer already reviewed
-    const existingReviewIndex = reviews.findIndex(r => r.adminPlayerId === loggedInOfficerId);
     if (existingReviewIndex !== -1) {
-        const updatedReviews = [...reviews];
-        updatedReviews[existingReviewIndex] = newReview;
-        setReviews(updatedReviews);
+        // This part needs schema alignment. For now, let's just add to history.
+        // updatedReviewHistory[existingReviewIndex] = newReview;
     } else {
-        setReviews(prev => [...prev, newReview]);
+        updatedReviewHistory.push({
+            officerId: officer.uid,
+            decision: 'approved', // Placeholder, decision is on the whole app
+            notes: notes,
+            timestamp: new Date().toISOString(),
+        });
     }
+
+    setDocumentNonBlocking(appRef, { reviewHistory: updatedReviewHistory }, { merge: true });
 
     toast({
         title: "Review Submitted",
@@ -77,11 +95,40 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
     setNotes('');
     setRating(5);
   }
+  
+  const handleDecision = (decision: 'approved' | 'denied') => {
+    if (!officer || !firestore) {
+        toast({ title: "Authentication Error", description: "You must be logged in as an officer.", variant: "destructive"});
+        return;
+    }
+    const appRef = doc(firestore, 'applications', application.id);
+    
+    if (decision === 'approved') {
+        const playerRef = doc(firestore, 'players', application.userId);
+        const newPlayerData: Partial<Player> = {
+            displayName: application.applicantName,
+            discordTag: application.discordTag,
+            isOnline: false,
+            lifetimeHonor: 100, // Starting honor
+            currentHonor: 100,
+            maxHonor: 100,
+            role: 'member',
+            isMember: true,
+        };
+        setDocumentNonBlocking(playerRef, newPlayerData, { merge: true });
+        setDocumentNonBlocking(appRef, { status: 'approved' }, { merge: true });
+        toast({ title: "Application Approved!", description: `${application.applicantName} is now a member of the guild.` });
+    } else {
+        setDocumentNonBlocking(appRef, { status: 'denied' }, { merge: true });
+        toast({ title: "Application Denied", description: `The application for ${application.applicantName} has been denied.`, variant: "destructive"});
+    }
+    setIsOpen(false);
+  }
 
-  const existingReview = reviews.find(r => r.adminPlayerId === loggedInOfficerId);
+  const existingReview = reviews.find(r => r.adminPlayerId === officer?.uid);
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">Review</Button>
       </DialogTrigger>
@@ -96,14 +143,31 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
               <CardHeader>
                 <CardTitle className='font-headline'>Original Application</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm">Server / Region</h4>
-                  <p className="text-muted-foreground text-sm">{application.server}</p>
+              <CardContent className="space-y-4 text-sm">
+                 <div>
+                  <h4 className="font-semibold">Main Character(s) & Class(es)</h4>
+                  <p className="text-muted-foreground">{application.mainCharacters} ({application.mainClasses.join(', ')})</p>
+                </div>
+                 <div>
+                  <h4 className="font-semibold">Hours in Game</h4>
+                  <p className="text-muted-foreground">~{application.hoursInGame} hours</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-sm">Playstyle Notes</h4>
-                  <p className="text-muted-foreground text-sm">{application.notes}</p>
+                  <h4 className="font-semibold">Favorite Modes</h4>
+                  <p className="text-muted-foreground">{application.favoriteModes.join(', ')}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Memorable Experience</h4>
+                  <p className="text-muted-foreground">{application.memorableExperience}</p>
+                </div>
+                 <div>
+                  <h4 className="font-semibold">Guild Expectations</h4>
+                  <p className="text-muted-foreground">{application.guildExpectations}</p>
+                </div>
+                 <div>
+                  <h4 className="font-semibold">Availability</h4>
+                  <p className="text-muted-foreground">{application.availabilityDays.join(', ')}</p>
+                  <p className="text-muted-foreground">{application.availabilityStart} - {application.availabilityEnd} ({application.availabilityTimezone})</p>
                 </div>
               </CardContent>
             </Card>
@@ -114,16 +178,16 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
               </CardHeader>
               <CardContent className="space-y-4">
                 {reviews.length > 0 ? reviews.map(review => {
-                  const officer = getPlayer(review.adminPlayerId);
+                  const reviewer = getPlayer(review.adminPlayerId);
                   return (
                     <div key={review.adminPlayerId} className="flex gap-3">
                       <Avatar className='mt-1'>
-                        <AvatarImage src={officer?.avatarUrl} />
-                        <AvatarFallback>{officer?.displayName.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={reviewer?.avatarUrl} />
+                        <AvatarFallback>{reviewer?.displayName.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold">{officer?.displayName}</span>
+                          <span className="font-semibold">{reviewer?.displayName}</span>
                           <Badge variant="secondary" className="font-mono">{review.vote}/10</Badge>
                         </div>
                         <p className="text-muted-foreground text-sm">{review.note}</p>
@@ -162,8 +226,13 @@ export function ApplicationReview({ application, reviews: initialReviews }: Appl
           </div>
         </div>
         <DialogFooter className="pt-4 border-t">
-          <Button variant="destructive">Deny Application</Button>
-          <Button>Approve Application</Button>
+            <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+            </DialogClose>
+            <div className="flex gap-2">
+              <Button variant="destructive" onClick={() => handleDecision('denied')}>Deny Application</Button>
+              <Button onClick={() => handleDecision('approved')}>Approve Application</Button>
+            </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

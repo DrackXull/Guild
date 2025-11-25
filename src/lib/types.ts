@@ -11,6 +11,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Player = {
@@ -22,8 +23,8 @@ export type Player = {
   lifetimeHonor: number;
   currentHonor: number;
   maxHonor: number;
-  characters: Character[];
-  avatarUrl: string;
+  characters?: Character[];
+  avatarUrl?: string;
   rank?: string;
   role?: 'guest' | 'member' | 'officer' | 'admin';
   isMember?: boolean;
@@ -268,6 +269,6 @@ export type GuildSettings = {
 };
 
 // This is not a complete type, but it's what we need for the setup button
-export type PartialPlayer = Omit<Player, 'id' | 'characters'>;
+export type PartialPlayer = Partial<Omit<Player, 'id' | 'characters'>>;
 
     
