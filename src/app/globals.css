@@ -125,13 +125,13 @@
 }
 
 .officer-theme {
-  --primary: hsl(var(--destructive));
-  --primary-foreground: hsl(var(--destructive-foreground));
-  --ring: hsl(var(--destructive));
-  --border: hsl(var(--destructive) / 0.5);
-  --sidebar-primary: hsl(var(--destructive));
-  --sidebar-primary-foreground: hsl(var(--destructive-foreground));
-  --sidebar-ring: hsl(var(--destructive));
+  --primary: hsl(var(--blood));
+  --primary-foreground: hsl(var(--text));
+  --ring: hsl(var(--blood));
+  --border: hsl(var(--blood) / 0.5);
+  --sidebar-primary: hsl(var(--blood));
+  --sidebar-primary-foreground: hsl(var(--text));
+  --sidebar-ring: hsl(var(--blood));
 }
 
 body.view-officer {
