@@ -9,7 +9,7 @@ import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
+import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
 import { doc, collection, arrayUnion } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { Player, WithId, Character, CharacterClass, PartialPlayer } from "@/lib/types";
@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const createCharacterSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters.").max(20, "Name cannot exceed 20 characters."),
@@ -74,7 +75,7 @@ function EditProfileDialog({ player }: { player: WithId<Player> }) {
             (updateData as any).displayNameHistory = arrayUnion(nameHistoryEntry);
         }
         
-        setDocumentNonBlocking(playerDocRef, updateData, { merge: true });
+        updateDocumentNonBlocking(playerDocRef, updateData, { merge: true });
 
         toast({
             title: "Profile Updated",
@@ -143,7 +144,7 @@ function EditProfileDialog({ player }: { player: WithId<Player> }) {
     );
 }
 
-function CreateCharacterDialog() {
+function CreateCharacterDialog({isDisabled}: {isDisabled: boolean}) {
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -183,11 +184,26 @@ function CreateCharacterDialog() {
     form.reset();
     setIsOpen(false);
   };
+  
+  const triggerButton = (
+    <Button variant="outline" disabled={isDisabled}>Create Character</Button>
+  );
 
   return (
      <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Create Character</Button>
+        {isDisabled ? (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
+                    <TooltipContent>
+                        <p>You have reached the maximum of 11 characters.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        ) : (
+            triggerButton
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -244,6 +260,7 @@ function CreateCharacterDialog() {
 function ProfileContent({ player }: { player: WithId<Player> }) {
     const firestore = useFirestore();
     const friendCount = player.friends?.length || 0;
+    const MAX_CHARACTERS = 11;
     
     const charactersQuery = useMemoFirebase(() => {
         if (!firestore || !player.id) return null;
@@ -251,6 +268,8 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
     }, [firestore, player.id]);
 
     const { data: characters, isLoading: isLoadingCharacters } = useCollection<Character>(charactersQuery);
+    
+    const hasMaxCharacters = (characters?.length || 0) >= MAX_CHARACTERS;
 
     return (
         <div className="space-y-8">
@@ -298,9 +317,9 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
             
             <div>
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-headline text-3xl font-bold">My Characters</h2>
+                    <h2 className="font-headline text-3xl font-bold">My Characters ({characters?.length || 0}/{MAX_CHARACTERS})</h2>
                     <div className="flex gap-2">
-                      <CreateCharacterDialog />
+                      <CreateCharacterDialog isDisabled={hasMaxCharacters} />
                     </div>
                 </div>
 
@@ -432,4 +451,3 @@ export default function ProfilePage() {
   );
 }
 
-    
