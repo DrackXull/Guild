@@ -13,7 +13,6 @@ import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase,
 import { doc, collection, arrayUnion } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { Player, WithId, Character, CharacterClass, PartialPlayer } from "@/lib/types";
-import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { query } from "firebase/firestore";
 import { useState, useEffect } from "react";
@@ -75,7 +74,7 @@ function EditProfileDialog({ player }: { player: WithId<Player> }) {
             (updateData as any).displayNameHistory = arrayUnion(nameHistoryEntry);
         }
         
-        updateDocumentNonBlocking(playerDocRef, updateData, { merge: true });
+        updateDocumentNonBlocking(playerDocRef, updateData);
 
         toast({
             title: "Profile Updated",
@@ -149,6 +148,10 @@ function CreateCharacterDialog({isDisabled}: {isDisabled: boolean}) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  
+  const characterClasses = [
+    'Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'
+  ];
 
   const form = useForm<CreateCharacterFormValues>({
     resolver: zodResolver(createCharacterSchema),
