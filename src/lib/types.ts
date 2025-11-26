@@ -15,9 +15,10 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
-export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Sergeant' | 'Knight' | 'Captain' | 'Champion' | 'Elder' | 'Legend';
+export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Knight' | 'Champion' | 'Elder';
 
 export type Player = {
   id: string;

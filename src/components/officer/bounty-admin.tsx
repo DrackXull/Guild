@@ -21,7 +21,7 @@ import type { Quest, WithId, QuestRarity } from "@/lib/types";
 import { getBountySuggestions } from "@/lib/actions";
 
 const rarities: QuestRarity[] = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
-const ranks = ["Neophyte", "Voyager", "Champion", "Demigod"];
+const ranks = ["Neophyte", "Initiate", "Soldier", "Knight", "Champion", "Elder"];
 
 const bountySchema = z.object({
     questName: z.string().min(1, "Name is required."),
