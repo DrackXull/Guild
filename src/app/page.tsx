@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,7 @@ import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { GUILD_NAME } from '@/lib/config';
+import { useAudio } from '@/hooks/use-audio';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -50,10 +51,7 @@ export default function LandingPage() {
   const { user, isUserLoading } = useUser();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('sign-in');
-  
-  const tabAudioRef = useRef<HTMLAudioElement>(null);
-  const loginAudioRef = useRef<HTMLAudioElement>(null);
-  const typingAudioRef = useRef<HTMLAudioElement>(null);
+  const { playSound } = useAudio();
 
   const signInForm = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -81,21 +79,14 @@ export default function LandingPage() {
       </div>
     );
   }
-  
-  const playTabSound = () => {
-    tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
-  }
-
-  const playTypingSound = () => {
-    typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
-  }
 
   const handleSignIn = (data: SignInFormValues) => {
-    loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
+    playSound('login');
     initiateEmailSignIn(auth, data.email, data.password);
   };
 
   const handleSignUp = (data: SignUpFormValues) => {
+    playSound('login');
     initiateEmailSignUp(auth, data.email, data.password, () => {
         toast({
             title: 'Account Created & Signed In',
@@ -127,7 +118,7 @@ export default function LandingPage() {
             </h1>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playTabSound(); }} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playSound('tab'); }} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="sign-in">Sign In</TabsTrigger>
             <TabsTrigger value="sign-up">Create Account</TabsTrigger>
@@ -142,12 +133,12 @@ export default function LandingPage() {
                 <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-signin">Email</Label>
-                    <Input id="email-signin" type="email" placeholder="m@example.com" {...signInForm.register('email')} onKeyDown={playTypingSound} />
+                    <Input id="email-signin" type="email" placeholder="m@example.com" {...signInForm.register('email')} onKeyDown={() => playSound('typing')} />
                     {signInForm.formState.errors.email && <p className="text-destructive text-xs">{signInForm.formState.errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signin">Password</Label>
-                    <Input id="password-signin" type="password" {...signInForm.register('password')} onKeyDown={playTypingSound} />
+                    <Input id="password-signin" type="password" {...signInForm.register('password')} onKeyDown={() => playSound('typing')} />
                     {signInForm.formState.errors.password && <p className="text-destructive text-xs">{signInForm.formState.errors.password.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
@@ -165,17 +156,17 @@ export default function LandingPage() {
                 <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email-signup">Email</Label>
-                    <Input id="email-signup" type="email" placeholder="m@example.com" {...signUpForm.register('email')} onKeyDown={playTypingSound}/>
+                    <Input id="email-signup" type="email" placeholder="m@example.com" {...signUpForm.register('email')} onKeyDown={() => playSound('typing')}/>
                      {signUpForm.formState.errors.email && <p className="text-destructive text-xs">{signUpForm.formState.errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password-signup">Password</Label>
-                    <Input id="password-signup" type="password" {...signUpForm.register('password')} onKeyDown={playTypingSound}/>
+                    <Input id="password-signup" type="password" {...signUpForm.register('password')} onKeyDown={() => playSound('typing')}/>
                     {signUpForm.formState.errors.password && <p className="text-destructive text-xs">{signUpForm.formState.errors.password.message}</p>}
                   </div>
                    <div className="space-y-2">
                     <Label htmlFor="confirmPassword-signup">Confirm Password</Label>
-                    <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} onKeyDown={playTypingSound}/>
+                    <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} onKeyDown={() => playSound('typing')}/>
                     {signUpForm.formState.errors.confirmPassword && <p className="text-destructive text-xs">{signUpForm.formState.errors.confirmPassword.message}</p>}
                   </div>
                   <Button type="submit" className="w-full">Create Account</Button>
@@ -188,11 +179,6 @@ export default function LandingPage() {
             Not affiliated with IRONMACE. All trademarks are the property of their respective owners.
         </p>
       </div>
-      
-      {/* Audio elements for sound effects - Add your audio files to the /public/sounds folder */}
-      <audio ref={tabAudioRef} src="/sounds/rock-slide.mp3" preload="auto"></audio>
-      <audio ref={loginAudioRef} src="/sounds/chest-unlock.mp3" preload="auto"></audio>
-      <audio ref={typingAudioRef} src="/sounds/quill-writing.mp3" preload="auto"></audio>
     </div>
   );
 }

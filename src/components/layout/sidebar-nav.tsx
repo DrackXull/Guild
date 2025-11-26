@@ -31,6 +31,7 @@ import { GUILD_NAME } from '@/lib/config';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
+import { useAudio } from '@/hooks/use-audio';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -48,7 +49,7 @@ const officerNavItem = { href: '/officer', label: 'Council', icon: <Shield /> };
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const hoverAudioRef = useRef<HTMLAudioElement>(null);
+  const { playSound } = useAudio();
   
   const { user } = useUser();
   const firestore = useFirestore();
@@ -63,7 +64,7 @@ export function SidebarNav() {
   
 
   const playHoverSound = () => {
-    // hoverAudioRef.current?.play().catch(e => console.error("Error playing hover sound:", e));
+    playSound('hover');
   }
 
   return (
@@ -120,7 +121,6 @@ export function SidebarNav() {
           </Button>
         </div>
       </SidebarFooter>
-      <audio ref={hoverAudioRef} src="/sounds/ui-hover.mp3" preload="auto"></audio>
     </>
   );
 }
