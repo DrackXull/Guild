@@ -420,9 +420,10 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
                                       <Checkbox
                                         checked={field.value?.includes(trait)}
                                         onCheckedChange={(checked) => {
+                                          const currentValues = Array.isArray(field.value) ? field.value : [];
                                           return checked
-                                            ? field.onChange([...field.value, trait])
-                                            : field.onChange(field.value?.filter((value) => value !== trait));
+                                            ? field.onChange([...currentValues, trait])
+                                            : field.onChange(currentValues.filter((value) => value !== trait));
                                         }}
                                       />
                                     </FormControl>
@@ -533,3 +534,5 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
     </Form>
   );
 }
+
+    
