@@ -35,18 +35,19 @@ service cloud.firestore {
     // --------------------------------
 
     // Players can be read by any member.
-    // The owner can update their own profile (except rank/role).
+    // The owner can update their own profile (except rank/role and honor changes not related to bounties).
     // An officer or admin can update any profile (including rank/role).
-    // An Admin can create a player profile (for initial setup).
     match /players/{playerId} {
       allow read: if isMember();
       allow create: if isAdmin();
-      // Allow self-writes only for non-restricted fields
-      // Allow officers/admins to write anything
-      // Allow any member to update their own honor (for bounty system)
-      allow update: if (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+      // Allow self-writes for non-restricted fields.
+      allow update: if (
+                      // Profile updates by owner (no role/rank changes)
+                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      // Officer/Admin overrides
                       || isOfficer() 
-                      || isAdmin();
+                      || isAdmin()
+                    );
     }
     
     // User-specific data is only accessible by the owner.
@@ -85,17 +86,19 @@ service cloud.firestore {
     // Member Bounties have specific rules
     match /member_bounties/{bountyId} {
       allow read: if isSignedIn();
-      // Create: You must be the one creating it, and the reward must be less than or equal to your current honor
+      
+      // Create: You must be the one creating it, and your honor must be sufficient.
       allow create: if isSignedIn() && request.resource.data.requestingPlayerId == request.auth.uid
       						&& get(/databases/$(database)/documents/players/$(request.auth.uid)).data.currentHonor >= request.resource.data.reward;
-      // Update: You can only accept a bounty (not your own), or if you are the creator, you can mark it complete.
-      allow update: if isSignedIn() 
-                      && (
+      
+      // Update: You can accept a bounty (not your own), or if you are the creator, you can mark it complete.
+      allow update: if isSignedIn() && (
                         // Accepting a bounty
                         (request.resource.data.status == 'in_progress' && resource.data.status == 'open' && request.resource.data.acceptedPlayerId == request.auth.uid && resource.data.requestingPlayerId != request.auth.uid) ||
-                        // Completing a bounty
+                        // Completing a bounty (only status change, honor is handled by function)
                         (request.resource.data.status == 'complete' && resource.data.status == 'in_progress' && resource.data.requestingPlayerId == request.auth.uid)
                        );
+                       
       allow delete: if false; // Bounties are completed, not deleted.
     }
 

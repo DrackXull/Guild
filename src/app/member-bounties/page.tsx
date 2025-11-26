@@ -10,11 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDoc } from "@/firebase/firestore/use-doc";
 import { useToast } from "@/hooks/use-toast";
 import { CreateBountyDialog } from "@/components/bounties/create-bounty-dialog";
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 
 function BountiesGrid({ bounties, isLoading, currentPlayer, currentPlayerId }: { bounties: WithId<MemberBounty>[] | null, isLoading: boolean, currentPlayer: Player | null, currentPlayerId: string | undefined }) {
     const { toast } = useToast();
     const firestore = useFirestore();
+    const functions = getFunctions();
 
     const handleAcceptBounty = (bounty: WithId<MemberBounty>) => {
         if (!firestore || !currentPlayer || !currentPlayerId) return;
@@ -34,37 +36,27 @@ function BountiesGrid({ bounties, isLoading, currentPlayer, currentPlayerId }: {
         toast({ title: "Bounty Accepted!", description: `You are now in progress on "${bounty.title}".` });
     }
 
-    const handleMarkComplete = (bounty: WithId<MemberBounty>) => {
+    const handleMarkComplete = async (bounty: WithId<MemberBounty>) => {
         if (!firestore || !currentPlayerId) return;
         if (bounty.requestingPlayerId !== currentPlayerId) {
             toast({ title: "Only the creator can mark a bounty as complete.", variant: 'destructive' });
             return;
         }
-
-        const bountyRef = doc(firestore, 'member_bounties', bounty.id);
-        
-        // This would ideally be a transaction in a real-world scenario
-        // For simplicity, we'll use non-blocking updates.
-        updateDocumentNonBlocking(bountyRef, {
-            status: 'complete',
-            completedAt: new Date().toISOString()
-        });
-
-        // Award points to the accepted player
-        if(bounty.acceptedPlayerId) {
-            const acceptedPlayerRef = doc(firestore, 'players', bounty.acceptedPlayerId);
-            // This is a simplified example. A transaction or Cloud Function would be safer.
-             updateDocumentNonBlocking(acceptedPlayerRef, {
-                // A field increment would be better here if available client-side easily
-                // For now, we assume we have the full player object to update from.
-                // This part requires fetching the player doc first to avoid overwriting data,
-                // which adds complexity not suitable for this example.
-                // In a real app: use FieldValue.increment(bounty.reward)
-             });
+        if (!bounty.acceptedPlayerId) {
+            toast({ title: "Cannot complete a bounty that has not been accepted.", variant: 'destructive' });
+            return;
         }
 
+        try {
+            const awardBountyHonor = httpsCallable(functions, 'awardBountyHonor');
+            await awardBountyHonor({ bountyId: bounty.id });
 
-        toast({ title: "Bounty Completed!", description: `"${bounty.title}" has been marked as complete.` });
+            toast({ title: "Bounty Completed!", description: `"${bounty.title}" has been marked as complete and honor has been awarded.` });
+        } catch(error) {
+            console.error("Error completing bounty:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            toast({ title: "Completion Failed", description: errorMessage, variant: 'destructive' });
+        }
     }
 
     if (isLoading) {
