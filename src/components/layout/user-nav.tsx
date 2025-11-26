@@ -19,7 +19,7 @@ import {
 import Link from 'next/link';
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Gem, LogOut, Shield, User as UserIcon } from 'lucide-react';
-import { getAuth, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Progress } from '../ui/progress';
