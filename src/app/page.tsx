@@ -87,7 +87,7 @@ export default function LandingPage() {
   }
 
   const playTypingSound = () => {
-    typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
+    // typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
   }
 
   const handleSignIn = (data: SignInFormValues) => {
@@ -123,7 +123,7 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="font-headline text-5xl text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
-                {GUILD_NAME}
+                The <span className="text-muted-foreground">Black</span> Lantern Company
             </h1>
         </div>
 
