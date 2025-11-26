@@ -83,15 +83,15 @@ export default function LandingPage() {
   }
   
   const playTabSound = () => {
-    // tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
+    tabAudioRef.current?.play().catch(e => console.error("Error playing tab sound:", e));
   }
 
   const playTypingSound = () => {
-    // typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
+    typingAudioRef.current?.play().catch(e => console.error("Error playing typing sound:", e));
   }
 
   const handleSignIn = (data: SignInFormValues) => {
-    // loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
+    loginAudioRef.current?.play().catch(e => console.error("Error playing login sound:", e));
     initiateEmailSignIn(auth, data.email, data.password);
   };
 
@@ -196,5 +196,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
