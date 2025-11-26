@@ -16,6 +16,7 @@
 
 
 
+
 export type WithId<T> = T & { id: string };
 
 export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Knight' | 'Champion' | 'Elder';
@@ -23,6 +24,7 @@ export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Knight' | 'Champion' |
 export type Player = {
   id: string;
   displayName: string;
+  displayNameHistory?: { name: string; changedAt: string }[];
   discordTag: string;
   friends: string[];
   isOnline: boolean;
@@ -278,3 +280,5 @@ export type GuildSettings = {
 
 // This is not a complete type, but it's what we need for the setup button
 export type PartialPlayer = Partial<Omit<Player, 'id' | 'characters'>>;
+
+    

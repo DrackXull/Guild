@@ -4,19 +4,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2 } from "lucide-react";
+import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2, History } from "lucide-react";
 import { CharacterCard } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUser, useFirestore, setDocumentNonBlocking, useDoc, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
+import { doc, collection, arrayUnion } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { Player, WithId, Character, CharacterClass, PartialPlayer } from "@/lib/types";
 import { characterClasses } from "@/lib/data";
 import { useCollection } from "@/firebase/firestore/use-collection";
 import { query } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -29,6 +29,119 @@ const createCharacterSchema = z.object({
 });
 
 type CreateCharacterFormValues = z.infer<typeof createCharacterSchema>;
+
+const editProfileSchema = z.object({
+    displayName: z.string().min(2, "Display name must be at least 2 characters.").max(24, "Display name cannot exceed 24 characters."),
+    discordTag: z.string().min(2, "Discord tag must be at least 2 characters."),
+    avatarUrl: z.string().url("Please enter a valid URL.").optional().or(z.literal('')),
+});
+
+type EditProfileFormValues = z.infer<typeof editProfileSchema>;
+
+
+function EditProfileDialog({ player }: { player: WithId<Player> }) {
+    const { toast } = useToast();
+    const firestore = useFirestore();
+    const [isOpen, setIsOpen] = useState(false);
+
+    const form = useForm<EditProfileFormValues>({
+        resolver: zodResolver(editProfileSchema),
+        defaultValues: {
+            displayName: player.displayName,
+            discordTag: player.discordTag,
+            avatarUrl: player.avatarUrl || '',
+        },
+    });
+
+    const onSubmit = (data: EditProfileFormValues) => {
+        if (!firestore) return;
+
+        const playerDocRef = doc(firestore, 'players', player.id);
+        
+        const updateData: Partial<Player> = {
+            displayName: data.displayName,
+            discordTag: data.discordTag,
+            avatarUrl: data.avatarUrl,
+        };
+
+        // If display name has changed, log the old one
+        if (data.displayName !== player.displayName) {
+             const nameHistoryEntry = {
+                name: player.displayName,
+                changedAt: new Date().toISOString(),
+            };
+            // Use arrayUnion to add to the history
+            (updateData as any).displayNameHistory = arrayUnion(nameHistoryEntry);
+        }
+        
+        setDocumentNonBlocking(playerDocRef, updateData, { merge: true });
+
+        toast({
+            title: "Profile Updated",
+            description: "Your changes have been saved.",
+        });
+        setIsOpen(false);
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button>Edit Profile</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="font-headline text-2xl">Edit Profile</DialogTitle>
+                </DialogHeader>
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField control={form.control} name="displayName" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Display Name</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={form.control} name="discordTag" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Discord Tag</FormLabel>
+                                <FormControl><Input {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={form.control} name="avatarUrl" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Avatar URL</FormLabel>
+                                <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+
+                        {player.displayNameHistory && player.displayNameHistory.length > 0 && (
+                            <div>
+                                <h4 className="font-headline text-lg mb-2 flex items-center gap-2"><History className="h-4 w-4" /> Alias History</h4>
+                                <div className="space-y-2 rounded-md border bg-muted/50 p-3 max-h-32 overflow-y-auto">
+                                    {player.displayNameHistory.slice().reverse().map((entry, index) => (
+                                        <div key={index} className="text-sm">
+                                            <span className="font-semibold">{entry.name}</span>
+                                            <span className="text-xs text-muted-foreground ml-2">({new Date(entry.changedAt).toLocaleDateString()})</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        <DialogFooter className="pt-4">
+                           <Button type="submit" disabled={form.formState.isSubmitting}>
+                                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Save Changes
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 function CreateCharacterDialog() {
   const { user } = useUser();
@@ -178,27 +291,7 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
                         </div>
                     </div>
                     </div>
-                    <Dialog>
-                    <DialogTrigger asChild>
-                        <Button>Edit Profile</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                        <DialogTitle className="font-headline text-2xl">Edit Profile</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="displayName" className="text-right">Display Name</Label>
-                            <Input id="displayName" defaultValue={player.displayName} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="discordTag" className="text-right">Discord Tag</Label>
-                            <Input id="discordTag" defaultValue={player.discordTag} className="col-span-3" />
-                        </div>
-                        </div>
-                        <Button type="submit">Save Changes</Button>
-                    </DialogContent>
-                    </Dialog>
+                    <EditProfileDialog player={player} />
                 </div>
                 </CardHeader>
             </Card>
@@ -338,3 +431,5 @@ export default function ProfilePage() {
       </div>
   );
 }
+
+    
