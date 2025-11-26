@@ -111,9 +111,9 @@
           "type": "string",
           "description": "Character's rank (e.g. Neophyte, Voyager, Demigod)."
         },
-        "bossKills": {
+        "totalBossKills": {
           "type": "number",
-          "description": "Number of boss kills for this character."
+          "description": "Total number of boss kills for this character."
         },
         "confirmedKills": {
             "type": "number",
@@ -129,7 +129,7 @@
         "playerId",
         "name",
         "class",
-        "bossKills",
+        "totalBossKills",
         "confirmedKills",
         "unconfirmedKills"
       ]

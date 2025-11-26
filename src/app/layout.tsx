@@ -82,7 +82,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
                         </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Total Guild Kills</p>
+                        <p>Total Confirmed Guild Kills</p>
                     </TooltipContent>
                    </Tooltip>
                     <Tooltip>
@@ -197,3 +197,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+
+    
