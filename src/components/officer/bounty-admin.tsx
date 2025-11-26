@@ -77,7 +77,7 @@ export function BountyAdmin() {
 
     const questData: Quest = {
       ...data,
-      requiredRank: data.requiredRank || undefined,
+      requiredRank: data.requiredRank === 'none' || !data.requiredRank ? undefined : data.requiredRank,
     };
     
     if (editingBounty?.id) {
@@ -95,7 +95,10 @@ export function BountyAdmin() {
   
   const handleEditBounty = (bounty: WithId<Quest>) => {
     setEditingBounty(bounty);
-    reset(bounty);
+    reset({
+      ...bounty,
+      requiredRank: bounty.requiredRank || "none",
+    });
   }
 
   const handleCancelEdit = () => {
@@ -219,12 +222,12 @@ export function BountyAdmin() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="requiredRank">Required Rank (Optional)</Label>
-                 <Select name="requiredRank" value={form.watch('requiredRank')} onValueChange={(v) => form.setValue('requiredRank', v)}>
+                 <Select name="requiredRank" value={form.watch('requiredRank') || "none"} onValueChange={(v) => form.setValue('requiredRank', v)}>
                   <SelectTrigger id="requiredRank">
                     <SelectValue placeholder="No rank requirement" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {ranks.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                   </SelectContent>
                 </Select>

@@ -38,7 +38,7 @@ export function MarketAdmin() {
         const description = formData.get('description') as string;
         const category = formData.get('category') as string;
         const price = formData.get('price') as string;
-        const requiredRank = formData.get('requiredRank') as Rank | undefined;
+        const requiredRank = formData.get('requiredRank') as Rank | "none" | undefined;
 
         if (!name || !description || !category || !price) {
             toast({
@@ -55,7 +55,7 @@ export function MarketAdmin() {
             category,
             price: parseInt(price, 10),
             quantity: 1, // Default quantity
-            requiredRank: requiredRank || undefined,
+            requiredRank: requiredRank === 'none' ? undefined : requiredRank,
         };
 
         addDocumentNonBlocking(itemsCollectionRef, newItem);
@@ -148,7 +148,7 @@ export function MarketAdmin() {
                                 <SelectValue placeholder="No rank requirement" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">None</SelectItem>
+                                <SelectItem value="none">None</SelectItem>
                                 {guildRanks.map(r => <SelectItem key={r.rank} value={r.rank}>{r.rank}</SelectItem>)}
                             </SelectContent>
                         </Select>
