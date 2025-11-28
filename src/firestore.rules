@@ -34,11 +34,11 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member.
+    // Players can be read by any member, and a user can always read their own document.
     // The owner can update their own profile (except rank/role and honor changes not related to bounties).
     // An officer or admin can update any profile (including rank/role).
     match /players/{playerId} {
-      allow read: if isMember();
+      allow read: if isOwner(playerId) || isMember();
       allow create: if isAdmin();
       // Allow self-writes for non-restricted fields.
       allow update: if (
