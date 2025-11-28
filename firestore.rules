@@ -16,14 +16,12 @@ service cloud.firestore {
 
     function isOfficer() {
       return isSignedIn() && 
-        (exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid)) ||
-         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'officer');
+        exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
     }
     
     function isAdmin() {
       return isSignedIn() && 
-        (exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid)) ||
-         get(/databases/$(database)/documents/players/$(request.auth.uid)).data.role == 'admin');
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
     function isMember() {
@@ -34,17 +32,20 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member.
-    // The owner can update their own profile (except rank/role).
+    // Players can be read by any member, and a user can always read their own document.
+    // The owner can update their own profile (except rank/role and honor changes not related to bounties).
     // An officer or admin can update any profile (including rank/role).
-    // An Admin can create a player profile (for initial setup).
     match /players/{playerId} {
-      allow read: if isMember();
+      allow read: if isOwner(playerId) || isMember();
       allow create: if isAdmin();
-      // Allow self-writes only for non-restricted fields
-      allow update: if (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+      // Allow self-writes for non-restricted fields.
+      allow update: if (
+                      // Profile updates by owner (no role/rank changes)
+                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      // Officer/Admin overrides
                       || isOfficer() 
-                      || isAdmin();
+                      || isAdmin()
+                    );
     }
     
     // User-specific data is only accessible by the owner.
@@ -63,8 +64,10 @@ service cloud.firestore {
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // A user can get their own application, or an officer/admin can get any.
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
+        // Officers/admins can list all. A user can list only their own via a query.
+        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
         allow update: if isOfficer() || isAdmin();
         allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
@@ -80,9 +83,23 @@ service cloud.firestore {
       allow write: if isOfficer() || isAdmin();
     }
     
+    // Member Bounties have specific rules
     match /member_bounties/{bountyId} {
       allow read: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      
+      // Create: You must be the one creating it, and your honor must be sufficient.
+      allow create: if isSignedIn() && request.resource.data.requestingPlayerId == request.auth.uid
+      						&& get(/databases/$(database)/documents/players/$(request.auth.uid)).data.currentHonor >= request.resource.data.reward;
+      
+      // Update: You can accept a bounty (not your own), or if you are the creator, you can mark it complete.
+      allow update: if isSignedIn() && (
+                        // Accepting a bounty
+                        (request.resource.data.status == 'in_progress' && resource.data.status == 'open' && request.resource.data.acceptedPlayerId == request.auth.uid && resource.data.requestingPlayerId != request.auth.uid) ||
+                        // Completing a bounty (only status change, honor is handled by function)
+                        (request.resource.data.status == 'complete' && resource.data.status == 'in_progress' && resource.data.requestingPlayerId == request.auth.uid)
+                       );
+                       
+      allow delete: if false; // Bounties are completed, not deleted.
     }
 
     match /settings/guild {
