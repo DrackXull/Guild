@@ -66,9 +66,10 @@ service cloud.firestore {
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // A user can get their own application, or an officer/admin can get any.
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        // A user can list/query for their own application; officers/admins can query all.
-        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.get("where")[0][2] == request.auth.uid);
+        // A user can query for their own application; officers/admins can query all.
+        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
         allow update: if isOfficer() || isAdmin();
         allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
