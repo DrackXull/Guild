@@ -42,6 +42,8 @@ service cloud.firestore {
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
                       (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      // Bounty reward deduction
+                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
                       // Officer/Admin overrides
                       || isOfficer() 
                       || isAdmin()
@@ -66,8 +68,8 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         // A user can get their own application, or an officer/admin can get any.
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        // Officers/admins can list all. A user can list only their own via a query.
-        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
+        // A user can query for their own application; officers/admins can query all.
+        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.get('where')[0][2] == request.auth.uid);
         allow update: if isOfficer() || isAdmin();
         allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
