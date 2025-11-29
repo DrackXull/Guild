@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Swords, Loader2, Info, Save } from 'lucide-react';
-import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { timezones, convertToEST, getESTAbbreviation } from '@/lib/timezones';
@@ -127,7 +127,7 @@ export default function ApplyPage() {
     });
   };
 
-  const onSubmit = async (data: ApplicationFormValues) => {
+  const onSubmit = (data: ApplicationFormValues) => {
     if (!firestore || !user) {
       toast({
         title: 'Error',
@@ -137,31 +137,30 @@ export default function ApplyPage() {
       return;
     }
 
-    const applicationsCollection = collection(firestore, 'applications');
+    // Two-part save: one for the user-specific path, one for officer review
     const applicationData = {
       ...data,
       userId: user.uid,
-      status: 'pending',
+      status: 'pending' as const,
       createdAt: new Date().toISOString(),
-      attemptCount: 1, // This would be incremented if re-applying was handled here
+      attemptCount: 1, 
     };
 
-    try {
-      await addDocumentNonBlocking(applicationsCollection, applicationData);
-      toast({
-        title: 'Application Submitted',
-        description: 'Thank you for your summons. The council will review your application.',
-      });
-      setSavedDraft({}); // Clear the draft
-      router.push('/application-status'); // Redirect to status page
-    } catch (error) {
-       console.error("Error submitting application:", error);
-       toast({
-        title: 'Submission Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    // 1. Save to the user's private application path for their status page
+    const userApplicationRef = doc(firestore, `users/${user.uid}/application`, 'latest');
+    setDocumentNonBlocking(userApplicationRef, applicationData);
+    
+    // 2. Save a copy to the root `applications` collection for officer review
+    // We can use the user's UID as the document ID here for easy lookup/update by officers.
+    const officerReviewRef = doc(firestore, `applications`, user.uid);
+    setDocumentNonBlocking(officerReviewRef, applicationData);
+
+    toast({
+      title: 'Application Submitted',
+      description: 'Thank you for your summons. The council will review your application.',
+    });
+    setSavedDraft({}); // Clear the draft
+    router.push('/application-status'); // Redirect to status page
   };
   
   const watchedValues = watch();
@@ -626,3 +625,5 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+    

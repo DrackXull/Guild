@@ -62,16 +62,13 @@ service cloud.firestore {
       allow write: if isOwner(resource.data.playerId);
     }
 
-    // Applications can be created by any signed-in user.
-    // They can only be read/listed if the user is an officer, admin, or the owner of the application.
+    // Applications are for officer review. They can be read/listed by officers/admins.
+    // A user creates their application here but cannot read the list.
     match /applications/{applicationId} {
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        // A user can get their own application, or an officer/admin can get any.
-        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
-        // A user can query for their own application; officers/admins can query all.
-        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.get('where')[0][2] == request.auth.uid);
-        allow update: if isOfficer() || isAdmin();
-        allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && request.resource.id == request.auth.uid;
+        allow read, update, delete: if isOfficer() || isAdmin();
+        // A user cannot list all applications
+        allow list: if isOfficer() || isAdmin();
     }
 
     // Global data is readable by members/officers, but only writable by officers/admins.
@@ -127,3 +124,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

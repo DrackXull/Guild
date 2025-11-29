@@ -28,7 +28,7 @@ import type { Application, ApplicationReview as TApplicationReview, Player, Part
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { doc, collection, query, where, arrayUnion } from 'firebase/firestore';
 
 type ApplicationReviewProps = {
   application: WithId<Application>;
@@ -46,7 +46,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
 
   const officersQuery = useMemoFirebase(() => {
     if (!firestore || officerIds.length === 0) return null;
-    return query(collection(firestore, 'players'), where('id', 'in', officerIds));
+    // Firestore 'in' queries are limited to 30 items. For a larger guild, this might need pagination.
+    return query(collection(firestore, 'players'), where('__name__', 'in', officerIds));
   }, [firestore, officerIds]);
 
   const { data: officers } = useCollection<Player>(officersQuery);
@@ -70,24 +71,20 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     
     const newReviewLog: ApplicationReviewLog = {
       officerId: officer.uid,
-      decision: 'approved', // Placeholder, the real decision is on the whole app
+      decision: 'approved', // This is a placeholder; the decision is made on the application itself
       notes: notes,
       timestamp: new Date().toISOString(),
     };
-    
-    // Check if this officer has already reviewed
-    const existingReviewIndex = application.reviewHistory?.findIndex(r => r.officerId === officer.uid) ?? -1;
-    let updatedReviewHistory = [...(application.reviewHistory || [])];
 
-    if (existingReviewIndex !== -1) {
-        // Update existing review
-        updatedReviewHistory[existingReviewIndex] = newReviewLog;
-    } else {
-        // Add new review
-        updatedReviewHistory.push(newReviewLog);
-    }
-    
-    setDocumentNonBlocking(appRef, { reviewHistory: updatedReviewHistory }, { merge: true });
+    // This uses arrayUnion to add the review, which is more robust for concurrent edits.
+    // However, to support *editing* a review, we'd need to fetch, modify, and set.
+    // For simplicity, we'll just add for now. A more complex system would handle edits.
+    setDocumentNonBlocking(appRef, { reviewHistory: arrayUnion(newReviewLog) }, { merge: true });
+
+    // Also update the user-facing application doc to show review activity
+    const userAppRef = doc(firestore, `users/${application.userId}/application`, 'latest');
+    setDocumentNonBlocking(userAppRef, { reviewHistory: arrayUnion(newReviewLog) }, { merge: true });
+
 
     toast({
         title: "Review Submitted",
@@ -102,7 +99,14 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         toast({ title: "Authentication Error", description: "You must be logged in as an officer.", variant: "destructive"});
         return;
     }
-    const appRef = doc(firestore, 'applications', application.id);
+    
+    // Update officer-facing app
+    const officerAppRef = doc(firestore, 'applications', application.id);
+    setDocumentNonBlocking(officerAppRef, { status: decision }, { merge: true });
+
+    // Update user-facing app
+    const userAppRef = doc(firestore, `users/${application.userId}/application`, 'latest');
+    setDocumentNonBlocking(userAppRef, { status: decision }, { merge: true });
     
     if (decision === 'approved') {
         const playerRef = doc(firestore, 'players', application.userId);
@@ -114,13 +118,11 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             currentHonor: 100,
             maxHonor: 100,
             role: 'member',
-            isMember: true,
+            rank: 'Neophyte',
         };
         setDocumentNonBlocking(playerRef, newPlayerData, { merge: true });
-        setDocumentNonBlocking(appRef, { status: 'approved' }, { merge: true });
         toast({ title: "Application Approved!", description: `${application.applicantName} is now a member of the guild.` });
     } else {
-        setDocumentNonBlocking(appRef, { status: 'denied' }, { merge: true });
         toast({ title: "Application Denied", description: `The application for ${application.applicantName} has been denied.`, variant: "destructive"});
     }
     setIsOpen(false);
@@ -189,7 +191,6 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{reviewer?.displayName || 'Unknown Officer'}</span>
-                          {/* <Badge variant="secondary" className="font-mono">{review.vote}/10</Badge> */}
                         </div>
                         <p className="text-muted-foreground text-sm">{review.notes}</p>
                       </div>
@@ -203,7 +204,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             <Card className="sticky top-0">
               <CardHeader>
                  <CardTitle className='font-headline'>Your Review</CardTitle>
-                 <CardDescription>Leave a note for other council members. This will overwrite your previous review if you've made one.</CardDescription>
+                 <CardDescription>Leave a note for other council members. This will add a new review entry.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -217,7 +218,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
                 </div>
               </CardContent>
                <CardFooter>
-                <Button className="w-full" onClick={handleReviewSubmit}>{existingReview ? "Update Your Review" : "Submit Your Review"}</Button>
+                <Button className="w-full" onClick={handleReviewSubmit}>Submit Your Review</Button>
               </CardFooter>
             </Card>
           </div>
@@ -235,3 +236,5 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
+
+    

@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth, useDoc } from '@/firebase';
+import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { ApplicationStatus } from '@/components/apply/application-status';
 import type { Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -62,15 +62,15 @@ export default function ApplicationStatusPage() {
 
 
   // IMPORTANT: Only create the query if the user and firestore are available.
-  const applicationsQuery = useMemoFirebase(() => {
+  const applicationDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return query(collection(firestore, 'applications'), where('userId', '==', user.uid), limit(1));
+    // Fetch the user's specific application document.
+    return doc(firestore, `users/${user.uid}/application`, 'latest');
   }, [firestore, user]);
 
-  const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
-  const existingApplication = applications?.[0];
-
-  const isLoading = isUserLoading || (user && isLoadingApplications);
+  const { data: existingApplication, isLoading: isLoadingApplication } = useDoc<Application>(applicationDocRef);
+  
+  const isLoading = isUserLoading || (user && isLoadingApplication);
 
 
   // Render a loading state or null while redirecting to avoid flashing content.
@@ -125,3 +125,5 @@ export default function ApplicationStatusPage() {
     </div>
   );
 }
+
+    

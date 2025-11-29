@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, FileText, Loader, Shield, UserX, XCircle } from 'lucide-react';
 import type { Application, WithId } from '@/lib/types';
-import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { GUILD_NAME } from '@/lib/config';
@@ -72,10 +73,14 @@ export function ApplicationStatus({ application }: ApplicationStatusProps) {
 
     const handleWithdraw = () => {
         if (!firestore) return;
-        const appRef = doc(firestore, 'applications', application.id);
-        
-        // This is a non-blocking update.
-        deleteDocumentNonBlocking(appRef);
+        // Update the officer-facing application
+        const officerAppRef = doc(firestore, 'applications', application.userId);
+        setDocumentNonBlocking(officerAppRef, { status: 'withdrawn' }, { merge: true });
+
+        // Update the user-facing application
+        const userAppRef = doc(firestore, `users/${application.userId}/application`, 'latest');
+        setDocumentNonBlocking(userAppRef, { status: 'withdrawn' }, { merge: true });
+
 
         toast({
             title: 'Application Withdrawn',
@@ -125,3 +130,5 @@ export function ApplicationStatus({ application }: ApplicationStatusProps) {
     </Card>
   );
 }
+
+    
