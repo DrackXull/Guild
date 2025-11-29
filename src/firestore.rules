@@ -69,7 +69,7 @@ service cloud.firestore {
         // A user can get their own application, or an officer/admin can get any.
         allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
         // A user can query for their own application; officers/admins can query all.
-        allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
+        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
         allow update: if isOfficer() || isAdmin();
         allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
     }
