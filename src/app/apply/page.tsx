@@ -137,23 +137,18 @@ export default function ApplyPage() {
       return;
     }
 
-    // Two-part save: one for the user-specific path, one for officer review
     const applicationData = {
       ...data,
+      id: user.uid, // The application ID is the user's ID.
       userId: user.uid,
       status: 'pending' as const,
       createdAt: new Date().toISOString(),
       attemptCount: 1, 
     };
 
-    // 1. Save to the user's private application path for their status page
-    const userApplicationRef = doc(firestore, `users/${user.uid}/application`, 'latest');
-    setDocumentNonBlocking(userApplicationRef, applicationData);
-    
-    // 2. Save a copy to the root `applications` collection for officer review
-    // We can use the user's UID as the document ID here for easy lookup/update by officers.
-    const officerReviewRef = doc(firestore, `applications`, user.uid);
-    setDocumentNonBlocking(officerReviewRef, applicationData);
+    // Save to the root `applications` collection for officer review and user status check.
+    const applicationRef = doc(firestore, `applications`, user.uid);
+    setDocumentNonBlocking(applicationRef, applicationData);
 
     toast({
       title: 'Application Submitted',

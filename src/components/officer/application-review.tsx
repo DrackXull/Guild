@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Application, ApplicationReview as TApplicationReview, Player, PartialPlayer, WithId, ApplicationReviewLog } from '@/lib/types';
 import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, where, arrayUnion } from 'firebase/firestore';
 
 type ApplicationReviewProps = {
@@ -77,14 +77,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     };
 
     // This uses arrayUnion to add the review, which is more robust for concurrent edits.
-    // However, to support *editing* a review, we'd need to fetch, modify, and set.
-    // For simplicity, we'll just add for now. A more complex system would handle edits.
-    setDocumentNonBlocking(appRef, { reviewHistory: arrayUnion(newReviewLog) }, { merge: true });
-
-    // Also update the user-facing application doc to show review activity
-    const userAppRef = doc(firestore, `users/${application.userId}/application`, 'latest');
-    setDocumentNonBlocking(userAppRef, { reviewHistory: arrayUnion(newReviewLog) }, { merge: true });
-
+    updateDocumentNonBlocking(appRef, { reviewHistory: arrayUnion(newReviewLog) });
 
     toast({
         title: "Review Submitted",
@@ -100,13 +93,9 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
         return;
     }
     
-    // Update officer-facing app
-    const officerAppRef = doc(firestore, 'applications', application.id);
-    setDocumentNonBlocking(officerAppRef, { status: decision }, { merge: true });
-
-    // Update user-facing app
-    const userAppRef = doc(firestore, `users/${application.userId}/application`, 'latest');
-    setDocumentNonBlocking(userAppRef, { status: decision }, { merge: true });
+    // Update application status
+    const appRef = doc(firestore, 'applications', application.id);
+    updateDocumentNonBlocking(appRef, { status: decision });
     
     if (decision === 'approved') {
         const playerRef = doc(firestore, 'players', application.userId);
@@ -236,5 +225,3 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
-
-    

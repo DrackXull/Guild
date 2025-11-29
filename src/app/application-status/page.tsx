@@ -64,8 +64,8 @@ export default function ApplicationStatusPage() {
   // IMPORTANT: Only create the query if the user and firestore are available.
   const applicationDocRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    // Fetch the user's specific application document.
-    return doc(firestore, `users/${user.uid}/application`, 'latest');
+    // Fetch the user's specific application document from the root `applications` collection.
+    return doc(firestore, 'applications', user.uid);
   }, [firestore, user]);
 
   const { data: existingApplication, isLoading: isLoadingApplication } = useDoc<Application>(applicationDocRef);
