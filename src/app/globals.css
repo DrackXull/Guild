@@ -124,6 +124,13 @@
   }
 }
 
+@layer utilities {
+  .guild-title-gradient {
+    @apply bg-gradient-to-br from-amber-300 via-orange-500 to-red-700 bg-clip-text text-transparent drop-shadow-[0_2px_1px_rgba(0,0,0,0.5)];
+  }
+}
+
+
 .officer-theme {
   --primary: hsl(var(--blood));
   --primary-foreground: hsl(var(--text));

@@ -183,7 +183,7 @@ export default function ApplyPage() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
       <div className="flex flex-col items-center text-center mb-8">
-        <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to {GUILD_NAME}</h1>
+        <h1 className="font-headline text-4xl font-bold tracking-wide">A Summons to <span className="guild-title-gradient">{GUILD_NAME}</span></h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
             We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition.
         </p>

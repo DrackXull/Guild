@@ -22,6 +22,7 @@ import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { GUILD_NAME } from '@/lib/config';
 import { useAudio } from '@/hooks/use-audio';
+import { cn } from '@/lib/utils';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -113,7 +114,7 @@ export default function LandingPage() {
        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className="font-headline text-5xl text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
+            <h1 className={cn("font-headline text-5xl", "guild-title-gradient")}>
                 {GUILD_NAME}
             </h1>
         </div>

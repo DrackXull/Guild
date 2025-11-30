@@ -32,6 +32,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { useAudio } from '@/hooks/use-audio';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -70,7 +71,7 @@ export function SidebarNav() {
   return (
     <>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="font-headline text-2xl font-bold text-primary">
+        <Link href="/dashboard" className={cn("font-headline text-2xl font-bold", "guild-title-gradient")}>
           <span>{GUILD_NAME}</span>
         </Link>
       </SidebarHeader>
