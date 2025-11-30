@@ -71,7 +71,7 @@ export function SidebarNav() {
     <>
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="font-headline text-2xl font-bold text-primary">
-          <span>The <span className="text-muted">Black</span> Lantern Company</span>
+          <span>{GUILD_NAME}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">

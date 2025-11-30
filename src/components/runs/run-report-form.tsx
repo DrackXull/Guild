@@ -534,5 +534,3 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
     </Form>
   );
 }
-
-    

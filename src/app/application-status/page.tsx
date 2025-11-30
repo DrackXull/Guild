@@ -125,5 +125,3 @@ export default function ApplicationStatusPage() {
     </div>
   );
 }
-
-    

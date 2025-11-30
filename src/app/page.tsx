@@ -114,7 +114,7 @@ export default function LandingPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
             <h1 className="font-headline text-5xl text-primary drop-shadow-[0_2px_2px_rgba(0,0,0,0.7)]">
-                The <span className="text-muted">Black</span> Lantern Company
+                {GUILD_NAME}
             </h1>
         </div>
 
