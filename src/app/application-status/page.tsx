@@ -72,7 +72,7 @@ export default function ApplicationStatusPage() {
   
   const isLoading = isUserLoading || (user && isLoadingApplication);
 
-  const [firstWord, ...restOfName] = GUILD_NAME.split(' ');
+  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
 
   // Render a loading state or null while redirecting to avoid flashing content.
   if (isUserLoading || !user) {
@@ -94,7 +94,7 @@ export default function ApplicationStatusPage() {
         ) : (
             <div className="container mx-auto max-w-4xl py-12">
               <div className="flex flex-col items-center text-center mb-8">
-                <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{restOfName.join(' ')}</span></h1>
+                <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span></h1>
                 <p className="text-muted-foreground mt-2 max-w-2xl">
                   {existingApplication 
                     ? "Below is the current status of your petition."

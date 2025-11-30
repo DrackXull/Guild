@@ -162,7 +162,7 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
-  const [firstWord, ...restOfName] = GUILD_NAME.split(' ');
+  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
 
 
   if (isUserLoading) {
@@ -186,7 +186,7 @@ export default function ApplyPage() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
       <div className="flex flex-col items-center text-center mb-8">
-        <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{restOfName.join(' ')}</span></h1>
+        <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span></h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
             We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition.
         </p>
@@ -591,7 +591,7 @@ export default function ApplyPage() {
                   <legend className="font-headline text-xl mb-2">Your Intentions</legend>
                    <FormField control={control} name="guildExpectations" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>What are you looking to gain from and add to the <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{restOfName.join(' ')}</span>?</FormLabel>
+                        <FormLabel>What are you looking to gain from and add to the <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>?</FormLabel>
                         <FormControl><Textarea rows={4} {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
