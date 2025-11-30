@@ -98,6 +98,8 @@ export default function LandingPage() {
   };
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');
+  const [firstWord, ...restOfName] = GUILD_NAME.split(' ');
+
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background text-foreground p-4">
@@ -114,8 +116,8 @@ export default function LandingPage() {
        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className={cn("font-headline text-5xl", "guild-title-gradient")}>
-                {GUILD_NAME}
+            <h1 className="font-headline text-5xl guild-title-word">
+                <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{restOfName.join(' ')}</span>
             </h1>
         </div>
 

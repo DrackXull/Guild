@@ -1,1 +1,1 @@
-export const GUILD_NAME = "The Black Lantern Company";
+export const GUILD_NAME = "Black Lantern Company";

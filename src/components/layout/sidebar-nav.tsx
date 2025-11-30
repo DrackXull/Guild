@@ -63,6 +63,7 @@ export function SidebarNav() {
 
   const isOfficer = player?.role === 'officer' || player?.role === 'admin';
   
+  const [firstWord, ...restOfName] = GUILD_NAME.split(' ');
 
   const playHoverSound = () => {
     playSound('hover');
@@ -71,8 +72,8 @@ export function SidebarNav() {
   return (
     <>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className={cn("font-headline text-2xl font-bold", "guild-title-gradient")}>
-          <span>{GUILD_NAME}</span>
+        <Link href="/dashboard" className="font-headline text-2xl font-bold guild-title-word">
+            <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{restOfName.join(' ')}</span>
         </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
