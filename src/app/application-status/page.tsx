@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FilePlus, LogOut, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { GUILD_NAME } from '@/lib/config';
+import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 
 function ApplicantHeader() {
@@ -46,6 +46,22 @@ function ApplicantHeader() {
     )
 }
 
+function GuildTitle() {
+  const { settings, isLoading } = useGuildSettings();
+  const guildName = settings?.guildName || '...';
+  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
+
+  if (isLoading) {
+    return <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">Loading...</h1>
+  }
+
+  return (
+    <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">
+        A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
+    </h1>
+  );
+}
+
 
 export default function ApplicationStatusPage() {
   const { user, isUserLoading } = useUser();
@@ -72,8 +88,6 @@ export default function ApplicationStatusPage() {
   
   const isLoading = isUserLoading || (user && isLoadingApplication);
 
-  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
-
   // Render a loading state or null while redirecting to avoid flashing content.
   if (isUserLoading || !user) {
     return (
@@ -94,7 +108,7 @@ export default function ApplicationStatusPage() {
         ) : (
             <div className="container mx-auto max-w-4xl py-12">
               <div className="flex flex-col items-center text-center mb-8">
-                <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span></h1>
+                <GuildTitle />
                 <p className="text-muted-foreground mt-2 max-w-2xl">
                   {existingApplication 
                     ? "Below is the current status of your petition."
@@ -126,3 +140,5 @@ export default function ApplicationStatusPage() {
     </div>
   );
 }
+
+    

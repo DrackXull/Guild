@@ -27,12 +27,12 @@ import {
 import { Separator } from '../ui/separator';
 import { Button } from '../ui/button';
 import { useRef } from 'react';
-import { GUILD_NAME } from '@/lib/config';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { useAudio } from '@/hooks/use-audio';
 import { cn } from '@/lib/utils';
+import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
@@ -47,6 +47,21 @@ const navItems = [
 
 const officerNavItem = { href: '/officer', label: 'Council', icon: <Shield /> };
 
+function GuildTitle() {
+  const { settings, isLoading } = useGuildSettings();
+  const guildName = settings?.guildName || '...';
+  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
+
+  if (isLoading) {
+    return <div className="h-6 w-3/4 bg-muted animate-pulse rounded" />;
+  }
+
+  return (
+    <Link href="/dashboard" className="font-headline text-2xl font-bold guild-title-word">
+      <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
+    </Link>
+  );
+}
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -62,8 +77,6 @@ export function SidebarNav() {
   const { data: player } = useDoc<Player>(playerDocRef);
 
   const isOfficer = player?.role === 'officer' || player?.role === 'admin';
-  
-  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
 
   const playHoverSound = () => {
     playSound('hover');
@@ -72,9 +85,7 @@ export function SidebarNav() {
   return (
     <>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="font-headline text-2xl font-bold guild-title-word">
-            <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
-        </Link>
+        <GuildTitle />
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
@@ -126,3 +137,5 @@ export function SidebarNav() {
     </>
   );
 }
+
+    

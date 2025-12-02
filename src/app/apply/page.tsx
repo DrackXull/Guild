@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { GUILD_NAME } from '@/lib/config';
+import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 const applicationSchema = z.object({
   applicantName: z.string().min(1, 'Name is required.'),
@@ -66,12 +66,28 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
     return { value: time24, label: `${time24} (${time12})`};
 });
 
+function GuildTitle() {
+  const { settings, isLoading } = useGuildSettings();
+  const guildName = settings?.guildName || '...';
+  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
+
+  if (isLoading) {
+    return <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">Loading...</h1>
+  }
+
+  return (
+    <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">
+      A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
+    </h1>
+  );
+}
 
 export default function ApplyPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const { settings } = useGuildSettings();
   
   const [savedDraft, setSavedDraft] = useLocalStorage<Partial<ApplicationFormValues>>(LOCAL_STORAGE_KEY, {});
 
@@ -162,7 +178,8 @@ export default function ApplyPage() {
   const estTime = convertToEST(watchedValues.availabilityStart, watchedValues.availabilityEnd, watchedValues.availabilityTimezone);
   const estAbbreviation = getESTAbbreviation();
 
-  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
+  const guildName = settings?.guildName || '...';
+  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
 
 
   if (isUserLoading) {
@@ -186,7 +203,7 @@ export default function ApplyPage() {
   return (
     <div className="container mx-auto max-w-4xl py-12">
       <div className="flex flex-col items-center text-center mb-8">
-        <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">A Summons to <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span></h1>
+        <GuildTitle />
         <p className="text-muted-foreground mt-2 max-w-2xl">
             We seek stalwart adventurers to delve into the depths. Answer the call by completing the fields below. The council will review your petition.
         </p>
@@ -623,3 +640,5 @@ export default function ApplyPage() {
     </div>
   );
 }
+
+    

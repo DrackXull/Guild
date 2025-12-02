@@ -20,9 +20,9 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { doc } from 'firebase/firestore';
 import type { Player } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
-import { GUILD_NAME } from '@/lib/config';
 import { useAudio } from '@/hooks/use-audio';
 import { cn } from '@/lib/utils';
+import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 const signInSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -45,6 +45,22 @@ const signUpSchema = z.object({
 
 type SignInFormValues = z.infer<typeof signInSchema>;
 type SignUpFormValues = z.infer<typeof signUpSchema>;
+
+function GuildTitle() {
+  const { settings, isLoading } = useGuildSettings();
+  const guildName = settings?.guildName || '...';
+  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
+
+  if (isLoading) {
+    return <h1 className="font-headline text-5xl guild-title-word">Loading...</h1>
+  }
+
+  return (
+    <h1 className="font-headline text-5xl guild-title-word">
+        <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
+    </h1>
+  )
+}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -98,8 +114,6 @@ export default function LandingPage() {
   };
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');
-  const [firstWord, secondWord, ...restOfName] = GUILD_NAME.split(' ');
-
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-background text-foreground p-4">
@@ -116,9 +130,7 @@ export default function LandingPage() {
        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-            <h1 className="font-headline text-5xl guild-title-word">
-                <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
-            </h1>
+            <GuildTitle />
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playSound('tab'); }} className="w-full">
@@ -185,3 +197,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    

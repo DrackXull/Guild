@@ -66,7 +66,7 @@ service cloud.firestore {
     // A user can read their own application, and officers/admins can read any.
     match /applications/{applicationId} {
       allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
-      allow list: if isOfficer() || isAdmin();
+      allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
       allow create, update: if isOwner(applicationId) || isOfficer() || isAdmin();
       allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
     }
@@ -124,3 +124,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

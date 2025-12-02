@@ -255,31 +255,6 @@
         "timestamp"
       ]
     },
-    "DrasticScoreRule": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "DrasticScoreRule",
-      "type": "object",
-      "description": "Represents a rule for drastic ratings to discourage trolling.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the drastic score rule entity."
-        },
-        "threshold": {
-          "type": "number",
-          "description": "The score threshold for this rule."
-        },
-        "minimumCharacters": {
-          "type": "number",
-          "description": "The minimum number of characters required in the comment for this score."
-        }
-      },
-      "required": [
-        "id",
-        "threshold",
-        "minimumCharacters"
-      ]
-    },
     "BountyBoardQuest": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "BountyBoardQuest",
@@ -615,6 +590,10 @@
       "type": "object",
       "description": "Global settings for the guild, managed by officers.",
       "properties": {
+        "guildName": {
+            "type": "string",
+            "description": "The public name of the guild."
+        },
         "drasticScore": {
           "type": "object",
           "properties": {
@@ -650,7 +629,8 @@
                 "maxAttempts": { "type": "number" }
             }
         }
-      }
+      },
+      "required": ["guildName"]
     },
     "MemberBounty": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -749,22 +729,6 @@
             {
               "name": "runId",
               "description": "The unique identifier for the run."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/drastic_score_rules/{drasticScoreRuleId}",
-        "definition": {
-          "entityName": "DrasticScoreRule",
-          "schema": {
-            "$ref": "#/backend/entities/DrasticScoreRule"
-          },
-          "description": "Stores drastic score rules. Includes thresholds and minimum character counts for comments.",
-          "params": [
-            {
-              "name": "drasticScoreRuleId",
-              "description": "The unique identifier for the drastic score rule."
             }
           ]
         }
@@ -921,5 +885,4 @@
   }
 }
     
-
     

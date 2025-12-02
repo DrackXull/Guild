@@ -13,8 +13,9 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc, collection, collectionGroup, query, where } from 'firebase/firestore';
-import type { Player, Character } from '@/lib/types';
+import type { Player, Character, GuildSettings } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { GuildSettingsProvider, useGuildSettings } from '@/hooks/use-guild-settings';
 
 function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -190,10 +191,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </head>
         <body className="font-body antialiased">
             <FirebaseClientProvider>
-                <AppManager>{children}</AppManager>
+              <GuildSettingsProvider>
+                  <AppManager>{children}</AppManager>
+              </GuildSettingsProvider>
             </FirebaseClientProvider>
             <Toaster />
         </body>
     </html>
   );
 }
+
+    

@@ -9,7 +9,7 @@ import type { Application, WithId } from '@/lib/types';
 import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { GUILD_NAME } from '@/lib/config';
+import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 interface ApplicationStatusProps {
   application: WithId<Application>;
@@ -32,7 +32,7 @@ const statusInfo = {
   },
   approved: {
     title: 'Petition Approved!',
-    description: `Welcome to ${GUILD_NAME}! You have been granted member access.`,
+    description: `Welcome! You have been granted member access.`,
     icon: <CheckCircle className="h-10 w-10 text-success" />,
     badgeVariant: 'default',
     badgeClass: 'bg-success/20 text-success hover:bg-success/30 border-success/30',
@@ -58,6 +58,7 @@ const statusInfo = {
 export function ApplicationStatus({ application }: ApplicationStatusProps) {
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { settings } = useGuildSettings();
 
     // Determine the most relevant status
     const getDisplayStatus = (app: WithId<Application>): keyof typeof statusInfo => {
@@ -70,6 +71,10 @@ export function ApplicationStatus({ application }: ApplicationStatusProps) {
 
     const displayStatusKey = getDisplayStatus(application);
     const currentStatus = statusInfo[displayStatusKey];
+
+    if (displayStatusKey === 'approved' && settings?.guildName) {
+      currentStatus.description = `Welcome to the ${settings.guildName}! You have been granted member access.`
+    }
 
     const handleWithdraw = () => {
         if (!firestore) return;
@@ -126,3 +131,5 @@ export function ApplicationStatus({ application }: ApplicationStatusProps) {
     </Card>
   );
 }
+
+    

@@ -238,6 +238,7 @@ export type AdminLogEntry = {
 };
 
 export type GuildSettings = {
+  guildName: string;
   drasticScore: {
     lowThreshold: number;
     highThreshold: number;
@@ -262,3 +263,5 @@ export type GuildSettings = {
 
 // This is not a complete type, but it's what we need for the setup button
 export type PartialPlayer = Partial<Omit<Player, 'id' | 'characters'>>;
+
+    
