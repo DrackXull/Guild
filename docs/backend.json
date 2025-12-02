@@ -449,7 +449,7 @@
           "description": "The applicant's Dark and Darker account name."
         },
         "discordTag": {
-          "type": "string",_
+          "type": "string",
           "description": "The applicant's Discord tag."
         },
         "status": {
@@ -593,7 +593,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "GuildSettings",
       "type": "object",
-      "description": "Global settings for the guild, managed by officers.",
+      "description": "Global settings for a specific guild, managed by its officers. This document serves as the configuration hub for a single tenant (guild) in the multi-tenant system.",
       "properties": {
         "guildName": {
             "type": "string",
@@ -624,7 +624,8 @@
         },
         "traitOptions": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string" },
+          "description": "A list of admin-defined feedback traits for run reports."
         },
         "bountyAI": {
             "type": "object",
@@ -673,7 +674,7 @@
           "schema": {
             "$ref": "#/backend/entities/Player"
           },
-          "description": "Stores player information. Player ID is used for document ID, and for path-based ownership. The `friendIds` field facilitates tracking friends, but the relationship itself isn't explicitly enforced in the data structure beyond storing the IDs.",
+          "description": "Stores player information. Player ID is used for document ID. The 'guildId' field is critical for data segregation in this multi-tenant application.",
           "params": [
             {
               "name": "playerId",
@@ -689,7 +690,7 @@
           "schema": {
             "$ref": "#/backend/entities/Character"
           },
-          "description": "Stores character information for each player. Includes `playerId` (denormalized) for authorization independence. This enforces the Player 1:N Character relationship.",
+          "description": "Stores character information for each player. This collection is nested under a user's private data path, ensuring only they can manage their characters.",
           "params": [
             {
               "name": "userId",
@@ -709,7 +710,7 @@
           "schema": {
             "$ref": "#/backend/entities/RunReport"
           },
-          "description": "Stores run reports. References the `characterId` and `runId`. Includes fields for run rating, stats, traits, notes, and screenshot URL.",
+          "description": "Stores run reports. This data is specific to a guild and will be secured via rules that check the submitting user's guildId.",
           "params": [
             {
               "name": "runId",
@@ -729,7 +730,7 @@
           "schema": {
             "$ref": "#/backend/entities/Run"
           },
-          "description": "Stores run information. Includes a timestamp for when the run occurred. Used in conjunction with `RunReport` to facilitate the Verified Run System",
+          "description": "Stores run information, used in conjunction with RunReport. This data is guild-specific.",
           "params": [
             {
               "name": "runId",
@@ -745,7 +746,7 @@
           "schema": {
             "$ref": "#/backend/entities/BountyBoardQuest"
           },
-          "description": "Stores bounty board quests. Includes name, description, reward, and whether it's a daily quest.",
+          "description": "Stores bounty board quests for a specific guild. Data access will be controlled by the user's guild membership.",
           "params": [
             {
               "name": "bountyBoardQuestId",
@@ -761,7 +762,7 @@
           "schema": {
             "$ref": "#/backend/entities/HonorPointLog"
           },
-          "description": "Stores honor point logs for each player. Includes amount, reason, timestamp, and officer notes. The Officer Notes field is only visible to officers.",
+          "description": "Stores private honor point logs for each player, nested under their user document for security.",
           "params": [
             {
               "name": "userId",
@@ -781,7 +782,7 @@
           "schema": {
             "$ref": "#/backend/entities/GuildBankItem"
           },
-          "description": "Stores guild bank items. Includes name, description, cost, and quantity.",
+          "description": "Stores guild bank items. Data access will be controlled by the user's guild membership.",
           "params": [
             {
               "name": "guildBankItemId",
@@ -797,7 +798,7 @@
           "schema": {
             "$ref": "#/backend/entities/RunReview"
           },
-          "description": "Stores reviews for other characters in a run. Includes reviewer and reviewed character IDs, score, and comments.",
+          "description": "Stores reviews for other characters in a run. This data is guild-specific.",
           "params": [
             {
               "name": "runReportId",
@@ -817,7 +818,7 @@
           "schema": {
             "$ref": "#/backend/entities/Player"
           },
-          "description": "Documents in this collection denote a user as an officer. Existence of the document is sufficient; content is ignored.",
+          "description": "Documents in this collection denote a user as an officer for their guild. Existence is sufficient.",
           "params": [
             {
               "name": "userId",
@@ -833,7 +834,7 @@
           "schema": {
             "$ref": "#/backend/entities/Player"
           },
-          "description": "Documents in this collection denote a user as an admin. Existence is sufficient.",
+          "description": "Documents in this collection denote a user as an admin for their guild. Existence is sufficient.",
           "params": [
             {
               "name": "userId",
@@ -849,7 +850,7 @@
           "schema": {
             "$ref": "#/backend/entities/Application"
           },
-          "description": "Stores guild applications submitted by prospective members. Writable by any authenticated user, but only readable/updatable by officers.",
+          "description": "Stores guild applications. This collection is readable by officers and the applicant.",
            "params": [
             {
               "name": "applicationId",
@@ -865,7 +866,7 @@
           "schema": {
             "$ref": "#/backend/entities/GuildSettings"
           },
-          "description": "A singleton document containing global settings for the guild, managed by officers.",
+          "description": "A singleton document containing global settings for the guild. Publicly readable but only writable by officers/admins. In a multi-tenant system, this would be '/guilds/{guildId}/settings'.",
            "params": []
         }
       },
@@ -876,7 +877,7 @@
           "schema": {
             "$ref": "#/backend/entities/MemberBounty"
           },
-          "description": "A bounty posted by a guild member for other members to complete.",
+          "description": "A bounty posted by a guild member for others in the same guild to complete.",
           "params": [
             {
               "name": "bountyId",
@@ -886,7 +887,7 @@
         }
       }
     ],
-    "reasoning": "This Firestore structure is designed to support the Dark and Darker Guild Hub application, focusing on secure, scalable, and debuggable data management. The structure incorporates denormalization to ensure Authorization Independence, simplifies security rules, and enables efficient data retrieval. The core of this design is separation of concerns through Structural Segregation, Access Modeling, and Data Clarity.  \n\n**Authorization Independence (Denormalization):**  Authorization Independence is achieved by denormalizing authorization data directly into child documents.  For example, the `Player` ID is included in the `Character` documents, removing the need for `get()` calls in security rules.  This ensures atomic operations are possible and security rules remain simple and efficient. For Collaborative Data, we use Membership Maps. For example, officer status is checked by the existence of a document in `/roles_officer/{userId}`.\n\n**Structural Segregation (Homogeneous Security Posture):**  Collections are segregated based on their security requirements.  User-specific data (e.g., `/users/{userId}/characters/{characterId}`) is separated from global data (e.g., `/bounty_board_quests/{questId}`). This segregation makes security rules easier to write and maintain as each collection has a clear and consistent security posture. Sensitive data, like officer notes in honor point logs, can be stored in a separate collection accessible only to officers.\n\n**Access Modeling (Standardization and Consistency):**  Access is modeled consistently throughout the application. User-owned data is stored under `/users/{userId}`, while collaborative data uses membership maps where appropriate. Global roles are managed using the existence of documents in dedicated role collections.\n\n**QAPs (Rules are not Filters):**  The data structure is designed to support secure `list` operations. Segregation prevents the need to filter based on access control within the rules themselves. For example, listing characters under `/users/{userId}/characters` is secure because only the user has access to their characters. Officers can access all Run Reviews for moderation via `/run_reviews`, while players can only access their own, as each review is related to a report which belongs to a character which belongs to a player.\n\n**Invariants:**  The data structure supports data integrity. Ownership is enforced through path-based ownership. Timestamp fields are consistently named and used for ordering and filtering. Denormalized data maintains consistency by avoiding updates to parent documents that would require cascading updates to child documents.\n\nThe design ensures all collections maintain a homogeneous security posture, allowing for simple and robust security rules."
+    "reasoning": "This Firestore structure is designed for a multi-tenant application where each 'tenant' is a distinct guild. The cornerstone of this architecture is data segregation, primarily achieved by using a 'guildId' on top-level documents and enforcing access via Firestore Security Rules. This ensures that users from one guild cannot access data from another.\n\n**Multi-Tenancy and Data Segregation:**  The `guildId` field on documents like `/players/{playerId}` is critical. Security rules leverage this field by comparing it against a `guildId` stored in the user's authentication token (custom claim). This allows for secure `list` queries, for instance, allowing a user to list all players *only* within their own guild.\n\n**Authorization Independence (Denormalization):** Authorization data (like `playerId` in sub-collections or `guildId` in root collections) is denormalized to avoid costly and complex `get()` calls in security rules. This simplifies rule logic and improves performance.\n\n**Structural Segregation (Homogeneous Security Posture):** Collections are organized by their access patterns. User-private data (e.g., `/users/{userId}/characters`) is nested for ownership-based security. Guild-wide data (e.g., `/bounty_board_quests`) is stored at the root, with security rules ensuring only members of the correct guild can access it. This separation makes rules more predictable and maintainable.\n\n**Access Modeling:** Access is consistently modeled. User-owned data is secured by path (`/users/{userId}`). Guild-level data is secured by checking the `guildId` in the user's token against the document's `guildId`. Role-based access (like for officers and admins) is managed by checking for the existence of a document in a corresponding `roles_*` collection."
   }
 }
     

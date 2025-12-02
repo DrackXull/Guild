@@ -1,28 +1,22 @@
-# Firebase Studio
+# Guild Nexus: A Multi-Guild Community Management Platform
 
-This is a NextJS starter in Firebase Studio.
+This project is a sophisticated, customizable guild management tool designed to be the central hub for gaming communities. It provides a professional, feature-rich alternative for organization, communication, and progression tracking that complements and extends the capabilities of platforms like Discord.
 
-To get started, take a look at src/app/page.tsx.
+The vision is to create a cross-platform application that can be tailored by guild leaders to suit their community's specific needs, whether they play Dark and Darker, Escape from Tarkov, or any other online game.
+
+## Key Features & Vision
+
+*   **Guild Customization:** Empower guild leaders to change their guild's name, theme, ranks, and feedback traits to create a unique identity.
+*   **Multi-Game Support:** The architecture is designed to support game-specific modules, allowing for features tailored to different games (e.g., item databases, map tools, quest tracking).
+*   **Advanced Organization:** Move beyond simple chat logs with dedicated tools for run reporting, member-posted bounties, honor point systems, and market tracking.
+*   **Role & Permission System:** A robust backend with security rules ensures that guild leaders (Admins, Officers) have exclusive control over management features.
+*   **Professional Identity:** Provide your guild with a polished, top-quality web presence that looks and feels official.
 
 ## Roadmap
 
-*   **DarkerDB API Integration:** Investigate and potentially integrate with the DarkerDB API (`https://api.darkerdb.com/`) to pull live item data directly into the guild hub. This could enable features like an item database, tooltips, or market tracking.
-
-    ### API Details (v1.0.7)
-
-    *   **Host:** `https://api.darkerdb.com`
-    *   **Health Check:** `GET /v1/health-check`
-
-    #### Authentication
-    Requests are authenticated by providing an API key as a query string parameter: `?key=your-api-key`. It is strongly recommended to use an API key for all applications.
-
-    #### Authorization
-    Currently, all documented endpoints are public and free to use with no rate limits. However, API keys are recommended as rate limits and user levels will be implemented in the future.
-
-    #### Pagination
-    The API supports both cursor-based and page-based pagination.
-    *   **Limit:** The number of records per response can be set with `&limit=#` (default: 25, max: 50).
-    *   **Cursor Pagination:** Use `&cursor=#` to traverse pages, setting the cursor to the largest cursor value from the previous response. This method is more efficient.
-    *   **Page-based Pagination:** Provides total counts and is convenient for smaller datasets.
-
-    All paginated requests include a `pagination` field in the response envelope with metadata and a link to the next page.
+*   **DarkerDB API Integration:** As an example of a game-specific module, investigate and potentially integrate with the DarkerDB API (`https://api.darkerdb.com/`) to pull live item data directly into the hub for a Dark and Darker guild.
+*   **Theme Customization:** Allow admins to select color palettes and themes to match their guild's branding.
+*   **Game-Specific Modules:** Develop new modules for other popular games like Escape from Tarkov, including features like hideout tracking or market data integration.
+*   **Event & Calendar System:** Implement a guild calendar for scheduling runs, events, and meetings.
+*   **Advanced Communication Tools:** Build features like a persistent guild announcement board or private messaging between members.
+*   **Real-time Presence:** Enhance the "Online" status to show what activity a player is currently engaged in (e.g., "In a Run," "In Lobby").
