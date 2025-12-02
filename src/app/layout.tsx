@@ -1,4 +1,3 @@
-
 'use client';
 import * as React from 'react';
 import '@/app/globals.css';
@@ -19,8 +18,16 @@ import { GuildSettingsProvider, useGuildSettings } from '@/hooks/use-guild-setti
 
 function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useUser();
   const firestore = useFirestore();
   const isOfficerPage = pathname.startsWith('/officer');
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player } = useDoc<Player>(playerDocRef);
+  const currentGuildId = player?.guildId;
 
   useEffect(() => {
     if (isOfficerPage) {
@@ -33,17 +40,23 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isOfficerPage]);
 
-  // Guild-wide data, fetched only when the user is a logged-in member
   const charactersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentGuildId) return null;
+    // This query is expensive. For true multi-tenancy, characters should also have guildId.
+    // For now, we assume all characters in the DB belong to the one guild.
+    // A better query would be: query(collectionGroup(firestore, 'characters'), where('guildId', '==', currentGuildId));
     return query(collectionGroup(firestore, 'characters'));
-  }, [firestore]);
+  }, [firestore, currentGuildId]);
   const { data: allCharacters } = useCollection<Character>(charactersQuery);
 
   const onlinePlayersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'players'), where('isOnline', '==', true));
-  }, [firestore]);
+    if (!firestore || !currentGuildId) return null;
+    return query(
+      collection(firestore, 'players'),
+      where('guildId', '==', currentGuildId),
+      where('isOnline', '==', true)
+    );
+  }, [firestore, currentGuildId]);
   const { data: onlinePlayers } = useCollection<Player>(onlinePlayersQuery);
 
   const onlineMembers = onlinePlayers?.length || 0;
@@ -200,5 +213,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-    

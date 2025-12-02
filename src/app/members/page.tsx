@@ -1,11 +1,10 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import type { Player, WithId } from "@/lib/types";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -40,12 +39,24 @@ function MemberRowSkeleton() {
 }
 
 function MemberList() {
+    const { user } = useUser();
     const firestore = useFirestore();
 
+    const playerDocRef = useMemoFirebase(() => {
+        if (!user || !firestore) return null;
+        return doc(firestore, 'players', user.uid);
+    }, [user, firestore]);
+    const { data: currentPlayer } = useDoc<Player>(playerDocRef);
+    const currentGuildId = currentPlayer?.guildId;
+
     const playersQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'players'), orderBy('lifetimeHonor', 'desc'));
-    }, [firestore]);
+        if (!firestore || !currentGuildId) return null;
+        return query(
+            collection(firestore, 'players'), 
+            where('guildId', '==', currentGuildId),
+            orderBy('lifetimeHonor', 'desc')
+        );
+    }, [firestore, currentGuildId]);
 
     const { data: players, isLoading } = useCollection<Player>(playersQuery);
 

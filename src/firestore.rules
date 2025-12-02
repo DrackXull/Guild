@@ -14,6 +14,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getGuildId() {
+      return request.auth.token.guildId;
+    }
+
     function isOfficer() {
       return isSignedIn() && 
         exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
@@ -32,21 +36,22 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member, and a user can always read their own document.
-    // The owner can update their own profile (except rank/role and honor changes not related to bounties).
-    // An officer or admin can update any profile (including rank/role).
     match /players/{playerId} {
-      allow read: if isOwner(playerId) || isMember();
+      // Allow a user to read their own player doc, or any player doc if they are in the same guild.
+      allow get: if isOwner(playerId) || (isMember() && resource.data.guildId == getGuildId());
+
+      // Allow listing players only when filtering by the user's own guildId.
+      allow list: if isMember() && request.query.where[0][2] == getGuildId();
+
       allow create: if isAdmin();
-      // Allow self-writes for non-restricted fields.
+      
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
-                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data) && resource.data.guildId == getGuildId()) 
                       // Bounty reward deduction
-                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
+                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward && resource.data.guildId == getGuildId())
                       // Officer/Admin overrides
-                      || isOfficer() 
-                      || isAdmin()
+                      || ((isOfficer() || isAdmin()) && resource.data.guildId == getGuildId())
                     );
     }
     
@@ -66,9 +71,7 @@ service cloud.firestore {
     // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        // A user can get their own application, or an officer/admin can get any.
         allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
-        // A user can query for their own application; officers/admins can query all.
         allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
         allow update: if isOfficer() || isAdmin() || isOwner(applicationId);
         allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
