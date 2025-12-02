@@ -32,8 +32,7 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by any member, and a user can always read their own document.
-    // The owner can update their own profile (except rank/role and honor changes not related to bounties).
+    // Players can be read by their owner, or by any other member.
     // An officer or admin can update any profile (including rank/role).
     match /players/{playerId} {
       allow read: if isOwner(playerId) || isMember();
@@ -62,14 +61,16 @@ service cloud.firestore {
       allow write: if isOwner(resource.data.playerId);
     }
 
-    // Applications can be created by any signed-in user and stored with their UID as the doc ID.
-    // A user can read their own application, and officers/admins can read any.
+    // Applications can be created by any signed-in user.
+    // A user can get their own application, and officers/admins can get any.
+    // A user can query for their own application; officers/admins can query all.
     match /applications/{applicationId} {
       allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
-      allow list: if isOfficer() || isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
+      allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
       allow create, update: if isOwner(applicationId) || isOfficer() || isAdmin();
       allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
     }
+
 
     // Global data is readable by members/officers, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
@@ -102,7 +103,7 @@ service cloud.firestore {
     }
 
     match /settings/guild {
-      allow read: if isMember();
+      allow read: if true; // Allow public read access to guild settings.
       allow write: if isOfficer() || isAdmin();
     }
 
@@ -124,5 +125,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
