@@ -1,10 +1,12 @@
 
+
 export type WithId<T> = T & { id: string };
 
 export type Rank = 'Neophyte' | 'Initiate' | 'Soldier' | 'Knight' | 'Champion' | 'Elder';
 
 export type Player = {
   id: string;
+  guildId: string;
   displayName: string;
   displayNameHistory?: { name: string; changedAt: string }[];
   discordTag: string;
@@ -238,6 +240,7 @@ export type AdminLogEntry = {
 };
 
 export type GuildSettings = {
+  id: string;
   guildName: string;
   drasticScore: {
     lowThreshold: number;

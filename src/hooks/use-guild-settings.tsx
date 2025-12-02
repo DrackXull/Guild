@@ -4,11 +4,11 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import type { GuildSettings } from '@/lib/types';
+import type { GuildSettings, WithId } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface GuildSettingsContextType {
-  settings: GuildSettings | null;
+  settings: WithId<GuildSettings> | null;
   isLoading: boolean;
 }
 

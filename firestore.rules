@@ -14,6 +14,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getGuildId() {
+      return request.auth.token.guildId;
+    }
+
     function isOfficer() {
       return isSignedIn() && 
         exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
@@ -25,6 +29,7 @@ service cloud.firestore {
     }
 
     function isMember() {
+       // A user is a member if they have a player document in the current guild.
        return isSignedIn() && exists(/databases/$(database)/documents/players/$(request.auth.uid));
     }
 
@@ -32,20 +37,20 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
-    // Players can be read by their owner, or by any other member.
-    // An officer or admin can update any profile (including rank/role).
+    // Players can be read by any member of the SAME guild.
+    // The owner can update their own profile.
+    // An officer or admin of the same guild can update any profile.
     match /players/{playerId} {
-      allow read: if isOwner(playerId) || isMember();
+      allow read: if isOwner(playerId) || (isMember() && resource.data.guildId == getGuildId());
       allow create: if isAdmin();
       // Allow self-writes for non-restricted fields.
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
-                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data)) 
+                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data) && resource.data.guildId == getGuildId()) 
                       // Bounty reward deduction
-                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
+                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward && resource.data.guildId == getGuildId())
                       // Officer/Admin overrides
-                      || isOfficer() 
-                      || isAdmin()
+                      || ((isOfficer() || isAdmin()) && resource.data.guildId == getGuildId())
                     );
     }
     
@@ -62,15 +67,16 @@ service cloud.firestore {
     }
 
     // Applications can be created by any signed-in user.
-    // A user can get their own application, and officers/admins can get any.
-    // A user can query for their own application; officers/admins can query all.
+    // They can only be read/listed if the user is an officer, admin, or the owner of the application.
     match /applications/{applicationId} {
-      allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
-      allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
-      allow create, update: if isOwner(applicationId) || isOfficer() || isAdmin();
-      allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // A user can get their own application, or an officer/admin can get any.
+        allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
+        // A user can query for their own application; officers/admins can query all.
+        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
+        allow update: if isOfficer() || isAdmin() || isOwner(applicationId);
+        allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
     }
-
 
     // Global data is readable by members/officers, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
@@ -103,7 +109,7 @@ service cloud.firestore {
     }
 
     match /settings/guild {
-      allow read: if true; // Allow public read access to guild settings.
+      allow read: if true;
       allow write: if isOfficer() || isAdmin();
     }
 
@@ -125,3 +131,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
