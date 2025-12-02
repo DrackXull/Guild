@@ -1,7 +1,6 @@
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Shield, ScrollText, Users, FileText, Gem, Loader2, UserCheck, Store, Wand2 } from "lucide-react";
+import { Shield, ScrollText, Users, FileText, Gem, Loader2, UserCheck, Store, Wand2, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApplicationReview } from "@/components/officer/application-review";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BountyAdmin } from "@/components/officer/bounty-admin";
 import { Badge } from "@/components/ui/badge";
+import { GuildSettingsAdmin } from "@/components/officer/guild-settings-admin";
 
 const guildRanks: { rank: string; description: string; honorRequirement: number }[] = [
     { rank: 'Neophyte', description: 'A new recruit, learning the ropes and proving their worth in the dungeons.', honorRequirement: 0 },
@@ -280,7 +280,8 @@ export default function OfficerPage() {
       )}
 
       <Tabs defaultValue="applicants" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="settings"><Landmark className="mr-2 h-4 w-4" />Guild</TabsTrigger>
           <TabsTrigger value="applicants"><Users className="mr-2 h-4 w-4" />Applicants</TabsTrigger>
           <TabsTrigger value="roster"><UserCheck className="mr-2 h-4 w-4" />Roster</TabsTrigger>
           <TabsTrigger value="bounties"><ScrollText className="mr-2 h-4 w-4" />Bounties</TabsTrigger>
@@ -288,6 +289,10 @@ export default function OfficerPage() {
           <TabsTrigger value="ai-settings"><Wand2 className="mr-2 h-4 w-4" />AI Settings</TabsTrigger>
           <TabsTrigger value="logs"><FileText className="mr-2 h-4 w-4" />Logs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="settings" className="mt-6">
+          <GuildSettingsAdmin />
+        </TabsContent>
 
         <TabsContent value="applicants" className="mt-6">
           <ApplicantsAdmin />

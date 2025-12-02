@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Shield, ScrollText, Users, FileText, Gem, Loader2, UserCheck, Store, Wand2, Landmark } from "lucide-react";
@@ -281,7 +280,7 @@ export default function OfficerPage() {
       )}
 
       <Tabs defaultValue="applicants" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="settings"><Landmark className="mr-2 h-4 w-4" />Guild</TabsTrigger>
           <TabsTrigger value="applicants"><Users className="mr-2 h-4 w-4" />Applicants</TabsTrigger>
           <TabsTrigger value="roster"><UserCheck className="mr-2 h-4 w-4" />Roster</TabsTrigger>
@@ -323,5 +322,3 @@ export default function OfficerPage() {
     </div>
   );
 }
-
-    
