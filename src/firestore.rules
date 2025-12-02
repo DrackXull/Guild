@@ -67,11 +67,11 @@ service cloud.firestore {
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         // A user can get their own application, or an officer/admin can get any.
-        allow get: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
         // A user can query for their own application; officers/admins can query all.
-        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where.userId == request.auth.uid);
-        allow update: if isOfficer() || isAdmin();
-        allow delete: if isOwner(resource.data.userId) || isOfficer() || isAdmin();
+        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
+        allow update: if isOfficer() || isAdmin() || isOwner(applicationId);
+        allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
     }
 
     // Global data is readable by members/officers, but only writable by officers/admins.
@@ -105,7 +105,7 @@ service cloud.firestore {
     }
 
     match /settings/guild {
-      allow read: if isMember();
+      allow read: if true;
       allow write: if isOfficer() || isAdmin();
     }
 
