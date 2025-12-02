@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Shield, ScrollText, Users, FileText, Gem, Loader2, UserCheck, Store, Wand2, Landmark } from "lucide-react";
@@ -227,6 +228,7 @@ export default function OfficerPage() {
       const playerDocRef = doc(firestore, `players/${user.uid}`);
 
       const newPlayerData: Omit<Player, 'id'> = {
+          guildId: 'main-guild', // TODO: This should be dynamic
           displayName: user.email?.split('@')[0] || 'Guild Leader',
           discordTag: 'Admin#0001',
           friends: [],
@@ -322,3 +324,5 @@ export default function OfficerPage() {
     </div>
   );
 }
+
+    
