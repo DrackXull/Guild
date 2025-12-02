@@ -37,8 +37,8 @@ import { useToast } from "@/hooks/use-toast";
 import { gameModes, gameMaps } from "@/lib/data";
 import { useUser, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
 import { query, collection } from "firebase/firestore";
+import { useGuildSettings } from "@/hooks/use-guild-settings";
 
-const availableTraits = ["great comms", "team player", "loot hog", "toxic"];
 const RATING_LOW_THRESHOLD = 3;
 const RATING_HIGH_THRESHOLD = 9;
 const LOW_RATING_COMMENT_LENGTH = 140;
@@ -91,6 +91,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
+  const { settings } = useGuildSettings();
 
   const userCharactersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -98,6 +99,8 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
   }, [firestore, user]);
 
   const { data: playerCharacters, isLoading: isLoadingPlayerCharacters } = useCollection<Character>(userCharactersQuery);
+
+  const availableTraits = settings?.traitOptions || [];
 
   const form = useForm<RunReportFormValues>({
     resolver: zodResolver(runReportSchema),
