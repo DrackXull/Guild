@@ -185,10 +185,9 @@ export type LfgRequest = {
 export type ApplicationReviewDecision = 'approved' | 'denied';
 
 export type ApplicationReviewLog = {
-    officerId: string,
-    decision: ApplicationReviewDecision,
-    notes: string,
-    timestamp: string,
+    officerId: string;
+    notes: string;
+    timestamp: string;
 }
 
 export type Application = {

@@ -9,7 +9,7 @@ import { useState } from "react";
 import type { Quest, WithId, Application, Player, Rank } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { MarketAdmin } from "@/components/market/market-admin";
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, updateDocumentNonBlocking } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, updateDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
@@ -132,7 +132,7 @@ function ApplicantsAdmin() {
 
   const applicationsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'applications'), orderBy('createdAt', 'desc'));
+    return query(collection(firestore, 'applications'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
   }, [firestore]);
 
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
@@ -189,7 +189,7 @@ function ApplicantsAdmin() {
               {!isLoadingApplications && (!applications || applications.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No applications found.
+                      No pending applications found.
                   </TableCell>
               </TableRow>
               )}

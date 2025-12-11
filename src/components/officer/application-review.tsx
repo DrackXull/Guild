@@ -73,7 +73,6 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     
     const newReviewLog: ApplicationReviewLog = {
       officerId: officer.uid,
-      decision: 'approved', // This is a placeholder; the decision is made on the application itself
       notes: notes,
       timestamp: new Date().toISOString(),
     };
@@ -228,6 +227,5 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
-
 
     
