@@ -49,7 +49,7 @@ export function MarketAdmin() {
             return;
         }
 
-        const newItem: MarketItem = {
+        const newItem: Omit<MarketItem, 'id'> = {
             name,
             description,
             category,
@@ -159,3 +159,5 @@ export function MarketAdmin() {
         </Card>
     )
 }
+
+    

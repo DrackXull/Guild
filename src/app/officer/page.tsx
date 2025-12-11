@@ -9,7 +9,7 @@ import { useState } from "react";
 import type { Quest, WithId, Application, Player, Rank } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { MarketAdmin } from "@/components/market/market-admin";
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser, updateDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, doc, where } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AiSettingsAdmin } from "@/components/officer/ai-settings-admin";
@@ -31,18 +31,26 @@ const guildRanks: { rank: string; description: string; honorRequirement: number 
 function MemberRosterAdmin() {
   const firestore = useFirestore();
   const { toast } = useToast();
+  const { user } = useUser();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: currentPlayer } = useDoc<Player>(playerDocRef);
+  const currentGuildId = currentPlayer?.guildId;
 
   const playersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'players'), orderBy('displayName'));
-  }, [firestore]);
+    if (!firestore || !currentGuildId) return null;
+    return query(collection(firestore, 'players'), where('guildId', '==', currentGuildId), orderBy('displayName'));
+  }, [firestore, currentGuildId]);
 
   const { data: players, isLoading } = useCollection<Player>(playersQuery);
 
   const handleRankChange = (playerId: string, newRank: Rank) => {
     if (!firestore) return;
     const playerDocRef = doc(firestore, 'players', playerId);
-    setDocumentNonBlocking(playerDocRef, { rank: newRank }, { merge: true });
+    updateDocumentNonBlocking(playerDocRef, { rank: newRank });
     toast({
       title: "Rank Updated",
       description: `The member's rank has been updated to ${newRank}.`,
@@ -214,10 +222,17 @@ function LogsAdmin() {
 
 export default function OfficerPage() {
   const { user } = useUser();
-  const isGuildLeader = user?.email?.toLowerCase() === 'huzzinda@gmail.com';
   const firestore = useFirestore();
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+
+   const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+  const isGuildLeader = player?.role === 'admin';
+
 
   const handleGrantAdmin = () => {
       if (isProcessing || !firestore || !user) return;
@@ -264,7 +279,7 @@ export default function OfficerPage() {
         </div>
       </div>
       
-      {isGuildLeader && (
+      {user?.email?.toLowerCase() === 'huzzinda@gmail.com' && !isGuildLeader && !isPlayerLoading && (
         <Card className="border-primary/50">
           <CardHeader>
               <CardTitle className="font-headline text-2xl flex items-center gap-3"><Shield className="text-primary"/> First-Time Admin Setup</CardTitle>
@@ -324,3 +339,5 @@ export default function OfficerPage() {
     </div>
   );
 }
+
+    

@@ -121,7 +121,7 @@ export type Quest = {
   durationDays: number;
   isRepeatable: boolean;
   maxCompletions: number; // 0 for infinite
-  requiredRank?: Rank;
+  requiredRank?: string;
 };
 
 
@@ -133,6 +133,7 @@ export type NavItem = {
 };
 
 export type MarketItem = {
+    id: string;
     name: string;
     description: string;
     price: number;

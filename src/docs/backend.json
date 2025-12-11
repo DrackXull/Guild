@@ -1,0 +1,908 @@
+
+{
+  "entities": {
+    "Player": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Player",
+      "type": "object",
+      "description": "Represents a player's profile within a specific guild.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the player entity, typically the same as the Firebase Auth UID."
+        },
+        "guildId": {
+          "type": "string",
+          "description": "The ID of the guild this player profile belongs to."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Player's current display name."
+        },
+        "displayNameHistory": {
+          "type": "array",
+          "description": "A log of the player's previous display names and when they were changed.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "changedAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["name", "changedAt"]
+          }
+        },
+        "discordTag": {
+          "type": "string",
+          "description": "Player's Discord tag."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["guest", "member", "officer", "admin"],
+          "description": "The player's role within the guild."
+        },
+        "rank": {
+          "type": "string",
+          "enum": ["Neophyte", "Initiate", "Soldier", "Knight", "Champion", "Elder"],
+          "description": "The player's rank within the guild, based on honor."
+        },
+        "friendIds": {
+          "type": "array",
+          "description": "References to other Players who are friends. (Relationship: Player N:N Player)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isOnline": {
+          "type": "boolean",
+          "description": "Indicates whether the player is currently online."
+        },
+        "lifetimeHonor": {
+          "type": "number",
+          "description": "Player's lifetime honor points."
+        },
+        "currentHonor": {
+          "type": "number",
+          "description": "Player's current honor points."
+        },
+        "maxHonor": {
+          "type": "number",
+          "description": "The maximum honor points the player has ever held."
+        },
+        "recruitedBy": {
+          "type": "string",
+          "description": "The ID of the player who recruited this player."
+        },
+        "recruitedPlayers": {
+          "type": "array",
+          "description": "A list of IDs of players recruited by this player.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the player's custom avatar image."
+        }
+      },
+      "required": [
+        "id",
+        "guildId",
+        "displayName",
+        "discordTag",
+        "role",
+        "lifetimeHonor",
+        "currentHonor",
+        "maxHonor"
+      ]
+    },
+    "Character": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Character",
+      "type": "object",
+      "description": "Represents a character within the Dark and Darker Guild Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the character entity."
+        },
+        "playerId": {
+          "type": "string",
+          "description": "Reference to the Player that owns this character. (Relationship: Player 1:N Character)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Character's name."
+        },
+        "class": {
+          "type": "string",
+          "description": "Character's class."
+        },
+        "level": {
+          "type": "number",
+          "description": "Character's level."
+        },
+        "rank": {
+          "type": "string",
+          "description": "Character's rank (e.g. Neophyte, Voyager, Demigod)."
+        },
+        "totalBossKills": {
+          "type": "number",
+          "description": "Total number of boss kills for this character."
+        },
+        "confirmedKills": {
+            "type": "number",
+            "description": "Number of kills confirmed by a verified run report."
+        },
+        "unconfirmedKills": {
+            "type": "number",
+            "description": "Number of kills from unverified run reports."
+        }
+      },
+      "required": [
+        "id",
+        "playerId",
+        "name",
+        "class",
+        "totalBossKills",
+        "confirmedKills",
+        "unconfirmedKills"
+      ]
+    },
+    "RunReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RunReport",
+      "type": "object",
+      "description": "Represents a run report submitted by a player.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the run report entity."
+        },
+        "characterId": {
+          "type": "string",
+          "description": "Reference to the Character associated with this run report. (Relationship: Character 1:N RunReport)"
+        },
+        "runId": {
+          "type": "string",
+          "description": "Reference to the Run this report is for. (Relationship: Run 1:N RunReport)"
+        },
+        "overallRunRating": {
+          "type": "number",
+          "description": "Overall rating of the run."
+        },
+        "kills": {
+          "type": "number",
+          "description": "Number of kills during the run."
+        },
+        "deaths": {
+          "type": "number",
+          "description": "Number of deaths during the run."
+        },
+        "extracted": {
+          "type": "boolean",
+          "description": "Indicates whether the player extracted successfully."
+        },
+        "bossesKilled": {
+          "type": "array",
+          "description": "Array of boss names killed during the run.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "traits": {
+          "type": "array",
+          "description": "Array of traits associated with the run.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "runNotes": {
+          "type": "string",
+          "description": "Optional notes about the run."
+        },
+        "screenshotUrl": {
+          "type": "string",
+          "description": "URL of the screenshot uploaded for scoreboard proof.",
+          "format": "uri"
+        },
+        "isConfirmed": {
+          "type": "boolean",
+          "description": "Indicates if the stats in the run report have been confirmed by a screenshot or officer."
+        },
+        "officerNotes": {
+            "type": "string",
+            "description": "Private notes about the run, visible only to officers."
+        },
+        "requestMeeting": {
+            "type": "boolean",
+            "description": "Indicates if the player wants to discuss this report with an officer."
+        },
+        "evidenceLinks": {
+            "type": "array",
+            "description": "An array of URLs to videos or other evidence related to the run.",
+            "items": {
+                "type": "string",
+                "format": "uri"
+            }
+        },
+        "map": {
+          "type": "string",
+          "description": "The map the run took place on."
+        },
+        "gameType": {
+          "type": "string",
+          "enum": ["PvE", "PvP"],
+          "description": "The focus of the game run."
+        }
+      },
+      "required": [
+        "id",
+        "characterId",
+        "runId",
+        "overallRunRating",
+        "kills",
+        "deaths",
+        "extracted",
+        "isConfirmed",
+        "map",
+        "gameType"
+      ]
+    },
+    "Run": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Run",
+      "type": "object",
+      "description": "Represents a single run in the Dark and Darker Guild Hub.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the run entity."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the run occurred.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "timestamp"
+      ]
+    },
+    "BountyBoardQuest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "BountyBoardQuest",
+      "type": "object",
+      "description": "Represents a daily or weekly quest available on the bounty board.",
+      "properties": {
+        "questName": {
+          "type": "string",
+          "description": "Name of the bounty board quest."
+        },
+        "questDescription": {
+          "type": "string",
+          "description": "Description of the bounty board quest."
+        },
+        "reward": {
+          "type": "string",
+          "description": "Honor point reward for completing the quest."
+        },
+        "rarity": {
+          "type": "string",
+          "enum": ["Common", "Uncommon", "Rare", "Epic", "Legendary"],
+          "description": "The rarity or tier of the quest."
+        },
+        "durationDays": {
+          "type": "number",
+          "description": "How many days the quest is active for."
+        },
+        "isRepeatable": {
+          "type": "boolean",
+          "description": "Whether the same player can complete this quest multiple times."
+        },
+        "maxCompletions": {
+          "type": "number",
+          "description": "The maximum number of times this quest can be completed in total by all players. 0 for infinite."
+        },
+        "requiredRank": {
+          "type": "string",
+          "description": "The minimum player rank required to accept this quest."
+        }
+      },
+      "required": [
+        "questName",
+        "questDescription",
+        "reward",
+        "rarity",
+        "durationDays",
+        "isRepeatable",
+        "maxCompletions"
+      ]
+    },
+    "HonorPointLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "HonorPointLog",
+      "type": "object",
+      "description": "Represents a log of honor point awards or deductions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the honor point log entity."
+        },
+        "playerId": {
+          "type": "string",
+          "description": "Reference to the Player associated with this log entry. (Relationship: Player 1:N HonorPointLog)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of honor points awarded or deducted (negative for deductions)."
+        },
+        "reason": {
+          "type": "string",
+          "description": "The reason for the honor point change."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of when the honor point change occurred.",
+          "format": "date-time"
+        },
+        "officerNotes": {
+          "type": "string",
+          "description": "Notes that are written by officers when adjusting a score."
+        }
+      },
+      "required": [
+        "id",
+        "playerId",
+        "amount",
+        "reason",
+        "timestamp"
+      ]
+    },
+    "GuildBankItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuildBankItem",
+      "type": "object",
+      "description": "Represent an item available in the guild bank.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the guild bank item."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the item and its benefits."
+        },
+        "price": {
+          "type": "number",
+          "description": "Cost in honor points to purchase the item."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of this item that is available."
+        },
+         "category": {
+          "type": "string",
+          "description": "Category of the item (e.g., Utility, Consumable, Cosmetic)."
+        },
+        "requiredRank": {
+          "type": "string",
+          "description": "The minimum player rank required to purchase this item."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price",
+        "quantity",
+        "category"
+      ]
+    },
+    "RunReview": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RunReview",
+      "type": "object",
+      "description": "Reviews of other characters in a run.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the run review."
+        },
+        "runReportId": {
+          "type": "string",
+          "description": "Reference to run report that this review is for. (Relationship RunReport 1:N RunReview)"
+        },
+        "reviewerCharacterId": {
+          "type": "string",
+          "description": "Reference to the character completing the review. (Relationship Character 1:N RunReview)"
+        },
+        "reviewedCharacterId": {
+          "type": "string",
+          "description": "Reference to the character being reviewed. (Relationship Character 1:N RunReview)"
+        },
+        "score": {
+          "type": "number",
+          "description": "The score given to the character. Can range from 1-10"
+        },
+        "comments": {
+          "type": "string",
+          "description": "Comments that the reviewer made."
+        }
+      },
+      "required": [
+        "id",
+        "runReportId",
+        "reviewerCharacterId",
+        "reviewedCharacterId",
+        "score",
+        "comments"
+      ]
+    },
+    "Application": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Application",
+      "type": "object",
+      "description": "Represents a guild membership application, submitted by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The auth ID of the user submitting the application."
+        },
+        "applicantName": {
+          "type": "string",
+          "description": "The applicant's chosen name or handle."
+        },
+        "inGameName": {
+          "type": "string",
+          "description": "The applicant's Dark and Darker account name."
+        },
+        "discordTag": {
+          "type": "string",
+          "description": "The applicant's Discord tag."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "denied", "withdrawn"],
+          "description": "The current status of the application."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the application was submitted."
+        },
+        "attemptCount": {
+          "type": "number",
+          "description": "How many times this user has applied."
+        },
+        "reviewHistory": {
+          "type": "array",
+          "description": "A log of reviews and status changes from officers.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "officerId": { "type": "string" },
+              "decision": { "type": "string", "enum": ["approved", "denied"] },
+              "notes": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "mainCharacters": {
+          "type": "string",
+          "description": "The applicant's main character(s)."
+        },
+        "mainClasses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The applicant's main class(es)."
+        },
+        "mainRoles": {
+          "type": "string",
+          "description": "The applicant's main role(s) (e.g., Frontline, Support, DPS)."
+        },
+        "hoursInGame": {
+          "type": "number",
+          "description": "Approximate number of hours the applicant has played."
+        },
+        "favoriteModes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The applicant's favorite game modes."
+        },
+        "bossesKilled": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "A list of bosses the applicant has defeated."
+        },
+        "memorableExperience": {
+          "type": "string",
+          "description": "A fun or memorable in-game experience."
+        },
+        "isContentCreator": {
+          "type": "boolean",
+          "description": "Whether the applicant is a content creator."
+        },
+        "twitchUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's Twitch channel URL."
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's YouTube channel URL."
+        },
+        "kickUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's Kick channel URL."
+        },
+        "twitterUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's Twitter/X profile URL."
+        },
+        "tiktokUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's TikTok profile URL."
+        },
+        "otherUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The applicant's other content platform URL."
+        },
+        "availabilityDays": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The days of the week the applicant typically plays."
+        },
+        "availabilityTimezone": {
+          "type": "string",
+          "description": "The applicant's local timezone."
+        },
+        "availabilityStart": {
+          "type": "string",
+          "description": "The typical start time of their play session (in their local timezone)."
+        },
+        "availabilityEnd": {
+          "type": "string",
+          "description": "The typical end time of their play session (in their local timezone)."
+        },
+        "guildExpectations": {
+          "type": "string",
+          "description": "What the applicant is looking to gain from and add to the guild."
+        },
+        "references": {
+          "type": "string",
+          "description": "Guild members who can vouch for the applicant."
+        }
+      },
+      "required": [
+        "userId",
+        "applicantName",
+        "inGameName",
+        "discordTag",
+        "status",
+        "createdAt",
+        "mainCharacters",
+        "mainClasses",
+        "hoursInGame",
+        "favoriteModes",
+        "memorableExperience",
+        "availabilityDays",
+        "availabilityTimezone",
+        "availabilityStart",
+        "availabilityEnd",
+        "guildExpectations"
+      ]
+    },
+    "GuildSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuildSettings",
+      "type": "object",
+      "description": "Global settings for a specific guild, managed by its officers. This document serves as the configuration hub for a single tenant (guild) in the multi-tenant system.",
+      "properties": {
+        "guildName": {
+            "type": "string",
+            "description": "The public name of the guild."
+        },
+        "drasticScore": {
+          "type": "object",
+          "properties": {
+            "lowThreshold": { "type": "number" },
+            "highThreshold": { "type": "number" },
+            "lowCommentMinLength": { "type": "number" },
+            "highCommentMinLength": { "type": "number" }
+          }
+        },
+        "runVerification": {
+          "type": "object",
+          "properties": {
+            "minReporters": { "type": "number" },
+            "participationHonor": { "type": "number" },
+            "reportHonor": { "type": "number" }
+          }
+        },
+        "presence": {
+          "type": "object",
+          "properties": {
+            "ttlMinutes": { "type": "number" }
+          }
+        },
+        "traitOptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "A list of admin-defined feedback traits for run reports."
+        },
+        "bountyAI": {
+            "type": "object",
+            "properties": {
+                "enableAutoBoosting": { "type": "boolean" },
+                "boostPercentage": { "type": "number" },
+                "maxAttempts": { "type": "number" }
+            }
+        }
+      },
+      "required": ["guildName", "traitOptions"]
+    },
+    "MemberBounty": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MemberBounty",
+      "type": "object",
+      "description": "A bounty posted by a guild member for other members to complete.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the bounty." },
+        "requestingPlayerId": { "type": "string", "description": "The ID of the player who posted the bounty." },
+        "requestingPlayerName": { "type": "string", "description": "The name of the player who posted the bounty." },
+        "acceptedPlayerId": { "type": "string", "description": "The ID of the player who accepted the bounty." },
+        "acceptedPlayerName": { "type": "string", "description": "The name of the player who accepted the bounty." },
+        "title": { "type": "string", "description": "The title of the bounty." },
+        "description": { "type": "string", "description": "A detailed description of the bounty's requirements." },
+        "reward": { "type": "number", "description": "The Honor Point reward for completing the bounty." },
+        "status": { "type": "string", "enum": ["open", "in_progress", "complete"], "description": "The current status of the bounty." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the bounty was created." },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the bounty was completed." }
+      },
+      "required": ["id", "requestingPlayerId", "requestingPlayerName", "title", "description", "reward", "status", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/players/{playerId}",
+        "definition": {
+          "entityName": "Player",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Stores player information. Player ID is used for document ID. The 'guildId' field is critical for data segregation in this multi-tenant application.",
+          "params": [
+            {
+              "name": "playerId",
+              "description": "The unique identifier for the player. This is the document ID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/characters/{characterId}",
+        "definition": {
+          "entityName": "Character",
+          "schema": {
+            "$ref": "#/backend/entities/Character"
+          },
+          "description": "Stores character information for each player. This collection is nested under a user's private data path, ensuring only they can manage their characters.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player)."
+            },
+            {
+              "name": "characterId",
+              "description": "The unique identifier for the character."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/runs/{runId}/run_reports/{runReportId}",
+        "definition": {
+          "entityName": "RunReport",
+          "schema": {
+            "$ref": "#/backend/entities/RunReport"
+          },
+          "description": "Stores run reports. This data is specific to a guild and will be secured via rules that check the submitting user's guildId.",
+          "params": [
+            {
+              "name": "runId",
+              "description": "The unique identifier for the run."
+            },
+            {
+              "name": "runReportId",
+              "description": "The unique identifier for the run report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/runs/{runId}",
+        "definition": {
+          "entityName": "Run",
+          "schema": {
+            "$ref": "#/backend/entities/Run"
+          },
+          "description": "Stores run information, used in conjunction with RunReport. This data is guild-specific.",
+          "params": [
+            {
+              "name": "runId",
+              "description": "The unique identifier for the run."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/bounty_board_quests/{bountyBoardQuestId}",
+        "definition": {
+          "entityName": "BountyBoardQuest",
+          "schema": {
+            "$ref": "#/backend/entities/BountyBoardQuest"
+          },
+          "description": "Stores bounty board quests for a specific guild. Data access will be controlled by the user's guild membership.",
+          "params": [
+            {
+              "name": "bountyBoardQuestId",
+              "description": "The unique identifier for the bounty board quest."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/honor_point_logs/{honorPointLogId}",
+        "definition": {
+          "entityName": "HonorPointLog",
+          "schema": {
+            "$ref": "#/backend/entities/HonorPointLog"
+          },
+          "description": "Stores private honor point logs for each player, nested under their user document for security.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player)."
+            },
+            {
+              "name": "honorPointLogId",
+              "description": "The unique identifier for the honor point log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/guild_bank_items/{guildBankItemId}",
+        "definition": {
+          "entityName": "GuildBankItem",
+          "schema": {
+            "$ref": "#/backend/entities/GuildBankItem"
+          },
+          "description": "Stores guild bank items. Data access will be controlled by the user's guild membership.",
+          "params": [
+            {
+              "name": "guildBankItemId",
+              "description": "The unique identifier for the guild bank item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/run_reports/{runReportId}/run_reviews/{runReviewId}",
+        "definition": {
+          "entityName": "RunReview",
+          "schema": {
+            "$ref": "#/backend/entities/RunReview"
+          },
+          "description": "Stores reviews for other characters in a run. This data is guild-specific.",
+          "params": [
+            {
+              "name": "runReportId",
+              "description": "The unique identifier for the run report."
+            },
+            {
+              "name": "runReviewId",
+              "description": "The unique identifier for the run review."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_officer/{userId}",
+        "definition": {
+          "entityName": "officerRole",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Documents in this collection denote a user as an officer for their guild. Existence is sufficient.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player) who is an officer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "adminRole",
+          "schema": {
+            "$ref": "#/backend/entities/Player"
+          },
+          "description": "Documents in this collection denote a user as an admin for their guild. Existence is sufficient.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (player) who is an admin."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/applications/{applicationId}",
+        "definition": {
+          "entityName": "Application",
+          "schema": {
+            "$ref": "#/backend/entities/Application"
+          },
+          "description": "Stores guild applications. This collection is readable by officers and the applicant.",
+           "params": [
+            {
+              "name": "applicationId",
+              "description": "The unique identifier for the application."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/settings/guild",
+        "definition": {
+          "entityName": "GuildSettings",
+          "schema": {
+            "$ref": "#/backend/entities/GuildSettings"
+          },
+          "description": "A singleton document containing global settings for the guild. Publicly readable but only writable by officers/admins. In a multi-tenant system, this would be '/guilds/{guildId}/settings'.",
+           "params": []
+        }
+      },
+      {
+        "path": "/member_bounties/{bountyId}",
+        "definition": {
+          "entityName": "MemberBounty",
+          "schema": {
+            "$ref": "#/backend/entities/MemberBounty"
+          },
+          "description": "A bounty posted by a guild member for others in the same guild to complete.",
+          "params": [
+            {
+              "name": "bountyId",
+              "description": "The unique identifier for the member bounty."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This Firestore structure is designed for a multi-tenant application where each 'tenant' is a distinct guild. The cornerstone of this architecture is data segregation, primarily achieved by using a 'guildId' on top-level documents and enforcing access via Firestore Security Rules. This ensures that users from one guild cannot access data from another.\n\n**Multi-Tenancy and Data Segregation:**  The `guildId` field on documents like `/players/{playerId}` is critical. Security rules leverage this field by comparing it against a `guildId` stored in the user's authentication token (custom claim). This allows for secure `list` queries, for instance, allowing a user to list all players *only* within their own guild.\n\n**Authorization Independence (Denormalization):** Authorization data (like `playerId` in sub-collections or `guildId` in root collections) is denormalized to avoid costly and complex `get()` calls in security rules. This simplifies rule logic and improves performance.\n\n**Structural Segregation (Homogeneous Security Posture):** Collections are organized by their access patterns. User-private data (e.g., `/users/{userId}/characters`) is nested for ownership-based security. Guild-wide data (e.g., `/bounty_board_quests`) is stored at the root, with security rules ensuring only members of the correct guild can access it. This separation makes rules more predictable and maintainable.\n\n**Access Modeling:** Access is consistently modeled. User-owned data is secured by path (`/users/{userId}`). Guild-level data is secured by checking the `guildId` in the user's token against the document's `guildId`. Role-based access (like for officers and admins) is managed by checking for the existence of a document in a corresponding `roles_*` collection."
+  }
+}
+
+    
