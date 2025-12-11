@@ -40,6 +40,11 @@
           "enum": ["guest", "member", "officer", "admin"],
           "description": "The player's role within the guild."
         },
+        "rank": {
+          "type": "string",
+          "enum": ["Neophyte", "Initiate", "Soldier", "Knight", "Champion", "Elder"],
+          "description": "The player's rank within the guild, based on honor."
+        },
         "friendIds": {
           "type": "array",
           "description": "References to other Players who are friends. (Relationship: Player N:N Player)",
@@ -73,6 +78,11 @@
           "items": {
             "type": "string"
           }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the player's custom avatar image."
         }
       },
       "required": [
@@ -368,7 +378,7 @@
           "type": "string",
           "description": "Description of the item and its benefits."
         },
-        "cost": {
+        "price": {
           "type": "number",
           "description": "Cost in honor points to purchase the item."
         },
@@ -379,13 +389,17 @@
          "category": {
           "type": "string",
           "description": "Category of the item (e.g., Utility, Consumable, Cosmetic)."
+        },
+        "requiredRank": {
+          "type": "string",
+          "description": "The minimum player rank required to purchase this item."
         }
       },
       "required": [
         "id",
         "name",
         "description",
-        "cost",
+        "price",
         "quantity",
         "category"
       ]
@@ -892,6 +906,8 @@
 }
     
     
+    
+
     
 
     

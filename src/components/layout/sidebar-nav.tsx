@@ -57,7 +57,7 @@ function GuildTitle() {
   }
 
   return (
-    <Link href="/dashboard" className="font-headline text-2xl font-bold guild-title-word">
+    <Link href="/dashboard" className="font-headline text-2xl font-bold">
       <span className="text-muted-foreground">{firstWord}</span> <span className="guild-title-gradient">{secondWord}</span> <span>{restOfName.join(' ')}</span>
     </Link>
   );
