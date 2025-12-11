@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth, useUser, setDocumentNonBlocking, useFirestore } from '@/firebase';
-import { initiateEmailSignIn, initiateEmailSignUp } from '@/firebase/non-blocking-login';
+import { initiateEmailSignIn, initiateEmailSignUp, sendPasswordReset } from '@/firebase/non-blocking-login';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -69,6 +69,8 @@ export default function LandingPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('sign-in');
   const { playSound } = useAudio();
+  const [signInError, setSignInError] = useState<string | null>(null);
+
 
   const signInForm = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
@@ -99,7 +101,22 @@ export default function LandingPage() {
 
   const handleSignIn = (data: SignInFormValues) => {
     playSound('login');
-    initiateEmailSignIn(auth, data.email, data.password);
+    setSignInError(null); // Clear previous errors
+    initiateEmailSignIn(auth, data.email, data.password, (error) => {
+      // On error, set the error message to be displayed in the form
+      setSignInError("Invalid credentials. Please check your email and password.");
+    });
+  };
+  
+  const handlePasswordReset = () => {
+    const email = signInForm.getValues("email");
+    if (!email) {
+      signInForm.setError("email", { type: "manual", message: "Please enter your email to reset your password." });
+      return;
+    }
+    if (auth) {
+      sendPasswordReset(auth, email);
+    }
   };
 
   const handleSignUp = (data: SignUpFormValues) => {
@@ -152,9 +169,15 @@ export default function LandingPage() {
                     {signInForm.formState.errors.email && <p className="text-destructive text-xs">{signInForm.formState.errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password-signin">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password-signin">Password</Label>
+                      <Button variant="link" type="button" onClick={handlePasswordReset} className="p-0 h-auto text-xs">
+                          Forgot Password?
+                      </Button>
+                    </div>
                     <Input id="password-signin" type="password" {...signInForm.register('password')} onKeyDown={() => playSound('typing')} />
                     {signInForm.formState.errors.password && <p className="text-destructive text-xs">{signInForm.formState.errors.password.message}</p>}
+                    {signInError && <p className="text-destructive text-xs">{signInError}</p>}
                   </div>
                   <Button type="submit" className="w-full">Sign In</Button>
                 </form>
@@ -197,5 +220,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    

@@ -5,6 +5,7 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { toast } from '@/hooks/use-toast';
 
@@ -46,19 +47,44 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string, onError?: (error: any) => void): void {
   signInWithEmailAndPassword(authInstance, email, password)
     .catch((error) => {
         console.error("Sign-in error:", error);
-        let description = "An unknown error occurred during sign-in.";
-        // Check for common auth errors to provide a more specific message
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-            description = "Invalid credentials. Please check your email and password.";
+        if (onError) {
+            onError(error);
+        } else {
+            let description = "An unknown error occurred during sign-in.";
+            // Check for common auth errors to provide a more specific message
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                description = "Invalid credentials. Please check your email and password.";
+            }
+            toast({
+                variant: "destructive",
+                title: "Sign-In Failed",
+                description: description,
+            });
         }
-        toast({
-            variant: "destructive",
-            title: "Sign-In Failed",
-            description: description,
-        });
     });
+}
+
+
+/** Sends a password reset email to the given address. */
+export function sendPasswordReset(authInstance: Auth, email: string): void {
+    sendPasswordResetEmail(authInstance, email)
+        .then(() => {
+            toast({
+                title: "Password Reset Email Sent",
+                description: "If an account exists for that email, a reset link has been sent.",
+            });
+        })
+        .catch((error) => {
+            console.error("Password reset error:", error);
+            // We typically don't want to tell the user if the email was invalid for security reasons
+            // (to prevent user enumeration), so we show a generic message on error too.
+            toast({
+                title: "Password Reset Email Sent",
+                description: "If an account exists for that email, a reset link has been sent.",
+            });
+        });
 }
