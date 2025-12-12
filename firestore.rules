@@ -39,6 +39,12 @@ service cloud.firestore {
     // Collection Rules
     // --------------------------------
 
+    // Guild documents are public, but can only be created/edited by admins.
+    match /guilds/{guildId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /players/{playerId} {
       allow get: if isOwner(playerId) || (isMember() && resource.data.guildId == getGuildId());
       allow list: if isMember() && request.query.where[0][2] == getGuildId();
@@ -99,7 +105,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.requestingPlayerId == request.auth.uid
       						&& get(/databases/$(database)/documents/players/$(request.auth.uid)).data.currentHonor >= request.resource.data.reward;
       
-      // Update: You can accept a bounty (not your own), or if you are the creator, you can trigger the completion function.
+      // Update: You can accept a bounty (not your own), or if you are the creator, you can mark it complete.
       allow update: if isSignedIn() && (
                         // Accepting a bounty
                         (request.resource.data.status == 'in_progress' && resource.data.status == 'open' && request.resource.data.acceptedPlayerId == request.auth.uid && resource.data.requestingPlayerId != request.auth.uid) ||
@@ -134,4 +140,3 @@ service cloud.firestore {
   }
 }
 
-    

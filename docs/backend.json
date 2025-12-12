@@ -1,6 +1,54 @@
 
 {
   "entities": {
+    "Guild": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Guild",
+      "type": "object",
+      "description": "Represents a distinct guild or community within the platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the guild."
+        },
+        "name": {
+          "type": "string",
+          "description": "The public name of the guild."
+        },
+        "slug": {
+          "type": "string",
+          "description": "A URL-friendly slug for the guild."
+        },
+        "gamePrimary": {
+          "type": ["string", "null"],
+          "description": "The primary game the guild is focused on."
+        },
+        "theme": {
+          "type": "object",
+          "properties": {
+            "primaryColor": { "type": "string" },
+            "accentColor": { "type": "string" },
+            "logoUrl": { "type": "string", "format": "uri" }
+          },
+          "required": ["primaryColor", "accentColor"]
+        },
+        "governanceMode": {
+          "type": "string",
+          "enum": ["dictator", "democracy"],
+          "description": "The governance model of the guild."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the guild was created."
+        },
+        "leaderId": {
+          "type": "string",
+          "description": "The userId of the player who leads the guild."
+        }
+      },
+      "required": ["id", "name", "slug", "governanceMode", "createdAt", "leaderId"]
+    },
     "Player": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Player",
@@ -681,6 +729,22 @@
   },
   "firestore": {
     "structure": [
+       {
+        "path": "/guilds/{guildId}",
+        "definition": {
+          "entityName": "Guild",
+          "schema": {
+            "$ref": "#/backend/entities/Guild"
+          },
+          "description": "Stores high-level information about each individual guild.",
+          "params": [
+            {
+              "name": "guildId",
+              "description": "The unique identifier for the guild."
+            }
+          ]
+        }
+      },
       {
         "path": "/players/{playerId}",
         "definition": {
@@ -904,10 +968,4 @@
     "reasoning": "This Firestore structure is designed for a multi-tenant application where each 'tenant' is a distinct guild. The cornerstone of this architecture is data segregation, primarily achieved by using a 'guildId' on top-level documents and enforcing access via Firestore Security Rules. This ensures that users from one guild cannot access data from another.\n\n**Multi-Tenancy and Data Segregation:**  The `guildId` field on documents like `/players/{playerId}` is critical. Security rules leverage this field by comparing it against a `guildId` stored in the user's authentication token (custom claim). This allows for secure `list` queries, for instance, allowing a user to list all players *only* within their own guild.\n\n**Authorization Independence (Denormalization):** Authorization data (like `playerId` in sub-collections or `guildId` in root collections) is denormalized to avoid costly and complex `get()` calls in security rules. This simplifies rule logic and improves performance.\n\n**Structural Segregation (Homogeneous Security Posture):** Collections are organized by their access patterns. User-private data (e.g., `/users/{userId}/characters`) is nested for ownership-based security. Guild-wide data (e.g., `/bounty_board_quests`) is stored at the root, with security rules ensuring only members of the correct guild can access it. This separation makes rules more predictable and maintainable.\n\n**Access Modeling:** Access is consistently modeled. User-owned data is secured by path (`/users/{userId}`). Guild-level data is secured by checking the `guildId` in the user's token against the document's `guildId`. Role-based access (like for officers and admins) is managed by checking for the existence of a document in a corresponding `roles_*` collection."
   }
 }
-    
-    
-    
 
-    
-
-    
