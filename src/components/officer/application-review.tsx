@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Dialog,
@@ -89,8 +88,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
   }
   
   const handleDecision = (decision: 'approved' | 'denied') => {
-    if (!officer || !firestore || !guildSettings) {
-        toast({ title: "Authentication Error", description: "You must be logged in as an officer and guild settings must be loaded.", variant: "destructive"});
+    if (!officer || !firestore || !guildSettings?.id) {
+        toast({ title: "Error", description: "Officer identity and guild settings must be loaded to make a decision.", variant: "destructive"});
         return;
     }
     
@@ -100,7 +99,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     
     if (decision === 'approved') {
         const playerRef = doc(firestore, 'players', application.userId);
-        const newPlayerData: Partial<Player> = {
+        const newPlayerData: PartialPlayer = {
             guildId: guildSettings.id, // Associate player with the current guild
             displayName: application.applicantName,
             discordTag: application.discordTag,
@@ -227,5 +226,3 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
-
-    
