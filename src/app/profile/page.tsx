@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogFooter } from "@/components/ui/dialog";
 import { Gem, Shield, Users, UserCircle, Crown, UserPlus, Loader2, History } from "lucide-react";
-import { CharacterCard } from "@/components/profile/character-card";
+import { CharacterCard, CreateCharacterDialog } from "@/components/profile/character-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,12 +23,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
-const createCharacterSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters.").max(20, "Name cannot exceed 20 characters."),
-  characterClass: z.string().min(1, "Please select a class."),
-});
-
-type CreateCharacterFormValues = z.infer<typeof createCharacterSchema>;
 
 const editProfileSchema = z.object({
     displayName: z.string().min(2, "Display name must be at least 2 characters.").max(24, "Display name cannot exceed 24 characters."),
@@ -143,123 +137,6 @@ function EditProfileDialog({ player }: { player: WithId<Player> }) {
     );
 }
 
-function CreateCharacterDialog({isDisabled}: {isDisabled: boolean}) {
-  const { user } = useUser();
-  const firestore = useFirestore();
-  const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const characterClasses = [
-    'Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'
-  ];
-
-  const form = useForm<CreateCharacterFormValues>({
-    resolver: zodResolver(createCharacterSchema),
-    defaultValues: {
-      name: "",
-      characterClass: "",
-    },
-  });
-
-  const onSubmit = (data: CreateCharacterFormValues) => {
-    if (!firestore || !user) {
-      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
-      return;
-    }
-
-    const charactersCollectionRef = collection(firestore, `users/${user.uid}/characters`);
-    const newCharacter: Omit<Character, 'id'> = {
-      playerId: user.uid,
-      name: data.name,
-      characterClass: data.characterClass as CharacterClass,
-      level: 1,
-      totalBossKills: 0,
-      isConfirmed: false,
-      confirmedKills: 0,
-      unconfirmedKills: 0,
-    };
-
-    addDocumentNonBlocking(charactersCollectionRef, newCharacter);
-    toast({
-      title: "Character Created",
-      description: `${data.name} the ${data.characterClass} is ready for adventure!`,
-    });
-    form.reset();
-    setIsOpen(false);
-  };
-  
-  const triggerButton = (
-    <Button variant="outline" disabled={isDisabled}>Create Character</Button>
-  );
-
-  return (
-     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {isDisabled ? (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
-                    <TooltipContent>
-                        <p>You have reached the maximum of 11 characters.</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        ) : (
-            triggerButton
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="font-headline text-2xl">Create New Character</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Character Name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="characterClass"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Class</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a class" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {characterClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <CardFooter className="p-0 pt-4">
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                Create
-              </Button>
-            </CardFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function ProfileContent({ player }: { player: WithId<Player> }) {
     const firestore = useFirestore();
     const friendCount = player.friends?.length || 0;
@@ -322,7 +199,7 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="font-headline text-3xl font-bold">My Characters ({characters?.length || 0}/{MAX_CHARACTERS})</h2>
                     <div className="flex gap-2">
-                      <CreateCharacterDialog isDisabled={hasMaxCharacters} />
+                      <CreateCharacterDialog isDisabled={hasMaxCharacters} player={player} />
                     </div>
                 </div>
 

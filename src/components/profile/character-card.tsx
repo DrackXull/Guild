@@ -4,7 +4,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Character, WithId } from "@/lib/types";
+import type { Character, WithId, Player } from "@/lib/types";
 import { CheckCircle, Shield, Swords, Users, Edit, Trash2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
@@ -15,8 +15,8 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useUser, useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking, useDoc, useMemoFirebase } from "@/firebase";
+import { doc, collection } from "firebase/firestore";
 
 type CharacterCardProps = {
   character: WithId<Character>;
@@ -118,6 +118,131 @@ function DeleteCharacterAlert({ character, onOpenChange }: { character: WithId<C
             </AlertDialogContent>
         </AlertDialog>
     );
+}
+
+const createCharacterSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters.").max(20, "Name cannot exceed 20 characters."),
+  characterClass: z.string().min(1, "Please select a class."),
+});
+
+type CreateCharacterFormValues = z.infer<typeof createCharacterSchema>;
+
+export function CreateCharacterDialog({isDisabled, player}: {isDisabled: boolean, player: Player | null}) {
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const characterClasses = [
+    'Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'
+  ];
+
+  const form = useForm<CreateCharacterFormValues>({
+    resolver: zodResolver(createCharacterSchema),
+    defaultValues: {
+      name: "",
+      characterClass: "",
+    },
+  });
+
+  const onSubmit = (data: CreateCharacterFormValues) => {
+    if (!firestore || !user || !player?.guildId) {
+      toast({ title: "Error", description: "You must be logged in and part of a guild.", variant: "destructive" });
+      return;
+    }
+
+    const charactersCollectionRef = collection(firestore, `users/${user.uid}/characters`);
+    const newCharacter: Omit<Character, 'id'> = {
+      playerId: user.uid,
+      guildId: player.guildId,
+      name: data.name,
+      characterClass: data.characterClass as CharacterClass,
+      level: 1,
+      totalBossKills: 0,
+      isConfirmed: false,
+      confirmedKills: 0,
+      unconfirmedKills: 0,
+    };
+
+    addDocumentNonBlocking(charactersCollectionRef, newCharacter);
+    toast({
+      title: "Character Created",
+      description: `${data.name} the ${data.characterClass} is ready for adventure!`,
+    });
+    form.reset();
+    setIsOpen(false);
+  };
+  
+  const triggerButton = (
+    <Button variant="outline" disabled={isDisabled}>Create Character</Button>
+  );
+
+  return (
+     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {isDisabled ? (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
+                    <TooltipContent>
+                        <p>You have reached the maximum of 11 characters.</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        ) : (
+            triggerButton
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="font-headline text-2xl">Create New Character</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Character Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="characterClass"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Class</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a class" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {characterClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <CardFooter className="p-0 pt-4">
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                Create
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 

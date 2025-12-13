@@ -42,10 +42,7 @@ function MemberLayout({ children }: { children: React.ReactNode }) {
 
   const charactersQuery = useMemoFirebase(() => {
     if (!firestore || !currentGuildId) return null;
-    // This query is expensive. For true multi-tenancy, characters should also have guildId.
-    // For now, we assume all characters in the DB belong to the one guild.
-    // A better query would be: query(collectionGroup(firestore, 'characters'), where('guildId', '==', currentGuildId));
-    return query(collectionGroup(firestore, 'characters'));
+    return query(collectionGroup(firestore, 'characters'), where('guildId', '==', currentGuildId));
   }, [firestore, currentGuildId]);
   const { data: allCharacters } = useCollection<Character>(charactersQuery);
 

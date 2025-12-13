@@ -37,6 +37,7 @@ export type CharacterClass = 'Fighter' | 'Ranger' | 'Wizard' | 'Rogue' | 'Cleric
 export type Character = {
   id: string;
   playerId: string;
+  guildId: string;
   name: string;
   characterClass: CharacterClass;
   level?: number;
@@ -266,5 +267,3 @@ export type GuildSettings = {
 
 // This is not a complete type, but it's what we need for the setup button
 export type PartialPlayer = Partial<Omit<Player, 'id' | 'characters'>>;
-
-    
