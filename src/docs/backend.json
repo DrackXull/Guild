@@ -137,10 +137,6 @@
           "format": "date-time",
           "description": "Timestamp of when the player joined the guild."
         },
-        "guildScore": {
-          "type": "number",
-          "description": "A calculated score representing the player's overall contribution to the guild."
-        },
         "reportsSubmitted": {
           "type": "number",
           "description": "Total number of run reports submitted by the player."
@@ -222,98 +218,49 @@
       "type": "object",
       "description": "Represents a run report submitted by a player.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the run report entity."
-        },
-        "characterId": {
-          "type": "string",
-          "description": "Reference to the Character associated with this run report. (Relationship: Character 1:N RunReport)"
-        },
-        "runId": {
-          "type": "string",
-          "description": "Reference to the Run this report is for. (Relationship: Run 1:N RunReport)"
-        },
-        "overallRunRating": {
-          "type": "number",
-          "description": "Overall rating of the run."
-        },
-        "kills": {
-          "type": "number",
-          "description": "Number of kills during the run."
-        },
-        "deaths": {
-          "type": "number",
-          "description": "Number of deaths during the run."
-        },
-        "extracted": {
-          "type": "boolean",
-          "description": "Indicates whether the player extracted successfully."
-        },
-        "bossesKilled": {
+        "id": { "type": "string", "description": "Unique identifier for the run report entity." },
+        "reporterId": { "type": "string", "description": "The ID of the player who submitted the report." },
+        "guildId": { "type": "string", "description": "The ID of the guild this report belongs to." },
+        "runId": { "type": "string", "description": "Reference to the Run this report is for." },
+        "gameMode": { "type": "string", "enum": ["Normal", "High-Roller", "Adventure Mode", "Arena"] },
+        "map": { "type": "string", "description": "The map the run took place on." },
+        "gameType": { "type": "string", "enum": ["PvE", "PvP"] },
+        "overallRunRating": { "type": "number", "description": "Overall rating of the run from 1 to 10." },
+        "bossesKilled": { "type": "array", "items": { "type": "string" }, "description": "Array of boss names killed during the run." },
+        "runNotes": { "type": "string", "description": "Optional general notes about the run, visible to all teammates." },
+        "teammates": {
           "type": "array",
-          "description": "Array of boss names killed during the run.",
+          "description": "An array containing the stats and feedback for each participant in the run.",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "characterId": { "type": "string" },
+              "kills": { "type": "number" },
+              "deaths": { "type": "number" },
+              "extracted": { "type": "boolean" },
+              "traits": { "type": "array", "items": { "type": "string" } },
+              "notes": { "type": "string" }
+            },
+            "required": ["characterId", "kills", "deaths", "extracted", "traits"]
           }
         },
-        "traits": {
-          "type": "array",
-          "description": "Array of traits associated with the run.",
-          "items": {
-            "type": "string"
-          }
-        },
-        "runNotes": {
-          "type": "string",
-          "description": "Optional notes about the run."
-        },
-        "screenshotUrl": {
-          "type": "string",
-          "description": "URL of the screenshot uploaded for scoreboard proof.",
-          "format": "uri"
-        },
-        "isConfirmed": {
-          "type": "boolean",
-          "description": "Indicates if the stats in the run report have been confirmed by a screenshot or officer."
-        },
-        "officerNotes": {
-            "type": "string",
-            "description": "Private notes about the run, visible only to officers."
-        },
-        "requestMeeting": {
-            "type": "boolean",
-            "description": "Indicates if the player wants to discuss this report with an officer."
-        },
-        "evidenceLinks": {
-            "type": "array",
-            "description": "An array of URLs to videos or other evidence related to the run.",
-            "items": {
-                "type": "string",
-                "format": "uri"
-            }
-        },
-        "map": {
-          "type": "string",
-          "description": "The map the run took place on."
-        },
-        "gameType": {
-          "type": "string",
-          "enum": ["PvE", "PvP"],
-          "description": "The focus of the game run."
-        }
+        "screenshotUrl": { "type": "string", "format": "uri", "description": "URL of the screenshot uploaded for scoreboard proof." },
+        "isConfirmed": { "type": "boolean", "description": "Indicates if the stats have been confirmed by an officer." },
+        "officerNotes": { "type": "string", "description": "Private notes about the run, visible only to officers." },
+        "requestMeeting": { "type": "boolean", "description": "Indicates if the player wants to discuss this report with an officer." },
+        "evidenceLinks": { "type": "array", "items": { "type": "string", "format": "uri" }, "description": "An array of URLs to videos or other evidence." },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": [
-        "id",
-        "characterId",
+        "reporterId",
+        "guildId",
         "runId",
+        "gameMode",
+        "gameType",
         "overallRunRating",
-        "kills",
-        "deaths",
-        "extracted",
+        "teammates",
         "isConfirmed",
-        "map",
-        "gameType"
+        "createdAt"
       ]
     },
     "Run": {

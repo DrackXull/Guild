@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useTransition, useEffect } from "react";
@@ -45,10 +46,10 @@ const LOW_RATING_COMMENT_LENGTH = 140;
 const HIGH_RATING_COMMENT_LENGTH = 80;
 
 const runReportSchema = z.object({
-  gameMode: z.string().min(1, "Please select a game mode."),
+  gameMode: z.enum(["Normal", "High-Roller", "Adventure Mode", "Arena"]),
   map: z.string().optional(),
   gameType: z.enum(["PvE", "PvP"]),
-  rating: z.number().min(1).max(10),
+  overallRunRating: z.number().min(1).max(10),
   bossesKilled: z.array(z.string()).optional(),
   runNotes: z.string().optional(),
   screenshot: z.any().optional(),
@@ -58,16 +59,15 @@ const runReportSchema = z.object({
       kills: z.coerce.number().min(0),
       deaths: z.coerce.number().min(0),
       extracted: z.boolean(),
-      // bossKills is now derived from the main `bossesKilled` array
       traits: z.array(z.string()),
       notes: z.string().optional(),
     })
-  ).min(2, "A guild run must have at least 2 teammates.").max(3, "A guild run can have at most 3 teammates."),
+  ).min(1, "You must report stats for at least yourself.").max(3, "A guild run can have at most 3 teammates."),
   officerNotes: z.string().optional(),
   evidenceLinks: z.string().optional(),
   requestMeeting: z.boolean().default(false),
 }).refine(data => {
-  if (data.rating <= RATING_LOW_THRESHOLD) {
+  if (data.overallRunRating <= RATING_LOW_THRESHOLD) {
     return data.runNotes && data.runNotes.length >= LOW_RATING_COMMENT_LENGTH;
   }
   return true;
@@ -75,7 +75,7 @@ const runReportSchema = z.object({
   message: `Comments must be at least ${LOW_RATING_COMMENT_LENGTH} characters for ratings of ${RATING_LOW_THRESHOLD} or lower.`,
   path: ["runNotes"],
 }).refine(data => {
-  if (data.rating >= RATING_HIGH_THRESHOLD) {
+  if (data.overallRunRating >= RATING_HIGH_THRESHOLD) {
     return data.runNotes && data.runNotes.length >= HIGH_RATING_COMMENT_LENGTH;
   }
   return true;
@@ -107,17 +107,10 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
     defaultValues: {
       gameMode: "Normal",
       gameType: "PvP",
-      map: "none",
-      rating: 5,
+      map: undefined,
+      overallRunRating: 5,
       bossesKilled: [],
       teammates: [{
-        characterId: "",
-        kills: 0,
-        deaths: 0,
-        extracted: false,
-        traits: [],
-        notes: "",
-      }, {
         characterId: "",
         kills: 0,
         deaths: 0,
@@ -139,7 +132,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
   
   const watchedGameMode = form.watch("gameMode");
   const watchedMap = form.watch("map");
-  const rating = form.watch("rating");
+  const rating = form.watch("overallRunRating");
   const runNotes = form.watch("runNotes");
   
   const selectedMapData = gameMaps.find(m => m.name === watchedMap);
@@ -156,10 +149,10 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
 
   const onSubmit = (data: RunReportFormValues) => {
     startTransition(async () => {
-      // Split evidence links into an array
+      // Split evidence links into an array and clean up data
       const processedData = {
         ...data,
-        evidenceLinks: data.evidenceLinks ? data.evidenceLinks.split(',').map(link => link.trim()) : [],
+        // The server action will handle the rest of the required fields
       };
       const result = await submitRunReport(processedData);
       if (result.success) {
@@ -309,7 +302,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
 
             <FormField
               control={form.control}
-              name="rating"
+              name="overallRunRating"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Overall Run Rating: {field.value}</FormLabel>
@@ -356,7 +349,7 @@ export function RunReportForm({ allCharacters }: { allCharacters: WithId<Charact
               <Card key={field.id}>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="font-headline text-xl">{index === 0 ? "Your Character" : `Teammate ${index + 1}`}</CardTitle>
-                  {fields.length > 2 && index > 1 && ( // Allow removing only teammates beyond the first two
+                  {fields.length > 1 && (
                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>

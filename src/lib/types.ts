@@ -23,6 +23,8 @@ export type Player = {
   removalReason?: string;
   memberNo?: number;
   presence?: Presence;
+  joinedAt?: string;
+  reportsSubmitted?: number;
 };
 
 export type Presence = {
@@ -52,50 +54,31 @@ export type RunParticipantStats = {
   characterId: string;
   kills: number;
   deaths: number;
-
   extracted: boolean;
-  bossKills: number;
-};
-
-export type RunFeedback = {
-  reporterId: string;
-  characterId: string;
-  rating: number;
   traits: string[];
   notes?: string;
 };
 
 export type RunReport = {
   id: string;
-  code?: string;
-  runId: string;
   reporterId: string;
-  playerId: string;
-  characterId: string;
-  gameMode: 'Normal' | 'High-Roller';
-  map: string;
+  guildId: string;
+  runId: string;
+  gameMode: 'Normal' | 'High-Roller' | 'Adventure Mode' | 'Arena';
+  map?: string;
   gameType: 'PvE' | 'PvP';
-  participantStats: RunParticipantStats[];
-  feedback: RunFeedback[];
-  screenshotUrl?: string;
-  screenshots?: string[];
-  uploadBlobs?: any[];
-  score: number;
-  comment: string;
-  stats: {
-    kills: number;
-    deaths: number;
-    bossKills: number;
-  };
-  extracted: boolean;
-  traits: string[];
-  createdAt: Date;
-  officerNotes?: string;
-  requestMeeting?: boolean;
-  evidenceLinks?: string[];
-  isConfirmed: boolean;
+  overallRunRating: number;
   bossesKilled: string[];
+  runNotes?: string;
+  teammates: RunParticipantStats[];
+  screenshotUrl?: string;
+  isConfirmed: boolean;
+  officerNotes?: string;
+  evidenceLinks?: string[];
+  requestMeeting?: boolean;
+  createdAt: string;
 };
+
 
 export type Run = {
   id: string;
@@ -221,6 +204,7 @@ export type Application = {
   references?: string;
   bossesKilled?: string[];
   mainRoles?: string;
+  guildId: string;
 };
 
 export type ApplicationReview = {
@@ -243,6 +227,7 @@ export type AdminLogEntry = {
 export type GuildSettings = {
   id: string;
   guildName: string;
+  guildSubtitle?: string;
   drasticScore: {
     lowThreshold: number;
     highThreshold: number;
@@ -262,6 +247,10 @@ export type GuildSettings = {
     enableAutoBoosting: boolean;
     boostPercentage: number;
     maxAttempts: number;
+  };
+   anniversaryRewards?: {
+    enabled: boolean;
+    rewardAmount: number;
   };
 };
 
