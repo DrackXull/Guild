@@ -507,6 +507,10 @@
           "type": "string",
           "description": "The auth ID of the user submitting the application."
         },
+        "guildId": {
+          "type": "string",
+          "description": "The ID of the guild the user is applying to."
+        },
         "applicantName": {
           "type": "string",
           "description": "The applicant's chosen name or handle."
@@ -639,6 +643,7 @@
       },
       "required": [
         "userId",
+        "guildId",
         "applicantName",
         "inGameName",
         "discordTag",
@@ -973,3 +978,5 @@
     "reasoning": "This Firestore structure is designed for a multi-tenant application where each 'tenant' is a distinct guild. The cornerstone of this architecture is data segregation, primarily achieved by using a 'guildId' on top-level documents and enforcing access via Firestore Security Rules. This ensures that users from one guild cannot access data from another.\n\n**Multi-Tenancy and Data Segregation:**  The `guildId` field on documents like `/players/{playerId}` is critical. Security rules leverage this field by comparing it against a `guildId` stored in the user's authentication token (custom claim). This allows for secure `list` queries, for instance, allowing a user to list all players *only* within their own guild.\n\n**Authorization Independence (Denormalization):** Authorization data (like `playerId` in sub-collections or `guildId` in root collections) is denormalized to avoid costly and complex `get()` calls in security rules. This simplifies rule logic and improves performance.\n\n**Structural Segregation (Homogeneous Security Posture):** Collections are organized by their access patterns. User-private data (e.g., `/users/{userId}/characters`) is nested for ownership-based security. Guild-wide data (e.g., `/bounty_board_quests`) is stored at the root, with security rules ensuring only members of the correct guild can access it. This separation makes rules more predictable and maintainable.\n\n**Access Modeling:** Access is consistently modeled. User-owned data is secured by path (`/users/{userId}`). Guild-level data is secured by checking the `guildId` in the user's token against the document's `guildId`. Role-based access (like for officers and admins) is managed by checking for the existence of a document in a corresponding `roles_*` collection."
   }
 }
+
+    

@@ -157,6 +157,7 @@ export default function ApplyPage() {
       ...data,
       id: user.uid, // The application ID is the user's ID.
       userId: user.uid,
+      guildId: "main-guild", // TODO: Make this dynamic when guild selection is available
       status: 'pending' as const,
       createdAt: new Date().toISOString(),
       attemptCount: 1, 

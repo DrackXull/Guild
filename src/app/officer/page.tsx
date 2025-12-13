@@ -129,11 +129,25 @@ function MemberRosterAdmin() {
 
 function ApplicantsAdmin() {
   const firestore = useFirestore();
+  const { user } = useUser();
+
+  const playerDocRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return doc(firestore, 'players', user.uid);
+  }, [user, firestore]);
+  const { data: currentPlayer } = useDoc<Player>(playerDocRef);
+  const currentGuildId = currentPlayer?.guildId;
 
   const applicationsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'applications'), where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
-  }, [firestore]);
+    if (!firestore || !currentGuildId) return null;
+    // Filter applications by the officer's current guild and pending status
+    return query(
+        collection(firestore, 'applications'), 
+        where('guildId', '==', currentGuildId),
+        where('status', '==', 'pending'),
+        orderBy('createdAt', 'desc')
+    );
+  }, [firestore, currentGuildId]);
 
   const { data: applications, isLoading: isLoadingApplications } = useCollection<Application>(applicationsQuery);
 
@@ -189,7 +203,7 @@ function ApplicantsAdmin() {
               {!isLoadingApplications && (!applications || applications.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No pending applications found.
+                      No pending applications found for this guild.
                   </TableCell>
               </TableRow>
               )}
@@ -339,3 +353,5 @@ export default function OfficerPage() {
     </div>
   );
 }
+
+    
