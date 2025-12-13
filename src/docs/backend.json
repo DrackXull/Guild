@@ -131,6 +131,19 @@
           "type": "string",
           "format": "uri",
           "description": "URL to the player's custom avatar image."
+        },
+        "joinedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the player joined the guild."
+        },
+        "guildScore": {
+          "type": "number",
+          "description": "A calculated score representing the player's overall contribution to the guild."
+        },
+        "reportsSubmitted": {
+          "type": "number",
+          "description": "Total number of run reports submitted by the player."
         }
       },
       "required": [
@@ -141,7 +154,8 @@
         "role",
         "lifetimeHonor",
         "currentHonor",
-        "maxHonor"
+        "maxHonor",
+        "joinedAt"
       ]
     },
     "Character": {
@@ -671,6 +685,10 @@
             "type": "string",
             "description": "The public name of the guild."
         },
+        "guildSubtitle": {
+            "type": "string",
+            "description": "A short tagline or motto for the guild."
+        },
         "drasticScore": {
           "type": "object",
           "properties": {
@@ -705,6 +723,13 @@
                 "enableAutoBoosting": { "type": "boolean" },
                 "boostPercentage": { "type": "number" },
                 "maxAttempts": { "type": "number" }
+            }
+        },
+        "anniversaryRewards": {
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean" },
+                "rewardAmount": { "type": "number" }
             }
         }
       },
