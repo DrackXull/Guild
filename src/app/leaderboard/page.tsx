@@ -1,10 +1,11 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import type { Player, WithId } from "@/lib/types";
-import { collection, query, orderBy, limit, doc } from "firebase/firestore";
+import { collection, query, orderBy, limit, doc, where } from "firebase/firestore";
 import { Trophy, Crown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -45,10 +46,9 @@ export default function LeaderboardPage() {
         if (!firestore || !currentGuildId) return null;
         return query(
             collection(firestore, 'players'), 
+            where('guildId', '==', currentGuildId),
             orderBy('lifetimeHonor', 'desc'),
             limit(50)
-            // Note: A where clause on guildId should be here, but rule allows list if any filter exists.
-            // For true multi-tenancy, add: where('guildId', '==', currentGuildId)
         );
     }, [firestore, currentGuildId]);
 
