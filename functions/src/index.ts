@@ -260,5 +260,3 @@ export const awardBountyHonor = onCall(async (request) => {
     throw new HttpsError("internal", "An unexpected error occurred while completing the bounty.");
   }
 });
-
-    

@@ -136,7 +136,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
   
   const isLoading = isUserLoading || (user && isPlayerLoading);
-  const isMember = !!player;
+  const isMember = !!player && !!player.guildId;
 
   const publicRoutes = ['/'];
   const applicantRoutes = ['/application-status', '/apply', '/profile'];
@@ -165,7 +165,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
         router.replace('/');
       }
     }
-  }, [isLoading, user, player, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
+  }, [isLoading, user, isMember, pathname, router, isPublicRoute, isApplicantRoute]);
 
 
   if (isLoading) {

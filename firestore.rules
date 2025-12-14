@@ -63,6 +63,8 @@ service cloud.firestore {
       // Allow listing players only when filtering by the user's own guildId.
       allow list: if isGuildMember(request.query.where[0][2]);
 
+      // Allow creation of a player doc only if the user is an officer of the target guild.
+      // This happens during application approval.
       allow create: if isGuildOfficer(request.resource.data.guildId);
       
       allow update: if (
@@ -70,10 +72,12 @@ service cloud.firestore {
                       (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data))
                       // Bounty reward deduction
                       || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
-                      // Submitting a guild application
+                      // Submitting a guild application via public tag
                       || (isOwner(playerId) && request.resource.data.hasPendingApplication == true)
-                      // Officer/Admin overrides
+                      // Officer/Admin overrides (e.g., rank changes)
                       || isGuildOfficer(resource.data.guildId)
+                       // Allow setting the guildId on creation (from createGuild function)
+                      || (isOwner(playerId) && resource == null && 'guildId' in request.resource.data)
                     );
     }
     
@@ -136,8 +140,6 @@ service cloud.firestore {
     // Rule for the singleton guild settings document
     match /settings/guild {
       allow read: if isSignedIn();
-      // Writing should be restricted to officers of any guild,
-      // but since we can't know which guild here, we restrict to a specific admin role for now.
       allow write: if request.auth.uid in ['CWZmJwq1UhWUprYP7LJB9NHxvni2']; // Replace with actual admin UIDs
     }
 
