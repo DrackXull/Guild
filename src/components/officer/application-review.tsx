@@ -28,7 +28,6 @@ import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, setDocumentNonBlocking, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, where, arrayUnion } from 'firebase/firestore';
-import { useGuildSettings } from '@/hooks/use-guild-settings';
 
 type ApplicationReviewProps = {
   application: WithId<Application>;
@@ -38,7 +37,6 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
   const { toast } = useToast();
   const { user: officer } = useUser();
   const firestore = useFirestore();
-  const { settings: guildSettings } = useGuildSettings();
   const [rating, setRating] = useState(5);
   const [notes, setNotes] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -88,8 +86,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
   }
   
   const handleDecision = (decision: 'approved' | 'denied') => {
-    if (!officer || !firestore || !guildSettings?.id) {
-        toast({ title: "Error", description: "Officer identity and guild settings must be loaded to make a decision.", variant: "destructive"});
+    if (!officer || !firestore) {
+        toast({ title: "Error", description: "Officer identity must be loaded to make a decision.", variant: "destructive"});
         return;
     }
     
@@ -100,7 +98,7 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     if (decision === 'approved') {
         const playerRef = doc(firestore, 'players', application.userId);
         const newPlayerData: PartialPlayer = {
-            guildId: guildSettings.id, // Associate player with the current guild
+            guildId: application.guildId, // Associate player with the guild from the application
             displayName: application.applicantName,
             discordTag: application.discordTag,
             isOnline: false,
@@ -109,6 +107,8 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
             maxHonor: 100,
             role: 'member',
             rank: 'Neophyte',
+            joinedAt: new Date().toISOString(),
+            reportsSubmitted: 0
         };
         setDocumentNonBlocking(playerRef, newPlayerData, { merge: true });
         toast({ title: "Application Approved!", description: `${application.applicantName} is now a member of the guild.` });
@@ -226,3 +226,5 @@ export function ApplicationReview({ application }: ApplicationReviewProps) {
     </Dialog>
   );
 }
+
+    
