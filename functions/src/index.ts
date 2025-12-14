@@ -12,21 +12,104 @@ import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import { slugifyName, formatTagNumber } from "../../src/lib/utils-server";
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
+
+
+export const createGuild = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to create a guild.");
+    }
+    const uid = request.auth.uid;
+    const { name, primaryGame, tagNumber: number } = request.data;
+
+    if (!name || !primaryGame || !number) {
+        throw new HttpsError("invalid-argument", "The function must be called with 'name', 'primaryGame', and 'tagNumber'.");
+    }
+
+    const baseHandle = slugifyName(name);
+    const tagNumber = parseInt(number, 10);
+    if (isNaN(tagNumber) || tagNumber < 1 || tagNumber > 9999) {
+        throw new HttpsError("invalid-argument", "Tag number must be between 1 and 9999.");
+    }
+    const publicTag = `${baseHandle}#${formatTagNumber(tagNumber)}`;
+
+    const dirRef = db.collection("guildDirectory").doc(publicTag);
+    const guildRef = db.collection("guilds").doc();
+    const membershipRef = db.collection("guildMembers").doc(`${guildRef.id}_${uid}`);
+    const playerRef = db.collection("players").doc(uid);
+
+    try {
+        await db.runTransaction(async (tx) => {
+            const dirSnap = await tx.get(dirRef);
+            if (dirSnap.exists) {
+                throw new HttpsError("already-exists", "This guild tag is already taken. Please try another number.");
+            }
+
+            const now = admin.firestore.FieldValue.serverTimestamp();
+
+            // 1. Create the Guild document
+            tx.set(guildRef, {
+                name,
+                baseHandle,
+                tagNumber,
+                publicTag,
+                primaryGame,
+                visibility: "public",
+                createdAt: now,
+                createdBy: uid,
+                leaderUid: uid,
+                inviteCode: null,
+                settings: {},
+            });
+
+            // 2. Create the Guild Directory entry
+            tx.set(dirRef, {
+                guildId: guildRef.id,
+                name,
+                baseHandle,
+                tagNumber,
+                publicTag,
+                primaryGame,
+                visibility: "public",
+                createdAt: now,
+                updatedAt: now,
+            });
+
+            // 3. Create the leader's GuildMember document
+            tx.set(membershipRef, {
+                guildId: guildRef.id,
+                uid,
+                role: "leader",
+                joinedAt: now,
+                lastActiveAt: now,
+            });
+
+            // 4. Update the user's Player document with guildId and role
+            tx.set(playerRef, {
+              guildId: guildRef.id,
+              role: 'admin', // Guild leader gets admin role
+              rank: 'Elder',
+              joinedAt: new Date().toISOString(),
+            }, { merge: true });
+
+        });
+
+        logger.info(`Guild '${publicTag}' created successfully by user ${uid}. Guild ID: ${guildRef.id}`);
+        return { success: true, guildId: guildRef.id, publicTag };
+
+    } catch (error) {
+        logger.error(`Error creating guild '${publicTag}' for user ${uid}:`, error);
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+        throw new HttpsError("internal", "An unexpected error occurred while creating the guild.");
+    }
+});
 
 
 export const awardBountyHonor = onCall(async (request) => {

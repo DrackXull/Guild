@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,6 +9,8 @@ import { slugifyName, formatTagNumber } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { useRouter } from 'next/navigation';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -30,6 +32,7 @@ type CreateGuildFormValues = z.infer<typeof createGuildSchema>;
 export function CreateGuildForm() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
     const [isTagChecking, setIsTagChecking] = useState(false);
     const [isTagAvailable, setIsTagAvailable] = useState<boolean | null>(null);
 
@@ -81,12 +84,35 @@ export function CreateGuildForm() {
 
 
     const onSubmit = async (data: CreateGuildFormValues) => {
-        toast({
-            title: "Coming Soon!",
-            description: "Guild creation functionality is being implemented.",
-        });
-        console.log("Form submitted:", data);
-        // Transactional logic will go here in the next step.
+        if (!user) {
+            toast({ title: "Not Authenticated", description: "You must be logged in to create a guild.", variant: "destructive" });
+            return;
+        }
+
+        const functions = getFunctions();
+        const createGuildFn = httpsCallable(functions, 'createGuild');
+
+        try {
+            const result = await createGuildFn({
+                name: data.name,
+                primaryGame: data.game,
+                tagNumber: data.tagNumber,
+            });
+
+            toast({
+                title: "Guild Created!",
+                description: `Your guild "${data.name}" has been successfully created.`,
+            });
+            router.push('/dashboard'); // Redirect to dashboard after creation
+
+        } catch (error: any) {
+            console.error("Error creating guild:", error);
+            toast({
+                title: "Guild Creation Failed",
+                description: error.message || "An unknown error occurred.",
+                variant: "destructive",
+            });
+        }
     };
 
     const renderAvailability = () => {
@@ -178,22 +204,4 @@ export function CreateGuildForm() {
             </CardContent>
         </Card>
     );
-}
-
-// Add a new hook for debouncing input
-// This helps prevent excessive Firestore reads while the user is typing.
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
 }
