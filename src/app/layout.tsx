@@ -140,9 +140,9 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const isMember = !!player && !!player.guildId;
 
   const publicRoutes = ['/'];
-  const applicantRoutes = ['/application-status', '/profile'];
+  const applicantRoutes = ['/onboarding', '/profile'];
   const isPublicRoute = publicRoutes.includes(pathname);
-  const isApplicantRoute = applicantRoutes.includes(pathname);
+  const isApplicantRoute = applicantRoutes.includes(pathname) || pathname === '/application-status';
 
   useEffect(() => {
     if (isLoading) return;
@@ -150,15 +150,14 @@ function AppManager({ children }: { children: React.ReactNode }) {
     if (user) {
       if (isMember) {
         // User is a full member. Redirect to dashboard if they land on a public/applicant page.
-        if (isPublicRoute || pathname === '/application-status') {
+        if (isPublicRoute || pathname === '/onboarding' || pathname === '/application-status') {
           router.replace('/dashboard');
         }
       } else {
         // User is logged in but not a member (or player doc doesn't exist).
         // They should be on a page where they can join or create a guild.
-        // We now treat /application-status as the primary onboarding page.
         if (!isApplicantRoute) {
-          router.replace('/application-status');
+          router.replace('/onboarding');
         }
       }
     } else {
