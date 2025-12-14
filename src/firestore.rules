@@ -13,45 +13,65 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    function getGuildId() {
-      return request.auth.token.guildId;
+    
+    function isGuildLeader(guildId) {
+      return isSignedIn() && get(/databases/$(database)/documents/guildMembers/$(guildId + '_' + request.auth.uid)).data.role == 'leader';
     }
 
-    function isOfficer() {
-      return isSignedIn() && 
-        exists(/databases/$(database)/documents/roles_officer/$(request.auth.uid));
+    function isGuildOfficer(guildId) {
+      let role = get(/databases/$(database)/documents/guildMembers/$(guildId + '_' + request.auth.uid)).data.role;
+      return isSignedIn() && (role == 'officer' || role == 'leader');
     }
     
-    function isAdmin() {
-      return isSignedIn() && 
-        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    function isMember() {
-       return isSignedIn() && exists(/databases/$(database)/documents/players/$(request.auth.uid));
+    function isGuildMember(guildId) {
+       return isSignedIn() && exists(/databases/$(database)/documents/guildMembers/$(guildId + '_' + request.auth.uid));
     }
 
     // --------------------------------
     // Collection Rules
     // --------------------------------
 
+    match /guilds/{guildId} {
+      // Allow read if user is a member of that guild
+      allow read: if isGuildMember(guildId);
+      // Allow create by any signed-in user (transaction will handle logic)
+      allow create: if isSignedIn();
+      // Allow update only by the guild leader
+      allow update: if isGuildLeader(guildId);
+    }
+
+    match /guildDirectory/{publicTag} {
+      // Allow public read for discovery
+      allow read: if true;
+      // Creation is handled in a transaction, so just check for auth
+      allow create: if isSignedIn();
+      // Prevent manual updates or deletes
+      allow update, delete: if false;
+    }
+
+    match /guildMembers/{memberId} {
+        // memberId is a composite key: {guildId}_{uid}
+        allow read, create: if isSignedIn();
+        allow update: if false; // Role changes should be a dedicated function
+        allow delete: if false; // Leaving guild should be a dedicated function
+    }
+
     match /players/{playerId} {
       // Allow a user to read their own player doc, or any player doc if they are in the same guild.
-      allow get: if isOwner(playerId) || (isMember() && resource.data.guildId == getGuildId());
+      allow get: if isOwner(playerId) || (isGuildMember(resource.data.guildId));
 
       // Allow listing players only when filtering by the user's own guildId.
-      allow list: if isMember() && request.query.where[0][2] == getGuildId();
+      allow list: if isGuildMember(request.query.where[0][2]);
 
-      allow create: if isAdmin();
+      allow create: if isGuildOfficer(request.resource.data.guildId);
       
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
-                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data) && resource.data.guildId == getGuildId()) 
+                      (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data))
                       // Bounty reward deduction
-                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward && resource.data.guildId == getGuildId())
+                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
                       // Officer/Admin overrides
-                      || ((isOfficer() || isAdmin()) && resource.data.guildId == getGuildId())
+                      || isGuildOfficer(resource.data.guildId)
                     );
     }
     
@@ -61,42 +81,40 @@ service cloud.firestore {
     }
 
     // This rule allows a collection group query on 'characters'.
-    // Any member can read any character for global stats, but only the owner can write.
+    // Any member of the guild can read, but only the owner can write.
     match /{path=**}/characters/{characterId} {
-      allow read: if isMember();
+      allow read: if isGuildMember(resource.data.guildId);
       allow write: if isOwner(resource.data.playerId);
     }
 
     // Applications can be created by any signed-in user.
-    // They can only be read/listed if the user is an officer, admin, or the owner of the application.
+    // They can only be read/listed if the user is an officer of that guild, or the owner.
     match /applications/{applicationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow get: if isOwner(applicationId) || isOfficer() || isAdmin();
-        allow list: if (isOfficer() || isAdmin()) || (isSignedIn() && request.query.where[0][2] == request.auth.uid);
-        allow update: if isOfficer() || isAdmin() || isOwner(applicationId);
-        allow delete: if isOwner(applicationId) || isOfficer() || isAdmin();
+        allow get: if isOwner(applicationId) || isGuildOfficer(resource.data.guildId);
+        // A user can query for their own application; officers can query all for their guild.
+        allow list: if (isGuildOfficer(request.query.where[0][2])) || (isSignedIn() && request.query.where[1][2] == request.auth.uid);
+        allow update: if isGuildOfficer(resource.data.guildId) || isOwner(applicationId);
+        allow delete: if isOwner(applicationId) || isGuildOfficer(resource.data.guildId);
     }
 
     // Global data is readable by members/officers, but only writable by officers/admins.
     match /bounty_board_quests/{questId} {
       allow get, list: if true;
-      allow write: if isOfficer() || isAdmin();
+      allow write: if isGuildOfficer(request.resource.data.guildId);
     }
     
     match /guild_bank_items/{itemId} {
-      allow read: if isSignedIn();
-      allow write: if isOfficer() || isAdmin();
+      allow read: if isSignedIn(); // In multi-guild, needs guild check
+      allow write: if isGuildOfficer(request.resource.data.guildId);
     }
     
-    // Member Bounties have specific rules
     match /member_bounties/{bountyId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn(); // In multi-guild, needs guild check
       
-      // Create: You must be the one creating it, and your honor must be sufficient.
       allow create: if isSignedIn() && request.resource.data.requestingPlayerId == request.auth.uid
       						&& get(/databases/$(database)/documents/players/$(request.auth.uid)).data.currentHonor >= request.resource.data.reward;
       
-      // Update: You can accept a bounty (not your own), or if you are the creator, you can mark it complete.
       allow update: if isSignedIn() && (
                         // Accepting a bounty
                         (request.resource.data.status == 'in_progress' && resource.data.status == 'open' && request.resource.data.acceptedPlayerId == request.auth.uid && resource.data.requestingPlayerId != request.auth.uid) ||
@@ -107,26 +125,17 @@ service cloud.firestore {
       allow delete: if false; // Bounties are completed, not deleted.
     }
 
-    match /settings/guild {
-      allow read: if true;
-      allow write: if isOfficer() || isAdmin();
+    // Guild settings are specific to a guild
+    match /guilds/{guildId}/settings/{docId} {
+        allow read: if isGuildMember(guildId);
+        allow write: if isGuildOfficer(guildId);
     }
 
     match /runs/{runId}/{document=**} {
-      allow read, write: if isMember();
+      allow read, write: if isGuildMember(resource.data.guildId);
     }
     
-    // Role documents are protected.
-    // An admin can create new officer roles.
-    match /roles_officer/{userId} {
-      allow read, write: if isAdmin();
-    }
-
-    // An admin can create other admin roles.
-    // CRITICAL: To initialize the FIRST admin, we allow any signed-in user to create a role *only if the collection is empty*.
-    match /roles_admin/{userId} {
-        allow read: if isAdmin();
-        allow write: if isAdmin() || (isSignedIn() && !exists(/databases/$(database)/documents/roles_admin));
-    }
   }
 }
+
+    

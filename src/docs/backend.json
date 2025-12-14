@@ -7,47 +7,59 @@
       "type": "object",
       "description": "Represents a distinct guild or community within the platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the guild."
-        },
-        "name": {
-          "type": "string",
-          "description": "The public name of the guild."
-        },
-        "slug": {
-          "type": "string",
-          "description": "A URL-friendly slug for the guild."
-        },
-        "gamePrimary": {
-          "type": ["string", "null"],
-          "description": "The primary game the guild is focused on."
-        },
-        "theme": {
+        "id": { "type": "string", "description": "Unique identifier for the guild." },
+        "name": { "type": "string", "description": "The public, non-unique name of the guild." },
+        "baseHandle": { "type": "string", "description": "A URL-friendly, slugified version of the name." },
+        "tagNumber": { "type": "number", "description": "The user-chosen number for the guild's public tag." },
+        "publicTag": { "type": "string", "description": "The unique, public-facing identifier for the guild (e.g., 'guild-name#007')." },
+        "primaryGame": { "type": "string", "description": "The primary game the guild is focused on." },
+        "visibility": { "type": "string", "enum": ["public", "unlisted", "private"], "description": "Controls the guild's visibility in public directories." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the guild was created." },
+        "createdBy": { "type": "string", "description": "The UID of the user who created the guild." },
+        "leaderUid": { "type": "string", "description": "The UID of the player who leads the guild." },
+        "inviteCode": { "type": ["string", "null"], "description": "A unique, shareable code for joining the guild." },
+        "settings": {
           "type": "object",
           "properties": {
-            "primaryColor": { "type": "string" },
-            "accentColor": { "type": "string" },
-            "logoUrl": { "type": "string", "format": "uri" }
-          },
-          "required": ["primaryColor", "accentColor"]
-        },
-        "governanceMode": {
-          "type": "string",
-          "enum": ["dictator", "democracy"],
-          "description": "The governance model of the guild."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the guild was created."
-        },
-        "leaderId": {
-          "type": "string",
-          "description": "The userId of the player who leads the guild."
+            "governanceMode": { "type": "string", "enum": ["dictator", "democracy"] }
+          }
         }
       },
-      "required": ["name", "slug", "governanceMode", "createdAt", "leaderId"]
+      "required": ["name", "baseHandle", "tagNumber", "publicTag", "primaryGame", "visibility", "createdAt", "createdBy", "leaderUid"]
+    },
+    "GuildDirectory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuildDirectory",
+      "type": "object",
+      "description": "A global registry for fast, unique lookups of guild public tags.",
+      "properties": {
+        "guildId": { "type": "string", "description": "The internal Firestore ID of the guild." },
+        "name": { "type": "string" },
+        "baseHandle": { "type": "string" },
+        "tagNumber": { "type": "number" },
+        "publicTag": { "type": "string", "description": "The document ID, matching the public tag." },
+        "primaryGame": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["public", "unlisted", "private"] },
+        "verified": { "type": "boolean", "default": false },
+        "memberCountApprox": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["guildId", "name", "baseHandle", "tagNumber", "publicTag", "primaryGame", "visibility", "createdAt", "updatedAt"]
+    },
+     "GuildMember": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuildMember",
+      "type": "object",
+      "description": "Links a user to a guild and defines their role.",
+      "properties": {
+        "guildId": { "type": "string" },
+        "uid": { "type": "string", "description": "The user's Firebase Auth UID." },
+        "role": { "type": "string", "enum": ["leader", "officer", "member"] },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "lastActiveAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["guildId", "uid", "role", "joinedAt", "lastActiveAt"]
     },
     "Player": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -716,15 +728,32 @@
         "definition": {
           "entityName": "Guild",
           "schema": {
-            "$ref": "#/backend/entities/Guild"
+            "$ref": "#/entities/Guild"
           },
           "description": "Stores high-level information about each individual guild.",
-          "params": [
-            {
-              "name": "guildId",
-              "description": "The unique identifier for the guild."
-            }
-          ]
+          "params": [ { "name": "guildId" } ]
+        }
+      },
+       {
+        "path": "/guildDirectory/{publicTag}",
+        "definition": {
+          "entityName": "GuildDirectory",
+          "schema": {
+            "$ref": "#/entities/GuildDirectory"
+          },
+          "description": "A global registry for fast, unique lookups of guild public tags. The document ID is the publicTag.",
+          "params": [ { "name": "publicTag" } ]
+        }
+      },
+      {
+        "path": "/guildMembers/{memberId}",
+        "definition": {
+          "entityName": "GuildMember",
+          "schema": {
+            "$ref": "#/entities/GuildMember"
+          },
+          "description": "Links a user to a guild and defines their role. The document ID is a composite key: {guildId}_{uid}.",
+          "params": [ { "name": "memberId" } ]
         }
       },
       {
@@ -732,15 +761,10 @@
         "definition": {
           "entityName": "Player",
           "schema": {
-            "$ref": "#/backend/entities/Player"
+            "$ref": "#/entities/Player"
           },
           "description": "Stores player information. Player ID is used for document ID. The 'guildId' field is critical for data segregation in this multi-tenant application.",
-          "params": [
-            {
-              "name": "playerId",
-              "description": "The unique identifier for the player. This is the document ID."
-            }
-          ]
+          "params": [ { "name": "playerId" } ]
         }
       },
       {
@@ -748,19 +772,10 @@
         "definition": {
           "entityName": "Character",
           "schema": {
-            "$ref": "#/backend/entities/Character"
+            "$ref": "#/entities/Character"
           },
           "description": "Stores character information for each player. This collection is nested under a user's private data path, ensuring only they can manage their characters.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (player)."
-            },
-            {
-              "name": "characterId",
-              "description": "The unique identifier for the character."
-            }
-          ]
+          "params": [ { "name": "userId" }, { "name": "characterId" } ]
         }
       },
       {
@@ -768,19 +783,10 @@
         "definition": {
           "entityName": "RunReport",
           "schema": {
-            "$ref": "#/backend/entities/RunReport"
+            "$ref": "#/entities/RunReport"
           },
           "description": "Stores run reports. This data is specific to a guild and will be secured via rules that check the submitting user's guildId.",
-          "params": [
-            {
-              "name": "runId",
-              "description": "The unique identifier for the run."
-            },
-            {
-              "name": "runReportId",
-              "description": "The unique identifier for the run report."
-            }
-          ]
+          "params": [ { "name": "runId" }, { "name": "runReportId" } ]
         }
       },
       {
@@ -788,15 +794,10 @@
         "definition": {
           "entityName": "Run",
           "schema": {
-            "$ref": "#/backend/entities/Run"
+            "$ref": "#/entities/Run"
           },
           "description": "Stores run information, used in conjunction with RunReport. This data is guild-specific.",
-          "params": [
-            {
-              "name": "runId",
-              "description": "The unique identifier for the run."
-            }
-          ]
+          "params": [ { "name": "runId" } ]
         }
       },
       {
@@ -804,15 +805,10 @@
         "definition": {
           "entityName": "BountyBoardQuest",
           "schema": {
-            "$ref": "#/backend/entities/BountyBoardQuest"
+            "$ref": "#/entities/BountyBoardQuest"
           },
           "description": "Stores bounty board quests for a specific guild. Data access will be controlled by the user's guild membership.",
-          "params": [
-            {
-              "name": "bountyBoardQuestId",
-              "description": "The unique identifier for the bounty board quest."
-            }
-          ]
+          "params": [ { "name": "bountyBoardQuestId" } ]
         }
       },
       {
@@ -820,19 +816,10 @@
         "definition": {
           "entityName": "HonorPointLog",
           "schema": {
-            "$ref": "#/backend/entities/HonorPointLog"
+            "$ref": "#/entities/HonorPointLog"
           },
           "description": "Stores private honor point logs for each player, nested under their user document for security.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (player)."
-            },
-            {
-              "name": "honorPointLogId",
-              "description": "The unique identifier for the honor point log."
-            }
-          ]
+          "params": [ { "name": "userId" }, { "name": "honorPointLogId" } ]
         }
       },
       {
@@ -840,15 +827,10 @@
         "definition": {
           "entityName": "GuildBankItem",
           "schema": {
-            "$ref": "#/backend/entities/GuildBankItem"
+            "$ref": "#/entities/GuildBankItem"
           },
           "description": "Stores guild bank items. Data access will be controlled by the user's guild membership.",
-          "params": [
-            {
-              "name": "guildBankItemId",
-              "description": "The unique identifier for the guild bank item."
-            }
-          ]
+          "params": [ { "name": "guildBankItemId" } ]
         }
       },
       {
@@ -856,51 +838,10 @@
         "definition": {
           "entityName": "RunReview",
           "schema": {
-            "$ref": "#/backend/entities/RunReview"
+            "$ref": "#/entities/RunReview"
           },
           "description": "Stores reviews for other characters in a run. This data is guild-specific.",
-          "params": [
-            {
-              "name": "runReportId",
-              "description": "The unique identifier for the run report."
-            },
-            {
-              "name": "runReviewId",
-              "description": "The unique identifier for the run review."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_officer/{userId}",
-        "definition": {
-          "entityName": "officerRole",
-          "schema": {
-            "$ref": "#/backend/entities/Player"
-          },
-          "description": "Documents in this collection denote a user as an officer for their guild. Existence is sufficient.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (player) who is an officer."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_admin/{userId}",
-        "definition": {
-          "entityName": "adminRole",
-          "schema": {
-            "$ref": "#/backend/entities/Player"
-          },
-          "description": "Documents in this collection denote a user as an admin for their guild. Existence is sufficient.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user (player) who is an admin."
-            }
-          ]
+          "params": [ { "name": "runReportId" }, { "name": "runReviewId" } ]
         }
       },
       {
@@ -908,15 +849,10 @@
         "definition": {
           "entityName": "Application",
           "schema": {
-            "$ref": "#/backend/entities/Application"
+            "$ref": "#/entities/Application"
           },
           "description": "Stores guild applications. This collection is readable by officers and the applicant.",
-           "params": [
-            {
-              "name": "applicationId",
-              "description": "The unique identifier for the application."
-            }
-          ]
+           "params": [ { "name": "applicationId" } ]
         }
       },
       {
@@ -924,7 +860,7 @@
         "definition": {
           "entityName": "GuildSettings",
           "schema": {
-            "$ref": "#/backend/entities/GuildSettings"
+            "$ref": "#/entities/GuildSettings"
           },
           "description": "A singleton document containing global settings for the guild. Publicly readable but only writable by officers/admins. In a multi-tenant system, this would be '/guilds/{guildId}/settings'.",
            "params": []
@@ -935,15 +871,10 @@
         "definition": {
           "entityName": "MemberBounty",
           "schema": {
-            "$ref": "#/backend/entities/MemberBounty"
+            "$ref": "#/entities/MemberBounty"
           },
           "description": "A bounty posted by a guild member for others in the same guild to complete.",
-          "params": [
-            {
-              "name": "bountyId",
-              "description": "The unique identifier for the member bounty."
-            }
-          ]
+          "params": [ { "name": "bountyId" } ]
         }
       }
     ],
