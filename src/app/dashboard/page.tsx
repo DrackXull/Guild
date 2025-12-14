@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Quest, WithId, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDoc, useFirestore, useMemoFirebase, useUser, useCollection } from "@/firebase";
-import { doc, collection, query, orderBy, limit } from "firebase/firestore";
+import { doc, collection, query, where, limit } from "firebase/firestore";
 
 export default function DashboardPage() {
   const { user } = useUser();
@@ -23,12 +23,17 @@ export default function DashboardPage() {
     return doc(firestore, 'players', user.uid);
   }, [user, firestore]);
   const { data: player, isLoading: isPlayerLoading } = useDoc<Player>(playerDocRef);
+  const currentGuildId = player?.guildId;
 
   const bountiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentGuildId) return null;
     // We only need a few bounties for the dashboard
-    return query(collection(firestore, 'bounty_board_quests'), limit(2));
-  }, [firestore]);
+    return query(
+        collection(firestore, 'bounty_board_quests'), 
+        where('guildId', '==', currentGuildId),
+        limit(2)
+    );
+  }, [firestore, currentGuildId]);
   const { data: dailyBounties, isLoading: areBountiesLoading } = useCollection<Quest>(bountiesQuery);
 
   const isLoading = isPlayerLoading || areBountiesLoading;

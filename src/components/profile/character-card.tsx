@@ -4,8 +4,8 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Character, WithId, Player } from "@/lib/types";
-import { CheckCircle, Shield, Swords, Users, Edit, Trash2, Loader2 } from "lucide-react";
+import type { Character, WithId, Player, CharacterClass, PartialPlayer } from "@/lib/types";
+import { CheckCircle, Shield, Swords, Users, Edit, Trash2, Loader2, TooltipIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { useState } from "react";
@@ -17,6 +17,9 @@ import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUser, useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking, addDocumentNonBlocking, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, collection } from "firebase/firestore";
+import { characterClasses } from "@/lib/data";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 type CharacterCardProps = {
   character: WithId<Character>;
@@ -132,10 +135,6 @@ export function CreateCharacterDialog({isDisabled, player}: {isDisabled: boolean
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  
-  const characterClasses = [
-    'Fighter', 'Ranger', 'Wizard', 'Rogue', 'Cleric', 'Barbarian', 'Sorcerer', 'Warlock', 'Druid', 'Bard'
-  ];
 
   const form = useForm<CreateCharacterFormValues>({
     resolver: zodResolver(createCharacterSchema),
@@ -154,7 +153,7 @@ export function CreateCharacterDialog({isDisabled, player}: {isDisabled: boolean
     const charactersCollectionRef = collection(firestore, `users/${user.uid}/characters`);
     const newCharacter: Omit<Character, 'id'> = {
       playerId: user.uid,
-      guildId: player.guildId,
+      guildId: player.guildId, // Stamp the guildId on character creation
       name: data.name,
       characterClass: data.characterClass as CharacterClass,
       level: 1,
