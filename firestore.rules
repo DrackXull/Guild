@@ -70,8 +70,8 @@ service cloud.firestore {
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
                       (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data))
-                      // Bounty reward deduction
-                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
+                      // Bounty reward deduction by bounty creator
+                      || (exists(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)) && get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.requestingPlayerId == request.auth.uid)
                       // Submitting a guild application via public tag
                       || (isOwner(playerId) && request.resource.data.hasPendingApplication == true)
                       // Officer/Admin overrides (e.g., rank changes)

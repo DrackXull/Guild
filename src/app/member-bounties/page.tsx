@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CircleUser, Gem, Scroll, Loader2, User } from "lucide-react";
-import { useCollection, useFirestore, useMemoFirebase, useUser, setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
 import type { MemberBounty, WithId, Player } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,5 +158,3 @@ export default function MemberBountiesPage() {
         </div>
     );
 }
-
-    

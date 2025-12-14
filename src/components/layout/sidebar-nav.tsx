@@ -37,6 +37,7 @@ import { useGuildSettings } from '@/hooks/use-guild-settings';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard /> },
   { href: '/bounty-board', label: 'Guild Bounties', icon: <ScrollText /> },
+  { href: '/member-bounties', label: 'Member Bounties', icon: <Scroll /> },
   { href: '/market', label: 'Honor Market', icon: <Store /> },
   { href: '/runs/new', label: 'New Run Report', icon: <Swords /> },
   { href: '/leaderboard', label: 'Leaderboard', icon: <Trophy /> },

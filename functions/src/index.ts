@@ -26,10 +26,10 @@ export const createGuild = onCall(async (request) => {
         throw new HttpsError("unauthenticated", "You must be logged in to create a guild.");
     }
     const uid = request.auth.uid;
-    const { name, primaryGame, tagNumber: number } = request.data;
+    const { name, primaryGame, number } = request.data;
 
     if (!name || !primaryGame || !number) {
-        throw new HttpsError("invalid-argument", "The function must be called with 'name', 'primaryGame', and 'tagNumber'.");
+        throw new HttpsError("invalid-argument", "The function must be called with 'name', 'primaryGame', and 'number'.");
     }
 
     const baseHandle = slugifyName(name);
