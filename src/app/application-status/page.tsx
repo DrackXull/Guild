@@ -3,7 +3,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import { ApplicationStatus } from '@/components/apply/application-status';
 import type { Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
