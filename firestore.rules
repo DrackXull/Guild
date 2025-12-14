@@ -132,6 +132,14 @@ service cloud.firestore {
         allow read: if isGuildMember(guildId);
         allow write: if isGuildOfficer(guildId);
     }
+    
+    // Rule for the singleton guild settings document
+    match /settings/guild {
+      allow read: if isSignedIn();
+      // Writing should be restricted to officers of any guild,
+      // but since we can't know which guild here, we restrict to a specific admin role for now.
+      allow write: if request.auth.uid in ['CWZmJwq1UhWUprYP7LJB9NHxvni2']; // Replace with actual admin UIDs
+    }
 
     match /runs/{runId}/{document=**} {
       allow read, write: if isGuildMember(resource.data.guildId);
