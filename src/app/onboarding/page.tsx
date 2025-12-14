@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createGuild, findGuild } from "@/lib/guild";
 import { useUser } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +30,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const functions = getFunctions();
 
   const [mode, setMode] = useState<"create" | "join">("create");
 
@@ -79,20 +79,25 @@ export default function OnboardingPage() {
 
   const handleCreate = async () => {
     setError("");
-    if (!user) return setError("You must sign in first");
+    if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to create a guild.", variant: "destructive" });
+        return;
+    }
     setIsCreating(true);
+    
+    const createGuildFn = httpsCallable(functions, 'createGuild');
     try {
-      await createGuild({
+      await createGuildFn({
         name,
         primaryGame: game,
-        number: tagNum,
-        uid: user.uid
+        number: tagNum
       });
       toast({ title: "Guild Created!", description: "Redirecting to your new dashboard."});
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "Error creating guild", description: err.message, variant: "destructive" });
+      const errorMessage = err.message || "An unknown error occurred.";
+      setError(errorMessage);
+      toast({ title: "Error creating guild", description: errorMessage, variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
@@ -105,7 +110,6 @@ export default function OnboardingPage() {
         return;
     }
     setIsJoining(true);
-    const functions = getFunctions();
     const joinGuildFn = httpsCallable(functions, 'joinGuildByPublicTag');
     try {
         await joinGuildFn({ publicTag: joinTag });
@@ -113,10 +117,11 @@ export default function OnboardingPage() {
             title: "Application Sent!",
             description: `Your request to join the guild has been sent for review.`,
         });
-        router.refresh();
+        router.push('/application-status');
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "Failed to find guild", description: err.message, variant: "destructive" });
+      const errorMessage = err.message || "An unknown error occurred.";
+      setError(errorMessage);
+      toast({ title: "Failed to find guild", description: errorMessage, variant: "destructive" });
     } finally {
       setIsJoining(false);
     }
