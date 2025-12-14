@@ -22,7 +22,7 @@ export function initiateAnonymousSignIn(authInstance: Auth): void {
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, onSuccess?: () => void): void {
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, onSuccess?: () => void, onError?: (error: any) => void): void {
   createUserWithEmailAndPassword(authInstance, email, password)
     .then((userCredential) => {
         // Sign-up successful, user is automatically signed in.
@@ -32,6 +32,9 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
     })
     .catch((error) => {
         console.error("Sign-up error:", error);
+        if (onError) {
+          onError(error);
+        }
         let description = "An unknown error occurred during sign-up.";
         if (error.code === 'auth/email-already-in-use') {
             description = "This email is already in use. Please sign in or use a different email.";

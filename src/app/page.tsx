@@ -85,7 +85,7 @@ export default function LandingPage() {
    useEffect(() => {
     // If the user is logged in, send them to the most relevant page.
     if (!isUserLoading && user) {
-        // AppManager in layout.tsx will handle redirection to /dashboard or /application-status
+        // AppManager in layout.tsx will handle redirection to /dashboard or /onboarding
         // but we can push to a default here to be safe.
         router.push('/dashboard');
     }
@@ -100,10 +100,11 @@ export default function LandingPage() {
   }
 
   const handleSignIn = (data: SignInFormValues) => {
-    playSound('login');
+    playSound('confirm');
     setSignInError(null); // Clear previous errors
     initiateEmailSignIn(auth, data.email, data.password, (error) => {
       // On error, set the error message to be displayed in the form
+      playSound('error');
       setSignInError("Invalid credentials. Please check your email and password.");
     });
   };
@@ -112,22 +113,24 @@ export default function LandingPage() {
     const email = signInForm.getValues("email");
     if (!email) {
       signInForm.setError("email", { type: "manual", message: "Please enter your email to reset your password." });
+      playSound('error');
       return;
     }
     if (auth) {
+      playSound('confirm');
       sendPasswordReset(auth, email);
     }
   };
 
   const handleSignUp = (data: SignUpFormValues) => {
-    playSound('login');
     initiateEmailSignUp(auth, data.email, data.password, () => {
+        playSound('success');
         toast({
             title: 'Account Created & Signed In',
             description: 'Welcome! You are now logged in.',
         });
         // The useEffect will now handle the redirect
-    });
+    }, () => playSound('error'));
   };
 
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-dungeon');
@@ -150,7 +153,7 @@ export default function LandingPage() {
             <GuildTitle />
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playSound('tab'); }} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); playSound('switch'); }} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="sign-in">Sign In</TabsTrigger>
             <TabsTrigger value="sign-up">Create Account</TabsTrigger>
@@ -179,7 +182,7 @@ export default function LandingPage() {
                     {signInForm.formState.errors.password && <p className="text-destructive text-xs">{signInForm.formState.errors.password.message}</p>}
                     {signInError && <p className="text-destructive text-xs">{signInError}</p>}
                   </div>
-                  <Button type="submit" className="w-full">Sign In</Button>
+                  <Button type="submit" className="w-full" onMouseEnter={() => playSound('hover')}>Sign In</Button>
                 </form>
               </CardContent>
             </Card>
@@ -207,7 +210,7 @@ export default function LandingPage() {
                     <Input id="confirmPassword-signup" type="password" {...signUpForm.register('confirmPassword')} onKeyDown={() => playSound('typing')}/>
                     {signUpForm.formState.errors.confirmPassword && <p className="text-destructive text-xs">{signUpForm.formState.errors.confirmPassword.message}</p>}
                   </div>
-                  <Button type="submit" className="w-full">Create Account</Button>
+                  <Button type="submit" className="w-full" onMouseEnter={() => playSound('hover')}>Create Account</Button>
                 </form>
               </CardContent>
             </Card>

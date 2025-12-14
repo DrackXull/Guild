@@ -78,10 +78,6 @@ export function SidebarNav() {
 
   const isOfficer = player?.role === 'officer' || player?.role === 'admin';
 
-  const playHoverSound = () => {
-    playSound('hover');
-  }
-
   return (
     <>
       <SidebarHeader className="p-4">
@@ -91,7 +87,7 @@ export function SidebarNav() {
         <SidebarMenu>
           {navItems.map((item) => {
             return (
-              <SidebarMenuItem key={item.label} onMouseEnter={playHoverSound}>
+              <SidebarMenuItem key={item.label} onMouseEnter={() => playSound('hover')}>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === item.href}
@@ -106,7 +102,7 @@ export function SidebarNav() {
             );
           })}
           {isOfficer && (
-             <SidebarMenuItem onMouseEnter={playHoverSound}>
+             <SidebarMenuItem onMouseEnter={() => playSound('hover')}>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname.startsWith(officerNavItem.href)}
@@ -124,11 +120,11 @@ export function SidebarNav() {
       <SidebarFooter className="p-4">
         <Separator className="my-2" />
         <div className="flex flex-col gap-2">
-           <Button variant="ghost" className="justify-start gap-2" onMouseEnter={playHoverSound}>
+           <Button variant="ghost" className="justify-start gap-2" onMouseEnter={() => playSound('hover')}>
             <LifeBuoy className="h-4 w-4" />
             <span className="text-sm">Support</span>
           </Button>
-          <Button variant="ghost" className="justify-start gap-2" onMouseEnter={playHoverSound}>
+          <Button variant="ghost" className="justify-start gap-2" onMouseEnter={() => playSound('hover')}>
             <Settings className="h-4 w-4" />
             <span className="text-sm">Settings</span>
           </Button>
@@ -137,5 +133,3 @@ export function SidebarNav() {
     </>
   );
 }
-
-    

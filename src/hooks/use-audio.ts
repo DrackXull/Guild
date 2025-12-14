@@ -5,13 +5,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Defines the sound files and their friendly names.
 const soundFiles = {
-  tab: '/sounds/rock-slide.mp3',
-  login: '/sounds/chest-unlock.mp3',
-  typing: '/sounds/quill-writing.mp3',
-  hover: '/sounds/ui-hover.mp3'
+  confirm: '/sounds/chest-unlock.mp3', // Primary action
+  switch: '/sounds/rock-slide.mp3',   // Toggle/switch
+  error: '/sounds/ui-error.mp3',      // Error
+  success: '/sounds/ui-success.mp3',  // Success
+  typing: '/sounds/quill-writing.mp3',  // Typing
+  hover: '/sounds/ui-hover.mp3'       // Button hover
 };
 
-type SoundName = keyof typeof soundFiles;
+export type SoundName = keyof typeof soundFiles;
 
 // Singleton AudioContext to avoid creating multiple instances.
 let audioContext: AudioContext | null = null;
@@ -24,6 +26,11 @@ const getAudioContext = () => {
 
 // Cache for storing pre-loaded audio buffers.
 const audioBufferCache: Map<SoundName, AudioBuffer> = new Map();
+
+// A map to keep track of the last time a sound was played.
+const soundTimestamps: Map<SoundName, number> = new Map();
+const TYPING_THROTTLE_MS = 100;
+
 
 /**
  * Custom hook to manage and play audio using the Web Audio API.
@@ -40,7 +47,6 @@ export function useAudio() {
       if (!currentContext) return;
 
       const promises = Object.entries(soundFiles).map(async ([name, path]) => {
-        // If buffer is already in cache, skip loading.
         if (audioBufferCache.has(name as SoundName)) {
           return;
         }
@@ -62,12 +68,22 @@ export function useAudio() {
   }, []);
 
   /**
-   * Plays a pre-loaded sound.
+   * Plays a pre-loaded sound with optional throttling.
    * @param soundName The friendly name of the sound to play.
    */
   const playSound = useCallback((soundName: SoundName) => {
     const currentContext = context.current;
     if (!isLoaded || !currentContext) return;
+    
+    // Throttle typing sound
+    if (soundName === 'typing') {
+      const now = Date.now();
+      const lastPlayed = soundTimestamps.get('typing') || 0;
+      if (now - lastPlayed < TYPING_THROTTLE_MS) {
+        return;
+      }
+      soundTimestamps.set('typing', now);
+    }
     
     // Resume context if it's suspended (required for autoplay policy in browsers)
     if (currentContext.state === 'suspended') {
