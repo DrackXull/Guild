@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createGuild, findGuild, makePublicTag, slugifyName, formatTagNumber } from "@/lib/guild";
+import { createGuild, findGuild } from "@/lib/guild";
 import { useUser } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { useFirestore } from "@/firebase";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { makePublicTag } from "@/lib/utils";
 
 function GuildTitle() {
   return (

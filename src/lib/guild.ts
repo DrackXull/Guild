@@ -9,20 +9,8 @@ import {
   serverTimestamp,
   collection
 } from "firebase/firestore";
+import { makePublicTag } from "./utils";
 
-export function slugifyName(name: string) {
-  if (!name) return '';
-  return name.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "");
-}
-
-export function formatTagNumber(n: number) {
-  if (isNaN(n) || n < 1) return '000';
-  return n < 1000 ? n.toString().padStart(3, "0") : n.toString();
-}
-
-export function makePublicTag(name: string, n: number) {
-  return `${slugifyName(name)}#${formatTagNumber(n)}`;
-}
 
 export async function createGuild({
   name,
@@ -36,9 +24,7 @@ export async function createGuild({
   uid: string;
 }) {
   const { firestore: db } = getSdks();
-  const baseHandle = slugifyName(name);
-  const tagNumber = number;
-  const publicTag = makePublicTag(name, tagNumber);
+  const publicTag = makePublicTag(name, number);
 
   const dirRef = doc(db, "guildDirectory", publicTag);
   const guildRef = doc(collection(db, "guilds"));
@@ -55,8 +41,8 @@ export async function createGuild({
 
     tx.set(guildRef, {
       name,
-      baseHandle,
-      tagNumber,
+      baseHandle: makePublicTag(name, number).split('#')[0],
+      tagNumber: number,
       publicTag,
       primaryGame,
       visibility: "public",
@@ -70,8 +56,8 @@ export async function createGuild({
     tx.set(dirRef, {
       guildId: guildRef.id,
       name,
-      baseHandle,
-      tagNumber,
+      baseHandle: makePublicTag(name, number).split('#')[0],
+      tagNumber: number,
       publicTag,
       primaryGame,
       visibility: "public",

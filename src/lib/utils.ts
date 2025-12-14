@@ -17,3 +17,7 @@ export function formatTagNumber(n: number | undefined): string {
   }
   return n.toString();
 }
+
+export function makePublicTag(name: string, n: number): string {
+  return `${slugifyName(name)}#${formatTagNumber(n)}`;
+}
