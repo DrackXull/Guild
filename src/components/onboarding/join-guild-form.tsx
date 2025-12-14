@@ -52,7 +52,8 @@ export function JoinGuildForm() {
                 description: `Your request to join the guild has been sent for review.`,
             });
             // Redirect to the application status page so the user can see their pending application
-            router.push('/application-status');
+            // The AppManager will handle the redirect after this push
+            router.refresh();
 
         } catch (error: any) {
             console.error("Error joining guild:", error);

@@ -1,4 +1,5 @@
 
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -12,7 +13,7 @@ import {setGlobalOptions} from "firebase-functions";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import { slugifyName, formatTagNumber } from "../../src/lib/utils-server";
+import { slugifyName, formatTagNumber } from "./utils-server";
 
 admin.initializeApp();
 const db = admin.firestore();

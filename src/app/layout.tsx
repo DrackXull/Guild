@@ -1,3 +1,4 @@
+
 'use client';
 import * as React from 'react';
 import '@/app/globals.css';
@@ -7,14 +8,14 @@ import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { UserNav } from '@/components/layout/user-nav';
 import { Swords, Users, Skull } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { doc, collection, collectionGroup, query, where } from 'firebase/firestore';
-import type { Player, Character, GuildSettings } from '@/lib/types';
+import type { Player, Character } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { GuildSettingsProvider, useGuildSettings } from '@/hooks/use-guild-settings';
+import { GuildSettingsProvider } from '@/hooks/use-guild-settings';
 
 function MemberLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -139,7 +140,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
   const isMember = !!player && !!player.guildId;
 
   const publicRoutes = ['/'];
-  const applicantRoutes = ['/application-status', '/apply', '/profile'];
+  const applicantRoutes = ['/application-status', '/profile'];
   const isPublicRoute = publicRoutes.includes(pathname);
   const isApplicantRoute = applicantRoutes.includes(pathname);
 
@@ -149,12 +150,13 @@ function AppManager({ children }: { children: React.ReactNode }) {
     if (user) {
       if (isMember) {
         // User is a full member. Redirect to dashboard if they land on a public/applicant page.
-        if (isPublicRoute || pathname === '/application-status' || pathname === '/apply') {
+        if (isPublicRoute || pathname === '/application-status') {
           router.replace('/dashboard');
         }
       } else {
-        // User is an applicant (logged in but not a member).
-        // They should only be on applicant-safe routes.
+        // User is logged in but not a member (or player doc doesn't exist).
+        // They should be on a page where they can join or create a guild.
+        // We now treat /application-status as the primary onboarding page.
         if (!isApplicantRoute) {
           router.replace('/application-status');
         }
@@ -186,7 +188,7 @@ function AppManager({ children }: { children: React.ReactNode }) {
     // Logged-in Guild Member: Show the full member layout.
     return <MemberLayout>{children}</MemberLayout>;
   } else {
-    // Logged-in Applicant: Show pages without the member layout.
+    // Logged-in Applicant / New User: Show pages without the member layout.
     return <>{children}</>;
   }
 }

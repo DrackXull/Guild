@@ -1,15 +1,11 @@
 
-
 'use client';
 
 import { useEffect } from 'react';
-import { useUser, useFirestore, useAuth } from '@/firebase';
-import { ApplicationStatus } from '@/components/apply/application-status';
-import type { Application } from '@/lib/types';
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FilePlus, LogOut, UserCircle } from 'lucide-react';
+import { LogOut, UserCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { useGuildSettings } from '@/hooks/use-guild-settings';
@@ -51,7 +47,6 @@ function ApplicantHeader() {
 function GuildTitle() {
   const { settings, isLoading } = useGuildSettings();
   const guildName = settings?.guildName || '...';
-  const [firstWord, secondWord, ...restOfName] = guildName.split(' ');
 
   if (isLoading) {
     return <h1 className="font-headline text-4xl font-bold tracking-wide guild-title-word">Loading...</h1>

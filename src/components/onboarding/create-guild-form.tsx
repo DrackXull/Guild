@@ -129,7 +129,7 @@ export function CreateGuildForm() {
     }
 
     return (
-        <Card className="w-full max-w-xl mx-auto">
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl">Create a New Guild</CardTitle>
                 <CardDescription>
