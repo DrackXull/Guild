@@ -111,6 +111,66 @@ export const createGuild = onCall(async (request) => {
     }
 });
 
+export const joinGuildByPublicTag = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "You must be logged in to join a guild.");
+    }
+
+    const { publicTag } = request.data;
+    const uid = request.auth.uid;
+    const email = request.auth.token.email || 'Unknown';
+
+    if (!publicTag) {
+        throw new HttpsError("invalid-argument", "The function must be called with a 'publicTag'.");
+    }
+
+    const normalizedTag = publicTag.trim().toLowerCase();
+    const guildDirRef = db.collection('guildDirectory').doc(normalizedTag);
+
+    return db.runTransaction(async (transaction) => {
+        const guildDirDoc = await transaction.get(guildDirRef);
+        if (!guildDirDoc.exists) {
+            throw new HttpsError("not-found", `The guild tag "${normalizedTag}" does not exist.`);
+        }
+
+        const { guildId } = guildDirDoc.data() as { guildId: string };
+        const playerRef = db.collection('players').doc(uid);
+        const playerDoc = await transaction.get(playerRef);
+
+        if (playerDoc.exists && playerDoc.data()?.guildId) {
+            throw new HttpsError("failed-precondition", "You are already in a guild and cannot join another.");
+        }
+        
+        // This is a simplified application. In a real scenario, we'd use the full application form.
+        const applicationRef = db.collection('applications').doc(uid);
+        transaction.set(applicationRef, {
+            userId: uid,
+            guildId,
+            applicantName: email.split('@')[0],
+            inGameName: 'Not Set',
+            discordTag: 'Not Set',
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            // Fill in other required fields with defaults
+            mainCharacters: "Not Set",
+            mainClasses: [],
+            hoursInGame: 0,
+            favoriteModes: [],
+            memorableExperience: "Joined via public tag.",
+            availabilityDays: [],
+            availabilityTimezone: "GMT-5",
+            availabilityStart: "17:00",
+            availabilityEnd: "22:00",
+            guildExpectations: "Looking to join the community.",
+        });
+
+        // Update player doc to show they have a pending application
+        transaction.set(playerRef, { hasPendingApplication: true }, { merge: true });
+
+        return { success: true, message: "Application submitted successfully." };
+    });
+});
+
 
 export const awardBountyHonor = onCall(async (request) => {
   if (!request.auth) {

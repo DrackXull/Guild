@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect } from 'react';
@@ -13,6 +14,8 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { useGuildSettings } from '@/hooks/use-guild-settings';
 import { CreateGuildForm } from '@/components/onboarding/create-guild-form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { JoinGuildForm } from '@/components/onboarding/join-guild-form';
 
 function ApplicantHeader() {
     const { user } = useUser();
@@ -94,8 +97,18 @@ export default function ApplicationStatusPage() {
             </p>
             </div>
 
-            {/* TODO: Add a Tabs component here to switch between "Create" and "Join" */}
-            <CreateGuildForm />
+            <Tabs defaultValue="create" className="w-full max-w-xl mx-auto">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="create">Create a Guild</TabsTrigger>
+                    <TabsTrigger value="join">Join a Guild</TabsTrigger>
+                </TabsList>
+                <TabsContent value="create">
+                    <CreateGuildForm />
+                </TabsContent>
+                <TabsContent value="join">
+                    <JoinGuildForm />
+                </TabsContent>
+            </Tabs>
 
         </div>
     </div>
