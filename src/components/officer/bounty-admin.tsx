@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Gem, Repeat, Trash2, ScrollText } from "lucide-react";
+import { Loader2, Gem, Repeat, Trash2, ScrollText, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, doc } from "firebase/firestore";
@@ -89,7 +89,7 @@ export function BountyAdmin() {
       toast({ title: "Bounty Created", description: `"${questData.questName}" has been added.` });
     }
 
-    reset();
+    reset({ questName: "", questDescription: "", reward: "", rarity: "Common", durationDays: 1, isRepeatable: false, maxCompletions: 0, requiredRank: "" });
     setEditingBounty(null);
   };
   
@@ -103,7 +103,7 @@ export function BountyAdmin() {
 
   const handleCancelEdit = () => {
     setEditingBounty(null);
-    reset();
+    reset({ questName: "", questDescription: "", reward: "", rarity: "Common", durationDays: 1, isRepeatable: false, maxCompletions: 0, requiredRank: "" });
   }
 
   const handleRemoveBounty = (bountyId: string, bountyName: string) => {
@@ -140,6 +140,7 @@ export function BountyAdmin() {
               </div>
                <Button onClick={handleGenerateSuggestions} disabled={isSuggestionPending}>
                   {isSuggestionPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  <Wand2 className="h-4 w-4 mr-2" />
                   Generate AI Suggestion
               </Button>
           </div>

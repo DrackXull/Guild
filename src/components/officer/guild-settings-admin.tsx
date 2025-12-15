@@ -254,5 +254,3 @@ export function GuildSettingsAdmin() {
         </Card>
     );
 }
-
-    
