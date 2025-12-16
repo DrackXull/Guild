@@ -68,8 +68,8 @@ service cloud.firestore {
       allow update: if (
                       // Profile updates by owner (no role/rank changes)
                       (isOwner(playerId) && !('rank' in request.resource.data) && !('role' in request.resource.data))
-                      // Bounty reward deduction
-                      || (isOwner(playerId) && request.resource.data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
+                      // Bounty reward deduction by bounty creator
+                      || (isOwner(playerId) && request.resource.data.bountyId != null && getAfter(/databases/$(database)/documents/players/$(playerId)).data.currentHonor == resource.data.currentHonor - get(/databases/$(database)/documents/member_bounties/$(request.resource.data.bountyId)).data.reward)
                       // Officer/Admin overrides
                       || isGuildOfficer(resource.data.guildId)
                     );
@@ -130,6 +130,12 @@ service cloud.firestore {
         allow read: if isGuildMember(guildId);
         allow write: if isGuildOfficer(guildId);
     }
+    
+    // Rule for the singleton guild settings document
+    match /settings/guild {
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid in ['CWZmJwq1UhWUprYP7LJB9NHxvni2']; // Replace with actual admin UIDs
+    }
 
     match /runs/{runId}/{document=**} {
       allow read, write: if isGuildMember(resource.data.guildId);
@@ -137,5 +143,3 @@ service cloud.firestore {
     
   }
 }
-
-    

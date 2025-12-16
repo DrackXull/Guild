@@ -222,70 +222,6 @@ function ProfileContent({ player }: { player: WithId<Player> }) {
     );
 }
 
-function AdminInit() {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    // Only show this tool for the designated guild leader.
-    if (user?.email?.toLowerCase() !== 'huzzinda@gmail.com') {
-        return null;
-    }
-
-    const handleGrantAdmin = () => {
-        if (isProcessing || !firestore || !user) return;
-
-        setIsProcessing(true);
-        const adminRoleRef = doc(firestore, `roles_admin/${user.uid}`);
-        const officerRoleRef = doc(firestore, `roles_officer/${user.uid}`);
-        const playerDocRef = doc(firestore, `players/${user.uid}`);
-
-        const newPlayerData: PartialPlayer = {
-            displayName: user.email?.split('@')[0] || 'Guild Leader',
-            discordTag: 'Admin#0001',
-            friends: [],
-            isOnline: true,
-            lifetimeHonor: 100000,
-            currentHonor: 100000,
-            maxHonor: 100000,
-            avatarUrl: '',
-            role: 'admin',
-        };
-        
-        // Non-blocking writes
-        setDocumentNonBlocking(adminRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(officerRoleRef, { assignedAt: new Date().toISOString() });
-        setDocumentNonBlocking(playerDocRef, newPlayerData);
-
-        toast({
-            title: "Guild Leader Role Assigned",
-            description: "Your player profile has been created. The page will now reload to grant you full access.",
-            duration: 5000,
-        });
-        
-        // Reload the page to apply the new role and data
-        setTimeout(() => window.location.reload(), 2000);
-    };
-    
-    return (
-        <Card className="mt-8 border-destructive">
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl flex items-center gap-3"><Shield className="text-destructive"/> First-Time Admin Setup</CardTitle>
-                <CardDescription>
-                    This is a one-time setup to grant your account full administrative privileges and create your player profile.
-                </CardDescription>
-            </CardHeader>
-            <CardFooter>
-                 <Button onClick={handleGrantAdmin} disabled={isProcessing} variant="destructive">
-                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shield className="mr-2 h-4 w-4"/>}
-                    Force Admin Init
-                </Button>
-            </CardFooter>
-        </Card>
-    )
-}
-
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -319,15 +255,13 @@ export default function ProfilePage() {
                       <div>
                           <h1 className="font-headline text-4xl font-bold tracking-wide">My Profile</h1>
                           <p className="text-muted-foreground mt-1">
-                              Your player profile is not yet active. It will be created once your application is approved, or you can initialize it now if you are the admin.
+                              Your player profile is not yet active. It will be created once your application is approved. If you are the guild leader, please use the setup tools in the Council Chambers.
                           </p>
                       </div>
                   </div>
-                  <AdminInit />
                 </>
              )
           )}
       </div>
   );
 }
-
